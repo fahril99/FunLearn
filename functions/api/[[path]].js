@@ -11,7 +11,7 @@ function randomBytes(n) { const a = new Uint8Array(n); crypto.getRandomValues(a)
 function b64(a) { return btoa(String.fromCharCode(...a)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, ""); }
 function unb64(s) { const p = s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4); return Uint8Array.from(atob(p), c => c.charCodeAt(0)); }
 async function digest(bytes) { return new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)); }
-async function passwordHash(password, salt = randomBytes(16), iterations = 180000) {
+async function passwordHash(password, salt = randomBytes(16), iterations = 100000) {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
   const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations, hash: "SHA-256" }, key, 256);
   return `pbkdf2_sha256$${iterations}$${b64(salt)}$${b64(new Uint8Array(bits))}`;
