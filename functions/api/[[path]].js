@@ -11,6 +11,8 @@ function randomBytes(n) { const a = new Uint8Array(n); crypto.getRandomValues(a)
 function b64(a) { return btoa(String.fromCharCode(...a)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, ""); }
 function unb64(s) { const p = s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4); return Uint8Array.from(atob(p), c => c.charCodeAt(0)); }
 async function digest(bytes) { return new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)); }
+// Cloudflare Workers WebCrypto supports PBKDF2 up to 100,000 iterations.
+// Keep the value explicit so registration/login do not throw runtime error 1101.
 async function passwordHash(password, salt = randomBytes(16), iterations = 100000) {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
   const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations, hash: "SHA-256" }, key, 256);
@@ -84,6 +86,17 @@ export async function onRequest(context) {
     return json({ ok: true }, 200, { "set-cookie": clearCookie("funlearn_session") });
   }
   const user = await requireUser(request, env);
+  if (route === "/delete-account" && method === "POST") {
+    if (!user) return json({ error: "Sesi tidak valid." }, 401, { "set-cookie": clearCookie("funlearn_session") });
+    if (String(body.confirm || "").trim().toLowerCase() !== "hapus") return json({ error: 'Ketik "hapus" untuk mengonfirmasi.' }, 400);
+    await env.DB.batch([
+      env.DB.prepare("DELETE FROM video_progress WHERE user_id=?").bind(user.id),
+      env.DB.prepare("DELETE FROM user_data WHERE user_id=?").bind(user.id),
+      env.DB.prepare("DELETE FROM sessions WHERE user_id=?").bind(user.id),
+      env.DB.prepare("DELETE FROM users WHERE id=?").bind(user.id)
+    ]);
+    return json({ ok: true, deleted: true }, 200, { "set-cookie": clearCookie("funlearn_session") });
+  }
   if (route === "/me" && method === "GET") return user ? json({ user, state: await readState(env, user.id) }) : json({ user: null }, 401);
   if (route === "/sync" && method === "POST") { if (!user) return json({ error: "Sesi tidak valid." }, 401); await writeState(env, user.id, body); return json({ ok: true, syncedAt: now() }); }
   if (route === "/progress" && method === "POST") { if (!user) return json({ error: "Sesi tidak valid." }, 401); await writeState(env, user.id, { ...(await readState(env, user.id)), onlineProgress: { [String(body.moduleId)]: body } }); return json({ ok: true }); }
