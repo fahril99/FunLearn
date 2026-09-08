@@ -2,3 +2,8 @@ name = "funlearn"
 compatibility_date = "2026-09-08"
 pages_build_output_dir = "."
 
+[[d1_databases]]
+binding = "DB"
+database_name = "funlearn-db"
+database_id = "a56fc7b5-8065-4eca-b61a-334326bf1dec"
+migrations_dir = "migrations"
