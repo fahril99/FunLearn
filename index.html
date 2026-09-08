@@ -6972,10 +6972,9 @@ setupOnlineEvents();
       '<div class="reward-bottom"><div class="reward-price">'+Number(reward.price||0).toLocaleString("id-ID")+' 🪙</div>'+
       '<button class="redeem-btn" '+(canBuy?"":"disabled")+'>'+ (canBuy?"Tukar":"Dapatkan Reward")+'</button></div>'+
       (redeemed?'<div style="color:#737b88;font-size:10px;margin-top:9px">Sudah ditukar '+redeemed+'×</div>':"")+ 
-      '<div class="reward-edit-buttons"><button type="button" class="reward-edit-btn">✏️ Ubah</button><button type="button" class="reward-delete-btn danger">🗑️ Hapus</button></div>'
+      '<div class="reward-edit-buttons"><button type="button" class="reward-delete-btn danger">🗑️ Hapus</button></div>'
     );
     el.querySelector(".redeem-btn").onclick=()=>redeemRewardFixed(reward.id);
-    el.querySelector(".reward-edit-btn").onclick=()=>openRewardEditor(reward.id);
     el.querySelector(".reward-delete-btn").onclick=()=>{if(confirm('Hapus reward "'+reward.name+'"?'))deleteReward(reward.id)};
     return el;
   }
