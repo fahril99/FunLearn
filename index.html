@@ -1666,142 +1666,6 @@ textarea:focus{
 .auth-overlay{position:fixed;inset:0;background:#0009;display:none;place-items:center;z-index:100}.auth-overlay.open{display:grid}.auth-card{width:min(420px,calc(100vw - 28px));background:var(--card);border:1px solid var(--border);border-radius:18px;padding:23px;box-shadow:0 24px 70px #0009;animation:accountIn .2s ease}.auth-card h2{margin:0 0 7px}.auth-card p{color:var(--muted);font-size:12px;line-height:1.5}.auth-card label{display:block;font-size:12px;color:var(--muted);margin:14px 0 6px}.auth-card input{width:100%;border:1px solid var(--border);background:#10141a;color:#fff;border-radius:9px;padding:12px}.auth-actions{display:flex;gap:8px;margin-top:18px}.auth-actions button{flex:1}.auth-error{min-height:18px;color:var(--red);font-size:12px;margin-top:10px}.auth-switch{border:0;background:transparent!important;color:var(--green)!important;font-weight:700;cursor:pointer}.account-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:16px}.account-stat{background:var(--card2);border-radius:10px;padding:11px}.account-stat small{display:block;color:var(--muted);font-size:10px}.account-stat strong{display:block;margin-top:4px;font-size:18px}@keyframes accountIn{from{opacity:0;transform:translateY(-5px) scale(.98)}to{opacity:1;transform:none}}
 @media(max-width:900px){.topbar{flex-wrap:wrap}.account-area{order:3;width:100%;justify-content:flex-end}.sync-pill{margin-right:auto}}
 
-
-/* =========================================================
-   PREMIUM RESPONSIVE SYSTEM — mobile-first overrides
-========================================================= */
-:root{
-  --bg:#0b0f13;
-  --bg-soft:#10161b;
-  --card:#151b21;
-  --card2:#1c242c;
-  --border:rgba(146,165,183,.16);
-  --border-strong:rgba(92,213,33,.38);
-  --text:#f4f7f9;
-  --muted:#8c98a6;
-  --green:#65e529;
-  --green-dark:#35a512;
-  --gold:#ffd447;
-  --red:#ff7373;
-}
-html{background:var(--bg);overflow-x:hidden}
-body{min-width:320px;overflow-x:hidden;background:radial-gradient(900px 520px at 8% -8%,rgba(38,111,52,.34),transparent 62%),radial-gradient(700px 440px at 100% 18%,rgba(21,70,94,.14),transparent 60%),var(--bg);letter-spacing:.005em}
-button,input,select,textarea{font-size:inherit}
-button{touch-action:manipulation}
-.app{min-height:100dvh;align-items:stretch}
-.sidebar{flex:0 0 310px;background:linear-gradient(180deg,rgba(18,24,29,.98),rgba(12,17,21,.98));box-shadow:12px 0 40px rgba(0,0,0,.12);scrollbar-width:thin}
-.main{min-width:0;width:100%;max-width:1500px;margin:0 auto;padding:clamp(18px,3vw,34px) clamp(14px,3.2vw,42px) 48px;overflow:visible}
-.topbar{display:grid;grid-template-columns:auto minmax(170px,1fr) minmax(0,760px);align-items:start;gap:18px;margin-bottom:24px}
-.topbar>div:nth-of-type(1){min-width:0}
-.course-title{font-size:clamp(25px,3vw,36px);line-height:1.08;letter-spacing:-.03em;text-wrap:balance}
-.main-status{font-size:13px;line-height:1.5}
-.stats{grid-column:3;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;width:100%;max-width:none}
-.stat,.overall,.progress-box,.notes,.online-panel,.reward,.achievement{background:linear-gradient(145deg,rgba(24,31,38,.94),rgba(17,23,29,.94));border-color:var(--border);box-shadow:0 12px 35px rgba(0,0,0,.12)}
-.stat{min-width:0;min-height:82px;padding:15px;border-radius:16px}
-.stat-value{font-size:clamp(18px,2vw,23px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.page-switch{max-width:1100px;margin:0 0 18px;padding:4px;border:1px solid var(--border);background:rgba(14,20,25,.72);border-radius:15px;gap:5px}
-.page-switch button{border:0;background:transparent;border-radius:11px;min-height:43px;transition:background .2s,transform .2s}
-.page-switch button.active{background:linear-gradient(135deg,rgba(101,229,41,.18),rgba(101,229,41,.06));box-shadow:inset 0 0 0 1px rgba(101,229,41,.35)}
-.overall,.progress-box,.notes{padding:18px;border-radius:16px}
-.overall{max-width:1100px}
-.video-wrapper{border-radius:18px;border-color:var(--border);box-shadow:0 22px 55px rgba(0,0,0,.26);background:linear-gradient(135deg,#111820,#050708)}
-.current-title{font-size:clamp(19px,2.2vw,24px);letter-spacing:-.01em}
-.progress-box{margin-top:16px}
-.notes{margin-top:16px}
-textarea{font-size:14px;line-height:1.55}
-.hamburger-btn{align-self:start;position:static!important;display:none;border-color:var(--border);background:rgba(28,36,44,.9);box-shadow:0 8px 24px rgba(0,0,0,.18);min-width:44px;min-height:44px}
-.account-area{align-self:start;min-width:0;justify-content:flex-end}
-.auth-button,.account-button{min-height:44px;box-shadow:0 9px 22px rgba(0,0,0,.18)}
-.auth-button{background:linear-gradient(135deg,#72f12e,#48c91b);white-space:nowrap}
-.sync-pill{overflow:hidden;text-overflow:ellipsis}
-.online-layout{max-width:1100px;grid-template-columns:minmax(280px,340px) minmax(0,1fr)}
-.online-panel{border-radius:18px;padding:18px}
-.online-player-wrap{border-radius:14px;box-shadow:0 16px 38px rgba(0,0,0,.26)}
-.reward,.achievement{border-radius:16px}
-
-@media(max-width:1100px){
-  .topbar{grid-template-columns:auto minmax(0,1fr);gap:14px}
-  .stats{grid-column:1/-1;grid-row:2;grid-template-columns:repeat(4,minmax(0,1fr))}
-  .account-area{grid-column:2;grid-row:1;align-self:start}
-  .course-title{font-size:clamp(25px,4vw,32px)}
-}
-@media(max-width:900px){
-  .app{display:block}
-  .sidebar{position:fixed;inset:0 auto 0 0;width:min(320px,88vw);height:100dvh;max-height:none!important;padding:22px 16px;overflow-y:auto;transform:translateX(-105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:900;border:0;box-shadow:18px 0 55px rgba(0,0,0,.48)}
-  .sidebar.mobile-open{max-height:none!important;padding:22px 16px;transform:translateX(0);overflow-y:auto}
-  .main{padding:18px 14px 42px}
-  .topbar{grid-template-columns:48px minmax(0,1fr);gap:12px;margin-bottom:18px}
-  .hamburger-btn{display:block;grid-column:1;grid-row:1}
-  .topbar>div:nth-of-type(1){grid-column:2;grid-row:1;padding-top:2px}
-  .account-area{grid-column:1/-1;grid-row:2;justify-content:space-between;padding:0 2px}
-  .stats{grid-column:1/-1;grid-row:3;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:0}
-  .stat{min-height:90px;padding:14px}
-  .online-layout{grid-template-columns:1fr;gap:12px}
-  .online-tree{max-height:360px}
-  .toast-container{bottom:18px}
-}
-@media(max-width:560px){
-  .main{padding:14px 12px 34px}
-  .course-title{font-size:clamp(24px,8vw,31px)}
-  .main-status{font-size:12px}
-  .account-area{gap:7px;flex-wrap:wrap}
-  .sync-pill{flex:1 1 80px;min-width:0}
-  .auth-button,.account-button{flex:0 1 auto;padding:10px 11px;font-size:12px}
-  .stats{gap:8px}
-  .stat{min-height:82px;padding:13px;border-radius:14px}
-  .stat-label{font-size:10px}
-  .stat-value{font-size:19px}
-  .overall,.progress-box,.notes,.online-panel{padding:14px;border-radius:14px}
-  .video-wrapper{border-radius:14px}
-  .video-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .nav-btn{padding:12px 8px;font-size:12px}
-  .page-switch{margin-top:4px;border-radius:13px}
-  .page-switch button{min-height:45px;font-size:12px}
-  .online-toolbar{grid-template-columns:1fr}
-  .reward-bottom{align-items:flex-end;gap:8px}
-  .reward-bottom .redeem-btn{padding:10px}
-  .section-title{font-size:18px}
-}
-@media(max-width:380px){
-  .topbar{grid-template-columns:44px minmax(0,1fr);gap:9px}
-  .account-area{align-items:stretch}
-  .sync-pill{width:100%;flex-basis:100%}
-  .auth-button,.account-button{width:100%}
-  .stats{grid-template-columns:1fr}
-  .stat{min-height:76px}
-  .page-switch{grid-template-columns:1fr}
-}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
-
-
-/* Navigation and popup polish */
-.sidebar-backdrop{position:fixed;inset:0;background:rgba(2,6,9,.62);backdrop-filter:blur(2px);z-index:850;opacity:0;pointer-events:none;transition:opacity .28s ease}
-.sidebar-backdrop.show{opacity:1;pointer-events:auto}
-.arrow-icon{display:inline-flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;line-height:1;transform:rotate(0deg);transition:transform .48s cubic-bezier(.2,.9,.25,1),color .25s ease;will-change:transform}
-.hamburger-btn{transition:background .25s ease,border-color .25s ease,box-shadow .25s ease,transform .18s ease!important}
-.hamburger-btn[aria-expanded="true"]{border-color:var(--green-dark);background:rgba(92,213,33,.14);box-shadow:0 0 0 4px rgba(92,213,33,.08),0 10px 28px rgba(0,0,0,.2)}
-.hamburger-btn:active{transform:scale(.93)}
-.arrow-hint-popup{animation:hintFloatIn .42s cubic-bezier(.2,.9,.3,1) both}
-@keyframes hintFloatIn{from{opacity:0;transform:translateY(-15px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
-.funlearn-intro-card,.reward-editor-card,.auth-card{box-shadow:0 30px 90px rgba(0,0,0,.62),0 0 0 1px rgba(255,255,255,.025)}
-.funlearn-intro-card h2{letter-spacing:-.025em}.funlearn-intro-card p{max-width:58ch}
-@media(max-width:900px){.sidebar{z-index:900}.sidebar-backdrop{z-index:850}.arrow-hint-popup{position:fixed;left:14px;right:14px;top:74px;max-width:none;z-index:980}.arrow-hint-popup::before{left:25px;right:auto}.funlearn-intro{padding:14px}.funlearn-intro-card{padding:20px;border-radius:18px}}
-
-
-/* Theme toggle */
-.theme-toggle{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:10px 12px;border:1px solid var(--border);border-radius:11px;background:rgba(28,36,44,.9);color:var(--text);font-weight:800;cursor:pointer;transition:.22s ease;white-space:nowrap}
-.theme-toggle:hover{border-color:var(--green);transform:translateY(-1px)}
-.theme-toggle .theme-icon{font-size:17px;line-height:1}
-html[data-theme="light"] body{--bg:#edf3f0;--bg-soft:#f5f8f7;--card:#ffffff;--card2:#eef4f1;--border:rgba(36,56,47,.16);--text:#17231e;--muted:#63736b;background:radial-gradient(900px 520px at 8% -8%,rgba(126,224,133,.28),transparent 62%),linear-gradient(135deg,#f7faf8,#e9f2ed)}
-html[data-theme="light"] .sidebar{background:linear-gradient(180deg,#f9fcfa,#eef5f0);box-shadow:12px 0 40px rgba(42,73,54,.1)}
-html[data-theme="light"] .stat,html[data-theme="light"] .overall,html[data-theme="light"] .progress-box,html[data-theme="light"] .notes,html[data-theme="light"] .online-panel,html[data-theme="light"] .reward,html[data-theme="light"] .achievement{background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(241,247,243,.96))}
-html[data-theme="light"] textarea,html[data-theme="light"] .auth-card input,html[data-theme="light"] .online-form input,html[data-theme="light"] .online-form select,html[data-theme="light"] .online-form textarea,html[data-theme="light"] .share-form input,html[data-theme="light"] .share-form select{background:#f4f8f5;color:var(--text)}
-html[data-theme="light"] .theme-toggle{background:#fff;color:var(--text)}
-html[data-theme="light"] .account-menu,html[data-theme="light"] .arrow-hint-popup{background:#fff;color:var(--text)}
-html[data-theme="light"] .account-menu button{color:var(--text)}
-@media(max-width:900px){.theme-toggle{flex:0 0 auto}.account-area{align-items:center}}
-@media(max-width:560px){.theme-toggle{min-height:42px;padding:9px 10px;font-size:12px}.theme-toggle .theme-label{display:none}}
-
 </style>
 </head>
 
@@ -1865,8 +1729,6 @@ html[data-theme="light"] .account-menu button{color:var(--text)}
   </div>
 
 
-  <button class="folder-btn" id="navigationHelpButton" style="margin-top:10px;background:linear-gradient(135deg,#27333d,#202a33);color:#dce7ef;border:1px solid #3c4b58">❔ Petunjuk Navigasi</button>
-
   <div id="categories">
 
     <div
@@ -1921,8 +1783,6 @@ html[data-theme="light"] .account-menu button{color:var(--text)}
 
     <div class="account-area" id="accountArea">
       <span class="sync-pill" id="cloudSyncStatus">☁️ Lokal</span>
-      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ganti mode tampilan"><span class="theme-icon" id="themeToggleIcon">☾</span><span class="theme-label" id="themeToggleLabel">Dark Mode</span></button>
-
       <button class="auth-button" id="authOpenButton">Login / Buat Akun</button>
       <button class="account-button" id="accountButton" style="display:none">👤 <span id="accountUsername">Akun</span> ▾</button>
       <div class="account-menu" id="accountMenu">
@@ -6373,7 +6233,7 @@ function switchPage(mode){
 }
 document.getElementById("localPageButton").addEventListener("click",()=>switchPage("local"));
 document.getElementById("onlinePageButton").addEventListener("click",()=>switchPage("online"));
-/* Drawer toggle is installed by the integration layer below. */
+document.getElementById("hamburgerButton").addEventListener("click",()=>document.querySelector(".sidebar").classList.toggle("mobile-open"));
 setupOnlineEvents();
 
 /* =========================================================
@@ -6423,24 +6283,13 @@ setupOnlineEvents();
     hb.style.transformOrigin='center';
     hb.parentElement.style.position='relative';
 
-    /* Satu handler untuk buka/tutup drawer, animasi panah, dan backdrop. */
-    const sb=document.querySelector('.sidebar');
-    let backdrop=document.getElementById('funlearnSidebarBackdrop');
-    if(!backdrop){backdrop=document.createElement('div');backdrop.id='funlearnSidebarBackdrop';backdrop.className='sidebar-backdrop';document.body.appendChild(backdrop)}
-    const syncNavVisual=()=>{
-      const open=!!(sb&&sb.classList.contains('mobile-open'));
-      const ai=hb.querySelector('.arrow-icon');
-      if(ai) ai.style.transform=open?'rotate(180deg)':'rotate(0deg)';
+    /* Ikon berputar mengikuti status sidebar (toggle asli ada di listener lain) */
+    hb.addEventListener('click',function(){
+      const sb=document.querySelector('.sidebar');
+      const open=sb ? sb.classList.contains('mobile-open') : false;
+      const ai=hb.querySelector('.arrow-icon'); if(ai) ai.style.transform=open?'rotate(180deg)':'rotate(0deg)';
       hb.setAttribute('aria-expanded',String(open));
-      hb.setAttribute('aria-label',open?'Tutup menu navigasi':'Buka menu navigasi');
-      backdrop.classList.toggle('show',open&&window.matchMedia('(max-width: 900px)').matches);
-    };
-    const toggleNav=()=>{if(!sb)return;sb.classList.toggle('mobile-open');syncNavVisual()};
-    hb.addEventListener('click',toggleNav);
-    backdrop.addEventListener('click',()=>{sb?.classList.remove('mobile-open');syncNavVisual()});
-    window.addEventListener('resize',syncNavVisual);
-    if(sb) new MutationObserver(syncNavVisual).observe(sb,{attributes:true,attributeFilter:['class']});
-    syncNavVisual();
+    });
 
     /* Popup penjelasan yang cuma muncul di klik pertama, lalu diingat secara permanen.
        Disimpan di localStorage DAN cookie sekaligus (bukan cookie saja) supaya tetap
@@ -6473,30 +6322,12 @@ setupOnlineEvents();
       requestAnimationFrame(()=>requestAnimationFrame(()=>hint.classList.add('show')));
       hint.querySelector('.arrow-hint-close').addEventListener('click',e=>{e.stopPropagation();dismissHint();});
       hb.addEventListener('click',dismissHint,{once:true});
-      window.funlearnShowArrowHint=()=>{if(!document.getElementById('funlearnArrowHint')){const h=document.createElement('div');h.className='arrow-hint-popup show';h.id='funlearnArrowHint';h.innerHTML='<div class="arrow-hint-text">👋 Tombol ini membuka dan menutup menu navigasi.</div><button class="arrow-hint-close" type="button">Mengerti</button>';hb.parentElement.appendChild(h);h.querySelector('.arrow-hint-close').onclick=()=>h.remove();}};
     }
   }
 
   /* ---------- Tombol Reward Shop di sidebar ---------- */
-  const navHelp=$('navigationHelpButton'); if(navHelp) navHelp.addEventListener('click',()=>window.funlearnShowArrowHint&&window.funlearnShowArrowHint());
-
-  /* ---------- Theme toggle ---------- */
-  const themeToggle=$('themeToggle'),themeIcon=$('themeToggleIcon'),themeLabel=$('themeToggleLabel');
-  const applyTheme=(theme)=>{
-    const light=theme==='light';document.documentElement.dataset.theme=light?'light':'dark';
-    if(themeIcon)themeIcon.textContent=light?'☀':'☾';
-    if(themeLabel)themeLabel.textContent=light?'Light Mode':'Dark Mode';
-    if(themeToggle)themeToggle.setAttribute('aria-label',light?'Aktifkan dark mode':'Aktifkan light mode');
-  };
-  let savedTheme='dark';try{savedTheme=localStorage.getItem('funlearn_theme')||'dark'}catch(e){}
-  applyTheme(savedTheme);
-  if(themeToggle)themeToggle.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='light'?'dark':'light';applyTheme(next);try{localStorage.setItem('funlearn_theme',next)}catch(e){};showToast(next==='light'?'☀️ Light mode aktif.':'🌙 Dark mode aktif.','success')});
-
-  /* ---------- Auto-close navigation drawer after sidebar actions ---------- */
-  const closeNav=()=>{const sb=document.querySelector('.sidebar');if(sb)sb.classList.remove('mobile-open');const back=$('funlearnSidebarBackdrop');if(back)back.classList.remove('show');const arrow=$('hamburgerButton')?.querySelector('.arrow-icon');if(arrow)arrow.style.transform='rotate(0deg)';$('hamburgerButton')?.setAttribute('aria-expanded','false')};
-  const folderAction=$('folderButton');if(folderAction)folderAction.addEventListener('click',closeNav,{capture:true});
   const rewardSidebarBtn=$('rewardShopSidebarButton');
-  if(rewardSidebarBtn) rewardSidebarBtn.addEventListener('click',()=>{closeNav();window.openRewardModal&&window.openRewardModal();});
+  if(rewardSidebarBtn) rewardSidebarBtn.addEventListener('click',()=>{window.openRewardModal&&window.openRewardModal();});
 
   /* ---------- Achievement tabs + share ---------- */
   const achSection=document.querySelector('.achievement-section');
