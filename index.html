@@ -1803,6 +1803,64 @@ html[data-theme="light"] .account-menu button{color:var(--text)}
 @media(max-width:560px){.theme-toggle{min-height:42px;padding:9px 10px;font-size:12px}.theme-toggle .theme-label{display:none}}
 
 </style>
+
+<style>
+/* Public Video UI */
+#publicPageButton { position:relative; overflow:hidden; }
+#publicPageButton::after {
+  content:""; position:absolute; inset:0; transform:translateX(-120%);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+  animation:pvShimmer 3s infinite;
+}
+@keyframes pvShimmer { 55%,100% { transform:translateX(120%); } }
+
+.public-video-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:18px 0}
+.public-video-header h2{margin:0 0 5px}
+.public-video-header p{margin:0;opacity:.72}
+.public-video-toolbar{display:flex;gap:10px;margin:14px 0;flex-wrap:wrap}
+.public-video-toolbar input,.public-video-toolbar select,
+#publicUploadForm input,#publicUploadForm textarea{
+  width:100%;box-sizing:border-box;border:1px solid rgba(127,127,127,.25);
+  border-radius:12px;padding:12px;background:var(--card-bg,#fff);color:inherit;
+}
+.public-video-toolbar input{flex:1;min-width:180px}
+.public-video-toolbar select{width:auto;min-width:130px}
+.public-video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.public-video-card{border:1px solid rgba(127,127,127,.18);border-radius:18px;overflow:hidden;background:var(--card-bg,#fff);box-shadow:0 5px 18px rgba(0,0,0,.06);transition:.2s}
+.public-video-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.1)}
+.public-video-thumb{width:100%;aspect-ratio:16/9;background:#111;display:flex;align-items:center;justify-content:center;color:#fff;font-size:42px;cursor:pointer}
+.public-video-info{padding:14px}
+.public-video-title{font-weight:800;cursor:pointer;margin-bottom:7px}
+.public-video-meta{font-size:12px;opacity:.65}
+.public-video-desc{font-size:13px;opacity:.75;margin-top:8px;line-height:1.45}
+.public-video-actions{display:flex;justify-content:flex-end;margin-top:10px}
+.public-login-gate{display:flex;justify-content:center;padding:35px 10px}
+.public-login-card{text-align:center;max-width:450px;padding:28px;border:1px solid rgba(127,127,127,.18);border-radius:20px;background:var(--card-bg,#fff)}
+.public-login-icon{font-size:42px}
+.public-modal{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(5px)}
+.public-modal-card{position:relative;width:min(650px,100%);max-height:90vh;overflow:auto;border-radius:20px;padding:22px;background:var(--card-bg,#fff);color:inherit;box-shadow:0 20px 70px rgba(0,0,0,.25);animation:pvPop .2s ease}
+.public-watch-card{width:min(900px,100%)}
+.public-watch-card video{width:100%;max-height:60vh;background:#000;border-radius:14px}
+.public-modal-close{position:absolute;right:12px;top:8px;border:0;background:transparent;font-size:30px;cursor:pointer;color:inherit}
+#publicUploadForm{display:grid;gap:9px}
+#publicUploadForm textarea{min-height:100px;resize:vertical}
+.public-upload-progress,.public-video-status{font-size:13px;opacity:.72;margin:8px 0}
+.public-comment-list{display:grid;gap:9px;margin-top:14px}
+.public-comment{padding:10px 12px;border-radius:12px;background:rgba(127,127,127,.08)}
+.public-comment-head{display:flex;justify-content:space-between;gap:10px;font-size:12px;opacity:.7}
+.public-comment-text{margin-top:5px;white-space:pre-wrap}
+.public-comment-form{display:flex;gap:8px;margin-top:15px}
+.public-comment-form input{flex:1;border-radius:10px;padding:11px;border:1px solid rgba(127,127,127,.25);background:transparent;color:inherit}
+.public-danger{border:0;border-radius:8px;padding:5px 8px;cursor:pointer}
+@keyframes pvPop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@media(max-width:700px){
+  .public-video-header{align-items:flex-start;flex-direction:column}
+  .public-video-grid{grid-template-columns:1fr}
+  .public-video-toolbar select{width:100%}
+  .public-comment-form{flex-direction:column}
+}
+</style>
+
 </head>
 
 
@@ -2022,32 +2080,69 @@ html[data-theme="light"] .account-menu button{color:var(--text)}
 
 
 
-  <div class="page-switch public-page-switch">
+  <div class="page-switch">
     <button id="localPageButton" class="active">📁 Local Video</button>
     <button id="onlinePageButton">🌐 Online Video</button>
-    <button id="publicPageButton">🌍 Public Video</button>
+<button id="publicPageButton">🌍 Public Video</button>
+  </div>
+<div id="publicVideoPage" class="video-page" style="display:none;">
+  <div class="public-video-header">
+    <div>
+      <h2>🌍 Public Video</h2>
+      <p>Bagikan video pembelajaran dan diskusikan bersama pengguna FunLearn.</p>
+    </div>
+    <button id="publicUploadButton" class="primary-button">＋ Upload Video</button>
   </div>
 
-  <section class="public-video-page" id="publicVideoPage">
-    <div id="publicVideoGate"></div>
-    <div id="publicVideoApp" style="display:none">
-      <div class="public-hero">
-        <h2>🌍 Public Video</h2>
-        <p>Upload video dan bagikan ke semua pengguna FunLearn. User lain bisa membuka judul video, menonton, dan memberi komentar. Hanya pemilik video yang dapat menghapus videonya, dan hanya pemilik komentar yang dapat menghapus komentarnya.</p>
-      </div>
-      <div class="public-toolbar">
-        <input id="publicVideoSearch" class="public-search" placeholder="🔎 Cari judul video atau uploader...">
-        <select id="publicVideoSort" class="public-sort">
-          <option value="newest">Terbaru</option>
-          <option value="oldest">Terlama</option>
-          <option value="title">Judul A–Z</option>
-        </select>
-        <button id="publicUploadButton" class="public-primary">＋ Upload Video</button>
-      </div>
-      <div class="public-stats" id="publicVideoStats"></div>
-      <div class="public-grid" id="publicVideoGrid"></div>
+  <div id="publicLoginGate" class="public-login-gate" style="display:none;">
+    <div class="public-login-card">
+      <div class="public-login-icon">🔐</div>
+      <h3>Login diperlukan</h3>
+      <p>Silakan login atau buat akun terlebih dahulu untuk menggunakan Public Video.</p>
+      <button id="publicLoginButton" class="primary-button">Login / Buat Akun</button>
     </div>
-  </section>
+  </div>
+
+  <div id="publicVideoContent">
+    <div class="public-video-toolbar">
+      <input id="publicVideoSearch" type="search" placeholder="🔎 Cari judul video...">
+      <select id="publicVideoSort">
+        <option value="newest">Terbaru</option>
+        <option value="oldest">Terlama</option>
+        <option value="title">Judul A-Z</option>
+      </select>
+    </div>
+    <div id="publicVideoStatus" class="public-video-status"></div>
+    <div id="publicVideoGrid" class="public-video-grid"></div>
+  </div>
+</div>
+
+<div id="publicUploadModal" class="public-modal" style="display:none;">
+  <div class="public-modal-card">
+    <button id="publicUploadClose" class="public-modal-close">×</button>
+    <h3>📤 Upload Public Video</h3>
+    <form id="publicUploadForm">
+      <label>Judul Video</label>
+      <input id="publicVideoTitle" required maxlength="150" placeholder="Masukkan judul video">
+
+      <label>Deskripsi</label>
+      <textarea id="publicVideoDescription" maxlength="2000" placeholder="Deskripsi video (opsional)"></textarea>
+
+      <label>File Video</label>
+      <input id="publicVideoFile" type="file" accept="video/*" required>
+
+      <div id="publicUploadProgress" class="public-upload-progress"></div>
+      <button type="submit" class="primary-button">Upload Video</button>
+    </form>
+  </div>
+</div>
+
+<div id="publicWatchModal" class="public-modal" style="display:none;">
+  <div class="public-modal-card public-watch-card">
+    <button id="publicWatchClose" class="public-modal-close">×</button>
+    <div id="publicWatchBody"></div>
+  </div>
+</div>
 
 
   <!-- =====================================================
@@ -6694,93 +6789,6 @@ setupOnlineEvents();
 .reward-editor-card{width:min(520px,100%);background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px}
 .reward-editor-card h3{margin:0 0 14px}.reward-editor-form{display:grid;gap:9px}.reward-editor-form input,.reward-editor-form textarea{width:100%;background:#10141a;color:#fff;border:1px solid var(--border);border-radius:9px;padding:10px}.emoji-list{display:flex;flex-wrap:wrap;gap:6px}.emoji-choice{border:1px solid var(--border);background:#10141a;border-radius:8px;padding:7px;cursor:pointer;font-size:19px}.emoji-choice:hover{border-color:var(--green)}.reward-editor-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.reward-editor-actions button{padding:10px;border-radius:9px;border:1px solid var(--border);background:var(--card2);color:#fff;font-weight:800;cursor:pointer}.reward-editor-actions .primary{background:var(--green);color:#071000;border-color:var(--green)}
 @media(max-width:560px){.funlearn-intro-grid{grid-template-columns:1fr}.funlearn-data-actions{grid-template-columns:1fr}.online-module-row{align-items:flex-start}.online-module-actions{flex-direction:column}}
-
-/* =========================================================
-   PUBLIC VIDEO COMMUNITY
-   ========================================================= */
-.main.public-mode .local-only,
-.main.public-mode .online-page{display:none!important}
-.main.public-mode .public-video-page{display:block}
-.public-video-page{display:none;max-width:1100px}
-.public-hero{
-  position:relative;overflow:hidden;padding:24px;border:1px solid var(--border);
-  border-radius:20px;background:
-  radial-gradient(420px 180px at 10% 0%,rgba(101,229,41,.17),transparent 70%),
-  radial-gradient(420px 220px at 100% 100%,rgba(42,143,255,.14),transparent 70%),
-  linear-gradient(145deg,rgba(27,36,44,.96),rgba(14,19,24,.96));
-  box-shadow:0 18px 55px rgba(0,0,0,.18);margin-bottom:14px
-}
-.public-hero h2{margin:0;font-size:clamp(23px,3vw,34px);letter-spacing:-.03em}
-.public-hero p{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.6;max-width:760px}
-.public-toolbar{display:flex;gap:9px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:0 0 14px}
-.public-search{flex:1 1 240px;min-width:0;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:12px 14px;outline:none}
-.public-search:focus{border-color:var(--green)}
-.public-primary,.public-secondary,.public-danger{
-  border:1px solid var(--border);border-radius:11px;padding:11px 14px;font-weight:900;cursor:pointer;transition:.2s
-}
-.public-primary{background:linear-gradient(135deg,#72f12e,#48c91b);color:#071000;border-color:transparent}
-.public-secondary{background:var(--card);color:var(--text)}
-.public-danger{background:rgba(255,80,80,.08);color:#ff8d8d;border-color:rgba(255,100,100,.25)}
-.public-primary:hover,.public-secondary:hover,.public-danger:hover{transform:translateY(-1px)}
-.public-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
-.public-card{background:linear-gradient(145deg,rgba(24,31,38,.96),rgba(15,21,27,.96));border:1px solid var(--border);border-radius:17px;overflow:hidden;box-shadow:0 12px 35px rgba(0,0,0,.14);animation:publicCardIn .4s ease both}
-.public-thumb{position:relative;aspect-ratio:16/9;background:#06080a;overflow:hidden;cursor:pointer}
-.public-thumb video{width:100%;height:100%;object-fit:cover;display:block}
-.public-thumb .public-play{position:absolute;inset:0;display:grid;place-items:center;font-size:44px;background:linear-gradient(transparent,rgba(0,0,0,.45));opacity:.92}
-.public-card-body{padding:14px}
-.public-card-title{font-size:16px;font-weight:900;line-height:1.3;cursor:pointer;overflow-wrap:anywhere}
-.public-card-title:hover{color:var(--green)}
-.public-card-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;color:var(--muted);font-size:11px}
-.public-card-meta span{padding:4px 7px;background:rgba(255,255,255,.035);border-radius:999px}
-.public-card-desc{color:var(--muted);font-size:12px;line-height:1.5;margin-top:9px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.public-card-actions{display:flex;gap:7px;margin-top:12px}
-.public-card-actions button{flex:1;min-width:0}
-.public-empty{padding:45px 18px;text-align:center;color:var(--muted);background:var(--card);border:1px dashed var(--border);border-radius:16px;grid-column:1/-1}
-.public-modal{position:fixed;inset:0;background:rgba(0,0,0,.76);backdrop-filter:blur(7px);display:none;align-items:center;justify-content:center;padding:14px;z-index:1200}
-.public-modal.show{display:flex}
-.public-modal-card{width:min(900px,100%);max-height:94vh;overflow:auto;background:var(--bg);border:1px solid var(--border);border-radius:20px;box-shadow:0 30px 100px rgba(0,0,0,.58);animation:publicModalIn .3s cubic-bezier(.2,.9,.3,1) both}
-.public-modal-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 17px;background:rgba(11,15,19,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
-.public-modal-head h3{margin:0;font-size:18px;overflow-wrap:anywhere}
-.public-close{width:38px;height:38px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:#fff;cursor:pointer;font-size:19px}
-.public-form{padding:17px;display:grid;gap:11px}
-.public-form label{font-size:11px;color:var(--muted);font-weight:800}
-.public-form input,.public-form textarea,.public-form select{width:100%;margin-top:6px;background:#10151a;color:#fff;border:1px solid var(--border);border-radius:11px;padding:12px;outline:none}
-.public-form input:focus,.public-form textarea:focus,.public-form select:focus{border-color:var(--green)}
-.public-form textarea{min-height:105px;resize:vertical}
-.public-file-box{border:1px dashed rgba(101,229,41,.45);padding:14px;border-radius:13px;background:rgba(101,229,41,.04)}
-.public-file-note{font-size:10px;color:var(--muted);line-height:1.5;margin-top:7px}
-.public-progress{height:7px;border-radius:20px;background:#2a3038;overflow:hidden;display:none}
-.public-progress.show{display:block}
-.public-progress div{height:100%;width:0;background:linear-gradient(90deg,var(--green-dark),var(--green));transition:width .25s}
-.public-view{padding:17px}
-.public-view-player{aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden}
-.public-view-player video{width:100%;height:100%;display:block}
-.public-view-title{font-size:clamp(21px,3vw,30px);font-weight:950;margin-top:16px;overflow-wrap:anywhere}
-.public-view-meta{color:var(--muted);font-size:12px;margin-top:7px;display:flex;gap:8px;flex-wrap:wrap}
-.public-view-desc{white-space:pre-wrap;color:#d6dde5;font-size:13px;line-height:1.7;margin-top:13px}
-.public-comments{margin-top:22px;border-top:1px solid var(--border);padding-top:17px}
-.public-comments h4{margin:0 0 12px;font-size:16px}
-.public-comment-form{display:flex;gap:8px;margin-bottom:14px}
-.public-comment-form textarea{flex:1;min-height:48px;max-height:140px;resize:vertical;background:var(--card);color:#fff;border:1px solid var(--border);border-radius:11px;padding:11px;outline:none}
-.public-comment-form button{align-self:flex-end}
-.public-comment{padding:12px 0;border-top:1px solid var(--border)}
-.public-comment:first-child{border-top:0}
-.public-comment-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.public-comment-user{font-weight:900;font-size:13px}
-.public-comment-time{font-size:10px;color:var(--muted)}
-.public-comment-text{font-size:13px;line-height:1.55;margin-top:6px;white-space:pre-wrap;overflow-wrap:anywhere}
-.public-comment-delete{margin-top:7px;border:0;background:transparent;color:#ff8585;font-size:11px;font-weight:800;cursor:pointer;padding:0}
-.public-login-gate{display:grid;place-items:center;text-align:center;min-height:320px;padding:30px;background:var(--card);border:1px solid var(--border);border-radius:18px}
-.public-login-gate .gate-icon{font-size:55px}
-.public-login-gate h3{margin:12px 0 6px}
-.public-login-gate p{color:var(--muted);font-size:13px;max-width:480px;line-height:1.6}
-.public-stats{display:flex;gap:7px;flex-wrap:wrap;color:var(--muted);font-size:11px}
-.public-sort{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px}
-@keyframes publicCardIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
-@keyframes publicModalIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
-@media(max-width:900px){.public-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.public-hero{padding:19px}.public-modal-card{max-height:96vh}}
-@media(max-width:560px){.public-grid{grid-template-columns:1fr}.public-toolbar{align-items:stretch}.public-search,.public-sort,.public-primary{width:100%;flex-basis:100%}.public-comment-form{display:grid}.public-comment-form button{width:100%}.public-view{padding:12px}.public-form{padding:13px}.public-modal{padding:8px}.public-modal-card{border-radius:16px}.public-card-actions{display:grid;grid-template-columns:1fr}}
-
 </style>
 
 <!-- Intro popup -->
@@ -7309,14 +7317,14 @@ setupOnlineEvents();
 <script>
 /* FunLearn Cloud Account: additive adapter over the original local-first state. */
 (function(){
-  const API_BASE='https://workers-playground-super-butterfly-61b0.fahrilar81.workers.dev/api'; let cloudUser=null, syncTimer=null, progressTimer=null;
+  const API_BASE='/api'; let cloudUser=null, syncTimer=null, progressTimer=null;
   const $=id=>document.getElementById(id), status=$('cloudSyncStatus');
   function setStatus(text,kind=''){if(!status)return;status.textContent=text;status.className='sync-pill '+kind}
   function localSnapshot(){
     let rewards=[];try{rewards=typeof loadRewards==='function'?loadRewards():[]}catch(e){}
     return {schemaVersion:1,appDatabase:typeof appDatabase!=='undefined'?appDatabase:null,onlineData:typeof onlineData!=='undefined'?onlineData:null,onlineProgress:typeof onlineProgress!=='undefined'?onlineProgress:{},rewards,onlineNotes:{}};
   }
-  async function api(path,options={}){const r=await fetch(API_BASE+path,{credentials:'include',headers:{'content-type':'application/json',...(options.headers||{})},...options});let data={};try{data=await r.json()}catch(e){}if(!r.ok)throw new Error(data.error||'Request gagal');return data}
+  async function api(path,options={}){const r=await fetch(API_BASE+path,{credentials:'same-origin',headers:{'content-type':'application/json',...(options.headers||{})},...options});let data={};try{data=await r.json()}catch(e){}if(!r.ok)throw new Error(data.error||'Request gagal');return data}
   function openAuth(mode='login'){const o=$('funlearnAuthOverlay');if(!o)return;o.dataset.mode=mode;o.classList.add('open');$('authTitle').textContent=mode==='login'?'Login ke FunLearn':'Buat Akun FunLearn';$('authSubmit').textContent=mode==='login'?'Login':'Buat Akun';$('authSwitch').textContent=mode==='login'?'Belum punya akun? Buat Akun':'Sudah punya akun? Login';$('authError').textContent='';$('authPassword').value='';$('authUsername').focus()}
   function closeAuth(){$('funlearnAuthOverlay')?.classList.remove('open')}
   function renderAccount(){const logged=!!cloudUser;$('authOpenButton').style.display=logged?'none':'';$('accountButton').style.display=logged?'':'none';if(logged)$('accountUsername').textContent=cloudUser.username;}
@@ -7412,302 +7420,205 @@ setupOnlineEvents();
 
 
 <script>
-/* =========================================================
-   PUBLIC VIDEO COMMUNITY
-   Frontend for Cloudflare Worker public-video endpoints.
-   Expected API:
-   GET    /api/public-videos
-   POST   /api/public-videos/upload (multipart/form-data: title,description,video)
-   GET    /api/public-videos/:id
-   DELETE /api/public-videos/:id
-   GET    /api/public-videos/:id/comments
-   POST   /api/public-videos/:id/comments (JSON: {text})
-   DELETE /api/public-videos/:id/comments/:commentId
-   ========================================================= */
+/* Public Video feature: additive; reuses the original FunLearn auth/session. */
 (function(){
-  const API='https://workers-playground-super-butterfly-61b0.fahrilar81.workers.dev/api';
+  const API_BASE='/api';
   const $=id=>document.getElementById(id);
-  let publicVideos=[], publicCurrent=null, publicLoaded=false;
+  const btn=$('publicPageButton'), page=$('publicVideoPage');
+  if(!btn || !page) return;
 
-  function esc(v){
-    const d=document.createElement('div'); d.textContent=String(v??''); return d.innerHTML;
-  }
-  function currentUser(){
-    try{return window.funlearnCloud?.getUser?.()||null}catch(e){return null}
-  }
-  function authRequired(){
-    const u=currentUser();
-    if(u)return true;
-    const gate=$('publicVideoGate');
-    if(gate)gate.innerHTML=`<div class="public-login-gate">
-      <div><div class="gate-icon">🔐</div><h3>Login diperlukan</h3>
-      <p>Untuk masuk ke Public Video, upload video, dan berkomentar, kamu harus membuat akun atau login terlebih dahulu.</p>
-      <button class="public-primary" id="publicLoginGateButton">🔑 Login / Buat Akun</button></div>
-    </div>`;
-    $('publicVideoApp').style.display='none';
-    $('publicLoginGateButton')?.addEventListener('click',()=>window.funlearnCloud?.openAuth?.('login'));
-    return false;
-  }
-  async function api(path, options={}){
-    const opts={credentials:'include',...options,headers:{...(options.headers||{})}};
-    if(opts.body && !(opts.body instanceof FormData) && !opts.headers['content-type']){
+  let publicVideos=[];
+  let currentPublicVideo=null;
+
+  async function publicApi(path, options={}){
+    const opts={credentials:'same-origin', ...options};
+    opts.headers={...(options.headers||{})};
+    if(opts.body && !(opts.body instanceof FormData))
       opts.headers['content-type']='application/json';
-    }
-    const r=await fetch(API+path,opts);
+    const r=await fetch(API_BASE+path,opts);
     let data={}; try{data=await r.json()}catch(e){}
-    if(!r.ok) throw new Error(data.error||data.message||`Request gagal (${r.status})`);
+    if(!r.ok) throw new Error(data.error||('Request gagal ('+r.status+')'));
     return data;
   }
-  function showPublicToast(msg,type=''){
-    if(typeof showToast==='function')showToast(msg,type);else console.log(msg);
+
+  function currentUser(){
+    try{
+      return window.funlearnCloud && typeof window.funlearnCloud.getUser==='function'
+        ? window.funlearnCloud.getUser() : null;
+    }catch(e){ return null; }
   }
-  function formatDate(v){
-    if(!v)return '';
-    try{return new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'short'}).format(new Date(v))}
-    catch(e){return String(v)}
+
+  function escape(s){
+    return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }
-  function normalizeVideo(v){
-    return {
-      id:v.id||v.videoId,
-      title:v.title||'Tanpa judul',
-      description:v.description||'',
-      url:v.url||v.videoUrl||v.video_url||'',
-      thumbnail:v.thumbnail||v.thumbnailUrl||'',
-      username:v.username||v.uploader||v.ownerUsername||'User',
-      userId:v.userId||v.ownerId||v.uploaderId||null,
-      createdAt:v.createdAt||v.created_at||v.uploadedAt||null,
-      commentsCount:Number(v.commentsCount??v.commentCount??0)
-    };
+
+  function showPage(){
+    page.style.display='';
+    $('publicLoginGate').style.display=currentUser()?'none':'flex';
+    $('publicVideoContent').style.display=currentUser()?'':'none';
+    $('publicUploadButton').style.display=currentUser()?'':'none';
+    if(currentUser()) loadPublicVideos();
   }
-  function isOwner(v){
-    const u=currentUser(); if(!u)return false;
-    return String(v.userId||'')===String(u.id||u.userId||'') ||
-           String(v.username||'').toLowerCase()===String(u.username||'').toLowerCase();
+
+  btn.addEventListener('click',showPage);
+  $('publicLoginButton')?.addEventListener('click',()=>{
+    if(window.funlearnCloud?.openAuth) window.funlearnCloud.openAuth('login');
+  });
+
+  $('publicUploadButton')?.addEventListener('click',()=>{
+    if(!currentUser()){
+      window.funlearnCloud?.openAuth?.('login'); return;
+    }
+    $('publicUploadModal').style.display='flex';
+  });
+  $('publicUploadClose')?.addEventListener('click',()=>$('publicUploadModal').style.display='none');
+  $('publicWatchClose')?.addEventListener('click',()=>$('publicWatchModal').style.display='none');
+
+  $('publicVideoSearch')?.addEventListener('input',renderPublicVideos);
+  $('publicVideoSort')?.addEventListener('change',renderPublicVideos);
+
+  async function loadPublicVideos(){
+    const status=$('publicVideoStatus');
+    status.textContent='Memuat video...';
+    try{
+      const data=await publicApi('/public-videos');
+      publicVideos=Array.isArray(data)?data:(data.videos||[]);
+      renderPublicVideos();
+      status.textContent=publicVideos.length?'':'Belum ada video public.';
+    }catch(e){
+      status.textContent='Gagal memuat Public Video: '+e.message;
+      console.error(e);
+    }
   }
-  function setPage(mode){
-    const main=document.querySelector('.main');
-    const localBtn=$('localPageButton'), onlineBtn=$('onlinePageButton'), publicBtn=$('publicPageButton');
-    const publicMode=mode==='public', online=mode==='online';
-    main.classList.toggle('online-mode',online);
-    main.classList.toggle('public-mode',publicMode);
-    localBtn?.classList.toggle('active',!online&&!publicMode);
-    onlineBtn?.classList.toggle('active',online);
-    publicBtn?.classList.toggle('active',publicMode);
-    document.querySelector('.course-title').textContent=publicMode?'Public Video 🌍':(online?'Online Learning 🌐':'Keep Learning 🚀');
-    document.getElementById('mainStatus').textContent=publicMode?'Video komunitas • upload • komentar • akun':'Mulai belajar dan kumpulkan XP.';
-    document.querySelector('.sidebar')?.classList.remove('mobile-open');
-    if(publicMode)loadPublicVideos();
-  }
-  function renderGateOrApp(){
-    if(!authRequired())return;
-    $('publicVideoGate').innerHTML='';
-    $('publicVideoApp').style.display='';
-    if(!publicLoaded)loadPublicVideos();
-  }
-  function renderVideos(){
-    const grid=$('publicVideoGrid'), q=($('publicVideoSearch').value||'').trim().toLowerCase(), sort=$('publicVideoSort').value;
-    let list=publicVideos.filter(v=>!q || `${v.title} ${v.username} ${v.description}`.toLowerCase().includes(q));
-    list=[...list].sort((a,b)=>{
-      if(sort==='title')return a.title.localeCompare(b.title,'id');
-      const aa=new Date(a.createdAt||0).getTime(),bb=new Date(b.createdAt||0).getTime();
+
+  function renderPublicVideos(){
+    const grid=$('publicVideoGrid'), q=($('publicVideoSearch')?.value||'').toLowerCase();
+    let arr=publicVideos.filter(v=>(v.title||'').toLowerCase().includes(q));
+    const sort=$('publicVideoSort')?.value||'newest';
+    arr.sort((a,b)=>{
+      if(sort==='title') return String(a.title||'').localeCompare(String(b.title||''));
+      const aa=new Date(a.created_at||a.createdAt||0), bb=new Date(b.created_at||b.createdAt||0);
       return sort==='oldest'?aa-bb:bb-aa;
     });
-    $('publicVideoStats').textContent=`${publicVideos.length} video publik • ${list.length} ditampilkan`;
-    if(!list.length){
-      grid.innerHTML='<div class="public-empty"><div style="font-size:42px">🎬</div><div style="margin-top:8px;font-weight:900;color:var(--text)">Belum ada video</div><div style="margin-top:5px">Jadilah pengguna pertama yang membagikan video.</div></div>';
-      return;
-    }
-    grid.innerHTML=list.map((v,i)=>`
-      <article class="public-card" style="animation-delay:${Math.min(i,8)*45}ms">
-        <div class="public-thumb" data-public-open="${esc(v.id)}">
-          ${v.url?`<video src="${esc(v.url)}" preload="metadata" muted playsinline></video>`:'<div class="public-empty" style="height:100%;border:0;border-radius:0">🎬</div>'}
-          <div class="public-play">▶</div>
+    grid.innerHTML=arr.length?arr.map(v=>{
+      const owner=v.owner_username||v.username||v.ownerUsername||'Pengguna';
+      const mine=currentUser() && (v.owner_id===currentUser().id || v.user_id===currentUser().id || v.owner_username===currentUser().username);
+      return `<article class="public-video-card">
+        <div class="public-video-thumb" data-open="${escape(v.id)}">▶</div>
+        <div class="public-video-info">
+          <div class="public-video-title" data-open="${escape(v.id)}">${escape(v.title||'Tanpa judul')}</div>
+          <div class="public-video-meta">👤 ${escape(owner)} · ${escape(v.created_at||v.createdAt||'')}</div>
+          <div class="public-video-desc">${escape(v.description||'')}</div>
+          ${mine?`<div class="public-video-actions"><button class="public-danger" data-delete="${escape(v.id)}">🗑️ Hapus</button></div>`:''}
         </div>
-        <div class="public-card-body">
-          <div class="public-card-title" data-public-open="${esc(v.id)}">${esc(v.title)}</div>
-          <div class="public-card-meta"><span>👤 ${esc(v.username)}</span><span>💬 ${v.commentsCount}</span><span>${esc(formatDate(v.createdAt))}</span></div>
-          ${v.description?`<div class="public-card-desc">${esc(v.description)}</div>`:''}
-          <div class="public-card-actions">
-            <button class="public-primary" data-public-open="${esc(v.id)}">▶ Tonton</button>
-            ${isOwner(v)?`<button class="public-danger" data-public-delete="${esc(v.id)}">🗑️ Hapus</button>`:''}
-          </div>
-        </div>
-      </article>`).join('');
-    grid.querySelectorAll('[data-public-open]').forEach(el=>el.onclick=()=>openVideo(el.dataset.publicOpen));
-    grid.querySelectorAll('[data-public-delete]').forEach(el=>el.onclick=()=>deleteVideo(el.dataset.publicDelete));
-  }
-  async function loadPublicVideos(){
-    if(!authRequired())return;
-    $('publicVideoGate').innerHTML=''; $('publicVideoApp').style.display='';
-    $('publicVideoGrid').innerHTML='<div class="public-empty"><div style="font-size:34px">⏳</div><div style="margin-top:8px">Memuat video publik...</div></div>';
-    try{
-      const data=await api('/public-videos');
-      const arr=Array.isArray(data)?data:(data.videos||data.items||[]);
-      publicVideos=arr.map(normalizeVideo).filter(v=>v.id);
-      publicLoaded=true; renderVideos();
-    }catch(e){
-      publicLoaded=false;
-      $('publicVideoGrid').innerHTML=`<div class="public-empty"><div style="font-size:36px">⚠️</div><div style="margin-top:8px;color:#ff9a9a;font-weight:900">Gagal memuat Public Video</div><div style="margin-top:6px">${esc(e.message)}</div><button class="public-secondary" id="publicRetry" style="margin-top:12px">Coba Lagi</button></div>`;
-      $('publicRetry').onclick=loadPublicVideos;
-    }
-  }
-  function openUpload(){
-    if(!authRequired())return;
-    const old=$('publicUploadModal'); if(old)old.remove();
-    const m=document.createElement('div'); m.className='public-modal show'; m.id='publicUploadModal';
-    m.innerHTML=`<div class="public-modal-card">
-      <div class="public-modal-head"><h3>🎬 Upload Video Publik</h3><button class="public-close" id="publicUploadClose">×</button></div>
-      <form class="public-form" id="publicUploadForm">
-        <label>Judul video *
-          <input id="publicUploadTitle" maxlength="120" required placeholder="Contoh: Tutorial Matematika Dasar">
-        </label>
-        <label>Deskripsi
-          <textarea id="publicUploadDescription" maxlength="2000" placeholder="Ceritakan isi video..."></textarea>
-        </label>
-        <div class="public-file-box">
-          <label>Pilih file video * <input id="publicUploadFile" type="file" accept="video/*" required></label>
-          <div class="public-file-note">Video disimpan di storage server agar bisa ditonton user lain. Batas ukuran mengikuti konfigurasi backend Cloudflare Worker/R2.</div>
-        </div>
-        <div class="public-progress" id="publicUploadProgress"><div></div></div>
-        <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
-          <button type="button" class="public-secondary" id="publicUploadCancel">Batal</button>
-          <button type="submit" class="public-primary" id="publicUploadSubmit">🚀 Upload & Publikasikan</button>
-        </div>
-      </form>
-    </div>`;
-    document.body.appendChild(m);
-    $('publicUploadClose').onclick=$('publicUploadCancel').onclick=()=>m.remove();
-    m.onclick=e=>{if(e.target===m)m.remove()};
-    $('publicUploadForm').onsubmit=async e=>{
-      e.preventDefault();
-      const file=$('publicUploadFile').files?.[0], title=$('publicUploadTitle').value.trim(), desc=$('publicUploadDescription').value.trim();
-      if(!file||!title)return;
-      const btn=$('publicUploadSubmit'), bar=$('publicUploadProgress'), fill=bar.querySelector('div');
-      btn.disabled=true; btn.textContent='⏳ Mengupload...'; bar.classList.add('show');
-      const fd=new FormData(); fd.append('title',title); fd.append('description',desc); fd.append('video',file);
-      try{
-        const xhr=new XMLHttpRequest();
-        await new Promise((resolve,reject)=>{
-          xhr.open('POST',API+'/public-videos/upload',true); xhr.withCredentials=true;
-          xhr.upload.onprogress=e=>{if(e.lengthComputable)fill.style.width=(e.loaded/e.total*100)+'%'};
-          xhr.onload=()=>{let data={};try{data=JSON.parse(xhr.responseText||'{}')}catch(_){}; if(xhr.status>=200&&xhr.status<300)resolve(data);else reject(new Error(data.error||'Upload gagal ('+xhr.status+')'))};
-          xhr.onerror=()=>reject(new Error('Koneksi upload gagal.'));
-          xhr.send(fd);
-        });
-        showPublicToast('✓ Video berhasil dipublikasikan.','success');
-        m.remove(); await loadPublicVideos();
-      }catch(err){
-        btn.disabled=false;btn.textContent='🚀 Upload & Publikasikan';showPublicToast('❌ '+err.message,'error');
-      }
-    };
-  }
-  async function openVideo(id){
-    if(!authRequired())return;
-    try{
-      const data=await api('/public-videos/'+encodeURIComponent(id));
-      publicCurrent=normalizeVideo(data.video||data);
-      const comments=Array.isArray(data.comments)?data.comments:(data.video?.comments||[]);
-      showVideoModal(publicCurrent,comments);
-    }catch(e){showPublicToast('❌ '+e.message,'error')}
-  }
-  function showVideoModal(v,comments){
-    const old=$('publicViewModal');if(old)old.remove();
-    const m=document.createElement('div');m.className='public-modal show';m.id='publicViewModal';
-    m.innerHTML=`<div class="public-modal-card">
-      <div class="public-modal-head"><h3>▶ ${esc(v.title)}</h3><button class="public-close" id="publicViewClose">×</button></div>
-      <div class="public-view">
-        <div class="public-view-player"><video src="${esc(v.url)}" controls playsinline preload="metadata"></video></div>
-        <div class="public-view-title">${esc(v.title)}</div>
-        <div class="public-view-meta"><span>👤 ${esc(v.username)}</span><span>📅 ${esc(formatDate(v.createdAt))}</span></div>
-        ${v.description?`<div class="public-view-desc">${esc(v.description)}</div>`:''}
-        <div class="public-comments">
-          <h4>💬 Komentar</h4>
-          <form class="public-comment-form" id="publicCommentForm"><textarea id="publicCommentText" maxlength="1000" required placeholder="Tulis komentar..."></textarea><button class="public-primary" type="submit">Kirim</button></form>
-          <div id="publicCommentList">${renderCommentsHTML(comments,v)}</div>
-        </div>
-      </div>
-    </div>`;
-    document.body.appendChild(m);
-    $('publicViewClose').onclick=()=>m.remove();m.onclick=e=>{if(e.target===m)m.remove()};
-    $('publicCommentForm').onsubmit=async e=>{
-      e.preventDefault(); const text=$('publicCommentText').value.trim(); if(!text)return;
-      const btn=e.submitter;btn.disabled=true;
-      try{
-        await api('/public-videos/'+encodeURIComponent(v.id)+'/comments',{method:'POST',body:JSON.stringify({text})});
-        $('publicCommentText').value='';
-        showPublicToast('✓ Komentar ditambahkan.','success');
-        await openVideo(v.id);
-      }catch(err){showPublicToast('❌ '+err.message,'error')}
-      finally{btn.disabled=false}
-    };
-    m.querySelectorAll('[data-comment-delete]').forEach(b=>b.onclick=()=>deleteComment(v.id,b.dataset.commentDelete));
-  }
-  function renderCommentsHTML(comments,v){
-    if(!comments?.length)return '<div style="color:var(--muted);font-size:12px;padding:14px 0">Belum ada komentar. Jadilah yang pertama.</div>';
-    const u=currentUser();
-    return comments.map(c=>{
-      const cid=c.id||c.commentId, owner=String(c.userId||c.ownerId||'')===String(u?.id||u?.userId||'') || String(c.username||'').toLowerCase()===String(u?.username||'').toLowerCase();
-      return `<div class="public-comment"><div class="public-comment-head"><span class="public-comment-user">👤 ${esc(c.username||c.user?.username||'User')}</span><span class="public-comment-time">${esc(formatDate(c.createdAt||c.created_at))}</span></div><div class="public-comment-text">${esc(c.text||c.content||'')}</div>${owner&&cid?`<button class="public-comment-delete" data-comment-delete="${esc(cid)}">🗑️ Hapus komentar</button>`:''}</div>`;
-    }).join('');
-  }
-  async function deleteComment(videoId,commentId){
-    if(!confirm('Hapus komentar ini?'))return;
-    try{await api('/public-videos/'+encodeURIComponent(videoId)+'/comments/'+encodeURIComponent(commentId),{method:'DELETE'});showPublicToast('✓ Komentar dihapus.','success');await openVideo(videoId)}
-    catch(e){showPublicToast('❌ '+e.message,'error')}
-  }
-  async function deleteVideo(id){
-    const v=publicVideos.find(x=>String(x.id)===String(id));if(!v||!isOwner(v))return;
-    if(!confirm('Hapus video ini secara permanen?'))return;
-    try{await api('/public-videos/'+encodeURIComponent(id),{method:'DELETE'});showPublicToast('✓ Video dihapus.','success');await loadPublicVideos()}
-    catch(e){showPublicToast('❌ '+e.message,'error')}
-  }
-  function bind(){
-    $('publicPageButton')?.addEventListener('click',()=>setPage('public'));
-    $('localPageButton')?.addEventListener('click',()=>setPage('local'));
-    $('onlinePageButton')?.addEventListener('click',()=>setPage('online'));
-    $('publicUploadButton')?.addEventListener('click',openUpload);
-    $('publicVideoSearch')?.addEventListener('input',renderVideos);
-    $('publicVideoSort')?.addEventListener('change',renderVideos);
-    const oldOpen=window.funlearnCloud?.openAuth;
-    // Re-render gate/app after auth succeeds, without replacing the existing auth system.
-    const waitAuth=()=>{
-      let last='';
-      setInterval(()=>{
-        if(document.querySelector('.main.public-mode')){
-          const u=currentUser(), key=u?.id||u?.username||'';
-          if(key!==last){last=key;renderGateOrApp()}
-        }
-      },700);
-    };
-    waitAuth();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
-  window.funlearnPublicVideo={reload:loadPublicVideos,open:openVideo,showPage:()=>setPage('public')};
-})();
-</script>
+      </article>`;
+    }).join(''):'';
 
+    grid.querySelectorAll('[data-open]').forEach(x=>x.onclick=()=>openPublicVideo(x.dataset.open));
+    grid.querySelectorAll('[data-delete]').forEach(x=>x.onclick=()=>deletePublicVideo(x.dataset.delete));
+  }
 
-<script>
-/* Third page mode: Public Video */
-(function(){
-  const oldSwitch=window.switchPage;
-  window.switchPage=function(mode){
-    if(mode==='public'){
-      const main=document.querySelector('.main');
-      const localBtn=document.getElementById('localPageButton');
-      const onlineBtn=document.getElementById('onlinePageButton');
-      const publicBtn=document.getElementById('publicPageButton');
-      main.classList.remove('online-mode'); main.classList.add('public-mode');
-      localBtn?.classList.remove('active'); onlineBtn?.classList.remove('active'); publicBtn?.classList.add('active');
-      document.querySelector('.course-title').textContent='Public Video 🌍';
-      document.getElementById('mainStatus').textContent='Video komunitas • upload • komentar • akun';
-      document.querySelector('.sidebar')?.classList.remove('mobile-open');
-      window.funlearnPublicVideo?.showPage?.();
-      return;
+  async function openPublicVideo(id){
+    try{
+      const data=await publicApi('/public-videos/'+encodeURIComponent(id));
+      currentPublicVideo=data.video||data;
+      const v=currentPublicVideo;
+      const comments=data.comments||await loadComments(id,true);
+      $('publicWatchBody').innerHTML=`
+        <h3>${escape(v.title||'Tanpa judul')}</h3>
+        <p>${escape(v.description||'')}</p>
+        <video controls playsinline src="${escape(v.video_url||v.url||'')}"></video>
+        <div class="public-video-meta">👤 ${escape(v.owner_username||v.username||'Pengguna')}</div>
+        <h4>💬 Komentar</h4>
+        <div id="publicComments" class="public-comment-list">${renderComments(comments)}</div>
+        <form id="publicCommentForm" class="public-comment-form">
+          <input id="publicCommentText" maxlength="1000" required placeholder="Tulis komentar...">
+          <button class="primary-button" type="submit">Kirim</button>
+        </form>`;
+      $('publicWatchModal').style.display='flex';
+      $('publicCommentForm').onsubmit=async e=>{
+        e.preventDefault();
+        const text=$('publicCommentText').value.trim();
+        if(!text)return;
+        try{
+          await publicApi('/public-videos/'+encodeURIComponent(id)+'/comments',{method:'POST',body:JSON.stringify({text})});
+          $('publicCommentText').value='';
+          const c=await loadComments(id,true);
+          $('publicComments').innerHTML=renderComments(c);
+        }catch(err){alert(err.message);}
+      };
+    }catch(e){alert('Gagal membuka video: '+e.message);}
+  }
+
+  async function loadComments(id,silent){
+    try{
+      const data=await publicApi('/public-videos/'+encodeURIComponent(id)+'/comments');
+      return Array.isArray(data)?data:(data.comments||[]);
+    }catch(e){if(!silent)console.error(e);return [];}
+  }
+
+  function renderComments(comments){
+    const me=currentUser();
+    return comments.length?comments.map(c=>{
+      const mine=me && (c.user_id===me.id || c.username===me.username);
+      return `<div class="public-comment">
+        <div class="public-comment-head"><b>👤 ${escape(c.username||'Pengguna')}</b><span>${escape(c.created_at||'')}</span></div>
+        <div class="public-comment-text">${escape(c.text||'')}</div>
+        ${mine?`<button class="public-danger" data-cdel="${escape(c.id)}">🗑️ Hapus</button>`:''}
+      </div>`;
+    }).join(''):'<div class="public-video-status">Belum ada komentar.</div>';
+  }
+
+  $('publicWatchBody')?.addEventListener('click',async e=>{
+    const b=e.target.closest('[data-cdel]'); if(!b||!currentPublicVideo)return;
+    try{
+      await publicApi('/public-videos/'+encodeURIComponent(currentPublicVideo.id)+'/comments/'+encodeURIComponent(b.dataset.cdel),{method:'DELETE'});
+      const c=await loadComments(currentPublicVideo.id,true);
+      $('publicComments').innerHTML=renderComments(c);
+    }catch(err){alert(err.message);}
+  });
+
+  async function deletePublicVideo(id){
+    if(!confirm('Hapus video ini? Tindakan ini tidak dapat dibatalkan.'))return;
+    try{
+      await publicApi('/public-videos/'+encodeURIComponent(id),{method:'DELETE'});
+      await loadPublicVideos();
+    }catch(e){alert('Gagal menghapus video: '+e.message);}
+  }
+
+  $('publicUploadForm')?.addEventListener('submit',async e=>{
+    e.preventDefault();
+    if(!currentUser()){window.funlearnCloud?.openAuth?.('login');return;}
+    const file=$('publicVideoFile').files[0];
+    if(!file)return;
+    const fd=new FormData();
+    fd.append('title',$('publicVideoTitle').value.trim());
+    fd.append('description',$('publicVideoDescription').value.trim());
+    fd.append('video',file);
+    $('publicUploadProgress').textContent='Mengupload video...';
+    try{
+      await publicApi('/public-videos/upload',{method:'POST',body:fd});
+      $('publicUploadProgress').textContent='✓ Upload berhasil';
+      $('publicUploadForm').reset();
+      setTimeout(()=>{$('publicUploadModal').style.display='none';$('publicUploadProgress').textContent='';},500);
+      await loadPublicVideos();
+    }catch(err){
+      $('publicUploadProgress').textContent='❌ '+err.message;
     }
-    document.querySelector('.main')?.classList.remove('public-mode');
-    oldSwitch?.(mode);
-  };
+  });
+
+  // If the original auth UI logs in while Public Video is open,
+  // refresh the gate/feed without replacing the original auth implementation.
+  const oldRender=window.funlearnCloud?.renderAccount;
+  if(oldRender && !oldRender.__publicWrapped){
+    const wrapped=function(){
+      const r=oldRender.apply(this,arguments);
+      if(page.style.display!=='none') showPage();
+      return r;
+    };
+    wrapped.__publicWrapped=true;
+    window.funlearnCloud.renderAccount=wrapped;
+  }
 })();
 </script>
 
