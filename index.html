@@ -7481,7 +7481,7 @@ setupOnlineEvents();
     const status=$('publicVideoStatus');
     status.textContent='Memuat video...';
     try{
-      const data=await publicApi('/public-videos');
+      const data=await publicApi('/videos');
       publicVideos=Array.isArray(data)?data:(data.videos||[]);
       renderPublicVideos();
       status.textContent=publicVideos.length?'':'Belum ada video public.';
@@ -7597,7 +7597,7 @@ setupOnlineEvents();
     fd.append('video',file);
     $('publicUploadProgress').textContent='Mengupload video...';
     try{
-      await publicApi('/public-videos/upload',{method:'POST',body:fd});
+      await publicApi('/videos',{method:'POST',body:fd});
       $('publicUploadProgress').textContent='✓ Upload berhasil';
       $('publicUploadForm').reset();
       setTimeout(()=>{$('publicUploadModal').style.display='none';$('publicUploadProgress').textContent='';},500);
