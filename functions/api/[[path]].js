@@ -433,6 +433,30 @@ async function writeState(env, userId, body) {
 }
 
 // ============================================================
+// COMMENT REPLY DATABASE
+// ============================================================
+
+async function ensureReplySchema(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS comment_replies (
+      id TEXT PRIMARY KEY,
+      comment_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      username TEXT NOT NULL,
+      reply TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE INDEX IF NOT EXISTS
+    idx_comment_replies_comment_id
+    ON comment_replies(comment_id)
+  `).run();
+}
+
+// ============================================================
 // MAIN REQUEST HANDLER
 // ============================================================
 
@@ -458,10 +482,6 @@ export async function onRequest(context) {
 
   // ==========================================================
   // REQUEST BODY
-  //
-  // Hanya POST / PUT / PATCH yang membaca JSON.
-  // DELETE tidak membaca JSON karena DELETE komentar
-  // hanya membutuhkan ID yang ada di URL.
   // ==========================================================
 
   let body = {};
@@ -678,6 +698,8 @@ export async function onRequest(context) {
     route === "/comments" &&
     method === "GET"
   ) {
+    await ensureReplySchema(env);
+
     const result = await env.DB
       .prepare(`
         SELECT
@@ -692,9 +714,38 @@ export async function onRequest(context) {
       `)
       .all();
 
+    const comments = result.results || [];
+
+    // Ambil semua reply
+    const replyResult = await env.DB
+      .prepare(`
+        SELECT
+          id,
+          comment_id AS commentId,
+          user_id AS userId,
+          username,
+          reply,
+          created_at AS createdAt,
+          updated_at AS updatedAt
+        FROM comment_replies
+        ORDER BY created_at ASC, id ASC
+      `)
+      .all();
+
+    const replies = replyResult.results || [];
+
+    // Masukkan reply ke komentar masing-masing
+    for (const comment of comments) {
+      comment.replies = replies.filter(
+        reply =>
+          String(reply.commentId) ===
+          String(comment.id)
+      );
+    }
+
     return json({
       ok: true,
-      comments: result.results || []
+      comments
     });
   }
 
@@ -774,11 +825,233 @@ export async function onRequest(context) {
           username: user.username,
           comment,
           createdAt: timestamp,
+          updatedAt: timestamp,
+          replies: []
+        }
+      },
+      201
+    );
+  }
+
+  // ----------------------------------------------------------
+  // POST /comments/:id/replies
+  //
+  // Menambahkan reply ke komentar
+  // ----------------------------------------------------------
+
+  if (
+    /^\/comments\/[^/]+\/replies$/.test(route) &&
+    method === "POST"
+  ) {
+    if (!user) {
+      return json(
+        {
+          error:
+            "Kamu harus login terlebih dahulu."
+        },
+        401
+      );
+    }
+
+    await ensureReplySchema(env);
+
+    const parts = route.split("/");
+    const commentId = parts[2];
+
+    if (!commentId) {
+      return json(
+        {
+          error:
+            "ID komentar tidak valid."
+        },
+        400
+      );
+    }
+
+    // Pastikan komentar induk ada
+    const parentComment = await env.DB
+      .prepare(`
+        SELECT id
+        FROM comments
+        WHERE id = ?
+      `)
+      .bind(commentId)
+      .first();
+
+    if (!parentComment) {
+      return json(
+        {
+          error:
+            "Komentar tidak ditemukan."
+        },
+        404
+      );
+    }
+
+    const reply = String(
+      body.reply ||
+      body.comment ||
+      body.text ||
+      ""
+    ).trim();
+
+    if (!reply) {
+      return json(
+        {
+          error:
+            "Reply tidak boleh kosong."
+        },
+        400
+      );
+    }
+
+    if (reply.length > 2000) {
+      return json(
+        {
+          error:
+            "Reply maksimal 2000 karakter."
+        },
+        400
+      );
+    }
+
+    const replyId = id("reply");
+    const timestamp = now();
+
+    await env.DB
+      .prepare(`
+        INSERT INTO comment_replies(
+          id,
+          comment_id,
+          user_id,
+          username,
+          reply,
+          created_at,
+          updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `)
+      .bind(
+        replyId,
+        commentId,
+        user.id,
+        user.username,
+        reply,
+        timestamp,
+        timestamp
+      )
+      .run();
+
+    return json(
+      {
+        ok: true,
+        reply: {
+          id: replyId,
+          commentId,
+          userId: user.id,
+          username: user.username,
+          reply,
+          createdAt: timestamp,
           updatedAt: timestamp
         }
       },
       201
     );
+  }
+
+  // ----------------------------------------------------------
+  // DELETE /comments/reply/:id
+  //
+  // Pemilik reply:
+  //   bisa menghapus reply sendiri
+  //
+  // fazmen:
+  //   bisa menghapus reply siapa pun
+  // ----------------------------------------------------------
+
+  if (
+    /^\/comments\/reply\/[^/]+$/.test(route) &&
+    method === "DELETE"
+  ) {
+    if (!user) {
+      return json(
+        {
+          error:
+            "Kamu harus login terlebih dahulu."
+        },
+        401
+      );
+    }
+
+    await ensureReplySchema(env);
+
+    const parts = route.split("/");
+    const replyId = parts[3];
+
+    if (!replyId) {
+      return json(
+        {
+          error:
+            "ID reply tidak valid."
+        },
+        400
+      );
+    }
+
+    const replyRow = await env.DB
+      .prepare(`
+        SELECT
+          id,
+          comment_id,
+          user_id,
+          username
+        FROM comment_replies
+        WHERE id = ?
+      `)
+      .bind(replyId)
+      .first();
+
+    if (!replyRow) {
+      return json(
+        {
+          error:
+            "Reply tidak ditemukan."
+        },
+        404
+      );
+    }
+
+    const isOwner =
+      String(replyRow.user_id) ===
+      String(user.id);
+
+    const isDeveloper =
+      String(user.username || "").toLowerCase() ===
+      "fazmen";
+
+    if (!isOwner && !isDeveloper) {
+      return json(
+        {
+          error:
+            "Kamu tidak memiliki izin untuk menghapus reply ini."
+        },
+        403
+      );
+    }
+
+    await env.DB
+      .prepare(`
+        DELETE FROM comment_replies
+        WHERE id = ?
+      `)
+      .bind(replyId)
+      .run();
+
+    return json({
+      ok: true,
+      deleted: true,
+      replyId
+    });
   }
 
   // ----------------------------------------------------------
@@ -789,10 +1062,14 @@ export async function onRequest(context) {
   //
   // fazmen:
   //   bisa menghapus komentar siapa pun
+  //
+  // Reply dari komentar tersebut juga ikut dihapus.
   // ----------------------------------------------------------
 
   if (
     route.startsWith("/comments/") &&
+    !route.includes("/replies") &&
+    !route.startsWith("/comments/reply/") &&
     method === "DELETE"
   ) {
     if (!user) {
@@ -860,6 +1137,19 @@ export async function onRequest(context) {
       );
     }
 
+    // Pastikan tabel reply tersedia
+    await ensureReplySchema(env);
+
+    // Hapus reply yang berada di dalam komentar tersebut
+    await env.DB
+      .prepare(`
+        DELETE FROM comment_replies
+        WHERE comment_id = ?
+      `)
+      .bind(commentId)
+      .run();
+
+    // Hapus komentar utama
     await env.DB
       .prepare(
         "DELETE FROM comments WHERE id = ?"
@@ -909,7 +1199,22 @@ export async function onRequest(context) {
       );
     }
 
+    // Pastikan reply tersedia
+    await ensureReplySchema(env);
+
     await env.DB.batch([
+      env.DB
+        .prepare(
+          "DELETE FROM comment_replies WHERE user_id = ?"
+        )
+        .bind(user.id),
+
+      env.DB
+        .prepare(
+          "DELETE FROM comments WHERE user_id = ?"
+        )
+        .bind(user.id),
+
       env.DB
         .prepare(
           "DELETE FROM video_progress WHERE user_id = ?"
