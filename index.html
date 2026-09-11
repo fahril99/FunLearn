@@ -2133,6 +2133,7 @@ html[data-theme="light"] .account-area{gap:9px}
 
   <div class="page-switch">
     <button id="localPageButton" class="active">📁 Local Video</button>
+    <button id="publicPageButton">🌍 Public Video</button>
     <button id="onlinePageButton">🌐 Online Video</button>
   </div>
 
@@ -2166,6 +2167,114 @@ html[data-theme="light"] .account-area{gap:9px}
 
 <div class="flash-overlay" id="flFlashOverlay" role="dialog" aria-modal="true" aria-labelledby="flFlashTitle"><div class="flash-card-modal"><div class="quiz-top"><div><div class="study-lab-kicker">SPACED REPETITION</div><h2 id="flFlashTitle">🗂️ Flashcards</h2></div><button id="flFlashClose" class="modal-x" type="button" aria-label="Tutup">×</button></div><div class="flash-meta" id="flFlashMeta"></div><button id="flFlashFace" class="flash-face" type="button" aria-label="Balik kartu"><span id="flFlashFront">Tidak ada kartu jatuh tempo.</span><small id="flFlashBack" hidden></small></button><div id="flFlashDueTimer" class="flash-due-timer" hidden></div><div id="flFlashRating" class="flash-rating" hidden><button data-rate="again">Again<span>Ulang 10 menit</span></button><button data-rate="hard">Hard<span>Sulit • interval pendek</span></button><button data-rate="good">Good<span>Ingat • interval naik</span></button><button data-rate="easy">Easy<span>Mudah • interval lebih panjang</span></button></div><div class="flash-actions"><button id="flFlashSkip" type="button">Lewati kartu</button><button id="flFlashManage" type="button">📋 Kelola kartu</button></div><div class="flash-help"><b>Artinya:</b> Again = belum ingat, ulang cepat • Hard = ingat tapi sulit • Good = ingat normal • Easy = sangat mudah. Kamu selalu bisa melewati kartu atau menutup sesi.</div><div class="flash-manage" id="flFlashManagePanel" hidden><div class="flash-manage-title">Kelola Flashcards</div><div id="flFlashManageList"></div></div><div class="flash-empty" id="flFlashEmpty" hidden>Belum ada flashcard. Buat manual atau generate dari Notes aktif.</div></div></div>
 
+
+
+<style id="funlearn-public-video-css">
+  .main.public-mode .local-only,.main.public-mode .online-page{display:none!important}
+  .main.public-mode #funlearnPublicVideoPage{display:block!important}
+  #funlearnPublicVideoPage{display:none;width:min(1220px,calc(100% - 32px));margin:28px auto 80px;animation:fvIn .45s ease both}
+  @keyframes fvIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .fv-shell{border:1px solid rgba(120,140,180,.18);background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(245,248,255,.95));color:#182033;border-radius:30px;box-shadow:0 24px 80px rgba(35,45,85,.12);overflow:hidden}
+  body.dark .fv-shell{background:linear-gradient(145deg,#121827,#0d1220);color:#edf2ff;border-color:rgba(148,163,184,.18);box-shadow:0 28px 90px rgba(0,0,0,.35)}
+  .fv-hero{padding:34px 34px 25px;position:relative;overflow:hidden;background:radial-gradient(circle at 85% 20%,rgba(102,126,234,.22),transparent 34%),radial-gradient(circle at 15% 100%,rgba(67,201,255,.15),transparent 32%)}
+  body.dark .fv-hero{background:radial-gradient(circle at 85% 20%,rgba(99,102,241,.25),transparent 34%),radial-gradient(circle at 15% 100%,rgba(34,211,238,.10),transparent 32%),linear-gradient(145deg,rgba(18,24,39,.9),rgba(10,15,27,.75))}
+  .fv-kicker{font-size:11px;letter-spacing:.18em;font-weight:900;opacity:.58}.fv-hero h2{margin:7px 0 8px;font-size:clamp(28px,4vw,45px);letter-spacing:-.04em}.fv-hero p{margin:0;max-width:730px;line-height:1.65;opacity:.72}
+  .fv-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.fv-btn{border:0;border-radius:14px;padding:12px 17px;font-weight:850;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:8px}.fv-btn:hover{transform:translateY(-2px)}.fv-primary{background:linear-gradient(135deg,#665cff,#4a8cff);color:#fff;box-shadow:0 12px 28px rgba(85,96,220,.25)}.fv-ghost{background:rgba(120,130,160,.1);color:inherit}
+  .fv-user-note{margin:18px 34px 0;padding:12px 14px;border-radius:14px;background:rgba(100,120,220,.08);font-size:13px;display:none}.fv-user-note.show{display:block}
+  .fv-toolbar{padding:22px 34px 12px;display:flex;justify-content:space-between;gap:14px;align-items:center}.fv-toolbar strong{font-size:18px}.fv-count{font-size:12px;opacity:.58}.fv-grid{padding:0 34px 34px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+  .fv-card{border:1px solid rgba(120,140,180,.16);border-radius:22px;overflow:hidden;background:rgba(255,255,255,.78);color:#182033;box-shadow:0 12px 35px rgba(30,40,80,.07);transition:.24s;min-width:0}.fv-card:hover{transform:translateY(-4px);box-shadow:0 18px 48px rgba(30,40,80,.13)}body.dark .fv-card{background:linear-gradient(145deg,rgba(25,32,49,.92),rgba(15,20,33,.92));color:#edf2ff;border-color:rgba(148,163,184,.17);box-shadow:0 16px 44px rgba(0,0,0,.24)}
+  .fv-thumb{aspect-ratio:16/9;background:#0d1320;position:relative;overflow:hidden}.fv-thumb video{width:100%;height:100%;object-fit:cover;display:block}.fv-play{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(0,0,0,.35))}.fv-play span{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.9);color:#111;font-size:21px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .fv-body{padding:17px}.fv-module{font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:900;opacity:.52}.fv-title{margin:6px 0 7px;font-size:18px;line-height:1.3;font-weight:900}.fv-desc{font-size:12px;line-height:1.5;opacity:.66;min-height:36px}.fv-meta{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:14px;font-size:11px;opacity:.58}.fv-author{font-weight:800;opacity:.9}.fv-card-actions{display:flex;gap:8px;margin-top:14px}.fv-card-actions button{flex:1}.fv-delete{background:#fff0f0!important;color:#b42318!important}.fv-empty{grid-column:1/-1;text-align:center;padding:55px 20px;border:1px dashed rgba(120,140,180,.25);border-radius:22px;opacity:.65}
+  .fv-upload-modal,.fv-comments-modal{position:fixed;inset:0;z-index:10030;background:rgba(7,10,20,.62);backdrop-filter:blur(10px);display:none;place-items:center;padding:18px}.fv-upload-modal.show,.fv-comments-modal.show{display:grid}.fv-modal{width:min(760px,100%);max-height:min(88vh,820px);overflow:auto;background:#fff;color:#121725;border-radius:26px;box-shadow:0 30px 100px rgba(0,0,0,.3);padding:24px}.dark .fv-modal{background:#161b29;color:#eef2ff}.fv-modal-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.fv-modal-head h3{margin:0;font-size:25px}.fv-close{width:40px;height:40px;border:0;border-radius:12px;background:rgba(120,130,160,.12);cursor:pointer;font-size:22px;color:inherit}.fv-form{display:grid;gap:13px;margin-top:18px}.fv-form label{font-size:12px;font-weight:850;opacity:.72}.fv-form input,.fv-form textarea{width:100%;border:1px solid rgba(120,140,180,.25);background:rgba(120,130,160,.06);color:inherit;border-radius:13px;padding:12px 13px;outline:none}.fv-form textarea{min-height:90px;resize:vertical}.fv-file{padding:18px!important;border-style:dashed!important}.fv-progress{margin-top:12px;font-size:12px;opacity:.7}.fv-video-preview{margin-top:10px;border-radius:16px;overflow:hidden;background:#000}.fv-video-preview video{width:100%;max-height:280px;display:block}
+  .fvc-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.fvc-list{display:grid;gap:12px;margin-top:18px;max-height:48vh;overflow:auto}.fvc-item{padding:14px;border:1px solid rgba(120,140,180,.16);border-radius:16px}.fvc-meta{font-size:11px;opacity:.62}.fvc-text{margin-top:6px;line-height:1.55;white-space:pre-wrap;word-break:break-word}.fvc-actions{display:flex;gap:7px;margin-top:9px}.fvc-actions button{border:0;background:transparent;color:#5263d8;font-weight:800;cursor:pointer}.fvc-replies{margin:10px 0 0 22px;display:grid;gap:8px}.fvc-reply{padding:10px 12px;border-left:2px solid rgba(90,100,220,.25);background:rgba(100,110,220,.05);border-radius:0 12px 12px 0}.fvc-reply-form{display:flex;gap:8px;margin:9px 0 0 22px}.fvc-reply-form input{flex:1;min-width:0;border:1px solid rgba(120,140,180,.25);border-radius:11px;padding:9px;background:transparent;color:inherit}.fvc-reply-form button{border:0;border-radius:11px;padding:9px 12px;background:#5d65dc;color:#fff;font-weight:800}
+  @media(max-width:900px){.fv-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:650px){#funlearnPublicVideoPage{width:calc(100% - 16px);margin-top:15px}.fv-hero,.fv-toolbar,.fv-grid{padding-left:16px;padding-right:16px}.fv-hero{padding-top:25px}.fv-grid{grid-template-columns:1fr}.fv-toolbar{align-items:flex-start;flex-direction:column}.fv-modal{padding:18px;border-radius:21px}.fv-card-actions{flex-direction:column}.fvc-reply-form{margin-left:8px}.page-switch{overflow-x:auto;justify-content:flex-start}.page-switch button{white-space:nowrap}}
+</style>
+
+<section id="funlearnPublicVideoPage" aria-label="Public Video">
+  <div class="fv-shell">
+    <div class="fv-hero">
+      <div class="fv-kicker">FUNLEARN • PUBLIC LEARNING</div>
+      <h2>🌍 Public Video</h2>
+      <p>Temukan dan bagikan video edukasi untuk membantu pengguna FunLearn belajar bersama. Setiap video memiliki modul, pembuat, dan ruang diskusi sendiri.</p>
+      <div class="fv-actions"><button class="fv-btn fv-primary" id="fvUploadOpen">＋ Upload Video Edukasi</button><button class="fv-btn fv-ghost" id="fvRefresh">↻ Refresh Video</button></div>
+    </div>
+    <div class="fv-user-note" id="fvUserNote"></div>
+    <div class="fv-toolbar"><div><strong>Video terbaru</strong><div class="fv-count" id="fvCount">Memuat…</div></div></div>
+    <div class="fv-grid" id="fvGrid"><div class="fv-empty">Memuat video edukasi…</div></div>
+  </div>
+</section>
+
+<div class="fv-upload-modal" id="fvUploadModal" aria-hidden="true"><div class="fv-modal">
+  <div class="fv-modal-head"><div><div class="fv-kicker">PUBLISH • EDUCATIONAL VIDEO</div><h3>Upload Video Edukasi</h3><p style="opacity:.65;font-size:13px;line-height:1.5">Upload video yang bermanfaat untuk belajar. Video akan disimpan ke Top4Top, lalu metadata-nya dicatat di FunLearn.</p></div><button class="fv-close" id="fvUploadClose">×</button></div>
+  <div class="fv-form"><div><label>Judul video</label><input id="fvTitle" maxlength="160" placeholder="Contoh: Hukum Newton — Fisika Kelas 8"></div><div><label>Judul modul</label><input id="fvModule" maxlength="100" placeholder="Contoh: Modul 3 • Hukum Newton"></div><div><label>Deskripsi singkat</label><textarea id="fvDesc" maxlength="600" placeholder="Jelaskan apa yang akan dipelajari dari video ini…"></textarea></div><div><label>File video</label><input class="fv-file" id="fvFile" type="file" accept="video/*"></div><div id="fvPreview" class="fv-video-preview" hidden></div><div class="fv-progress" id="fvUploadStatus">Siap mengupload.</div><button class="fv-btn fv-primary" id="fvUploadSubmit" type="button">🚀 Upload & Publikasikan</button></div>
+</div></div>
+
+<div class="fv-comments-modal" id="fvCommentsModal" aria-hidden="true"><div class="fv-modal">
+  <div class="fvc-head"><div><div class="fv-kicker">DISCUSSION</div><h3 id="fvcTitle">Komentar</h3><div class="fv-count" id="fvcCount">—</div></div><div style="display:flex;gap:7px"><button class="fv-btn fv-ghost" id="fvcRefresh" type="button">↻ Refresh</button><button class="fv-close" id="fvcClose">×</button></div></div>
+  <div id="fvcVideoWrap" class="fv-video-preview" style="margin-top:18px"><video id="fvcVideo" controls playsinline preload="metadata"></video></div><div id="fvcCompose" style="margin-top:16px"></div><div class="fvc-list" id="fvcList"><div class="fv-empty">Memuat komentar…</div></div>
+</div></div>
+
+<script id="funlearn-public-video-js">
+(function(){
+  const API='/api', TOP4TOP='https://top4top.fahrilar81.workers.dev/';
+  async function readPublicResponse(response){
+    const text=await response.text();
+    const ct=(response.headers.get('content-type')||'').toLowerCase();
+    if(!text.trim()) return {};
+    if(ct.includes('application/json') || /^[\[{]/.test(text.trim())){
+      try{return JSON.parse(text)}catch(e){}
+    }
+    const raw=text.trim();
+    // Top4Top/proxy tertentu dapat mengembalikan XML meskipun upload berhasil.
+    try{
+      const xml=new DOMParser().parseFromString(raw,'application/xml');
+      const urlNode=xml.querySelector('url, link, file, location');
+      const xmlUrl=urlNode?.textContent?.trim();
+      if(xmlUrl && /^https?:\/\//i.test(xmlUrl)) return {ok:true,url:xmlUrl,raw};
+    }catch(e){}
+    const urlMatch=raw.match(/https?:\/\/[^\s<>\"']+/i);
+    if(urlMatch) return {ok:true,url:urlMatch[0],raw};
+    return {ok:false,raw};
+  }
+  async function requestPublicJSON(url,options={}){
+    const r=await fetch(url,options);
+    const d=await readPublicResponse(r);
+    if(!r.ok) throw Error(d.error || (d.raw && d.raw.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,180)) || ('HTTP '+r.status));
+    return d;
+  }
+  const $=id=>document.getElementById(id); const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  let me=null,videos=[],activeVideo=null,publicComments=[];
+  function openLogin(){try{if(typeof window.funlearnCloud?.openAuth==='function'){window.funlearnCloud.openAuth('login');return}}catch(e){};const b=$('authOpenButton');if(b)b.click()}
+  async function getMe(){try{const r=await fetch('/api/me',{credentials:'include',cache:'no-store'});const d=await r.json().catch(()=>({}));me=d?.user||null}catch(e){me=null}renderUser()}
+  function renderUser(){const n=$('fvUserNote');if(!n)return;if(me){n.classList.remove('show');n.textContent=''}else{n.classList.add('show');n.innerHTML='👋 Login diperlukan untuk upload, komentar, reply, dan penghapusan video milikmu. <button id="fvLogin" class="fv-btn fv-ghost" type="button">Login</button>';$('fvLogin').onclick=openLogin}}
+  function renderVideos(){ $('fvCount').textContent=videos.length+' video'; const g=$('fvGrid');if(!videos.length){g.innerHTML='<div class="fv-empty">Belum ada video edukasi. Jadilah yang pertama membagikan materi ✨</div>';return} g.innerHTML=videos.map(v=>{const own=me&&(v.userId===me.id||String(me.username).toLowerCase()==='fazmen');return `<article class="fv-card"><div class="fv-thumb"><video src="${esc(v.videoUrl)}" preload="metadata" muted playsinline></video><div class="fv-play"><span>▶</span></div></div><div class="fv-body"><div class="fv-module">${esc(v.moduleTitle||'Public Module')}</div><div class="fv-title">${esc(v.title)}</div><div class="fv-desc">${esc(v.description||'Video edukasi FunLearn.')}</div><div class="fv-meta"><span class="fv-author">👤 ${esc(v.username)}</span><span>${esc(new Date(v.createdAt).toLocaleDateString('id-ID'))}</span></div><div class="fv-card-actions"><button class="fv-btn fv-primary" data-watch="${esc(v.id)}">▶ Tonton & Komentar</button>${own?`<button class="fv-btn fv-delete" data-delete-video="${esc(v.id)}">🗑️ Hapus</button>`:''}</div></div></article>`}).join('');g.querySelectorAll('[data-watch]').forEach(b=>b.onclick=()=>openComments(b.dataset.watch));g.querySelectorAll('[data-delete-video]').forEach(b=>b.onclick=()=>deleteVideo(b.dataset.deleteVideo))}
+  async function loadVideos(){ $('fvCount').textContent='Memuat…';try{const d=await requestPublicJSON(API+'/public-videos',{credentials:'include',cache:'no-store'});videos=Array.isArray(d.videos)?d.videos:[];renderVideos()}catch(e){$('fvGrid').innerHTML='<div class="fv-empty">❌ '+esc(e.message)+'</div>'}}
+  function showUpload(){if(!me){openLogin();return}$('fvUploadModal').classList.add('show');$('fvUploadModal').setAttribute('aria-hidden','false')}
+  function hideUpload(){$('fvUploadModal').classList.remove('show');$('fvUploadModal').setAttribute('aria-hidden','true')}
+  $('fvUploadOpen').onclick=showUpload;$('fvUploadClose').onclick=hideUpload;$('fvUploadModal').addEventListener('click',e=>{if(e.target===$('fvUploadModal'))hideUpload()});$('fvRefresh').onclick=loadVideos;
+  $('fvFile').addEventListener('change',()=>{const f=$('fvFile').files[0],p=$('fvPreview');if(!f){p.hidden=true;p.innerHTML='';return}const u=URL.createObjectURL(f);p.hidden=false;p.innerHTML='<video controls muted playsinline src="'+u+'"></video>'});
+  async function upload(){if(!me){openLogin();return}const file=$('fvFile').files[0],title=$('fvTitle').value.trim(),moduleTitle=$('fvModule').value.trim(),description=$('fvDesc').value.trim();if(!file)return $('fvUploadStatus').textContent='Pilih file video terlebih dahulu.';if(!title)return $('fvUploadStatus').textContent='Isi judul video.';if(!moduleTitle)return $('fvUploadStatus').textContent='Isi judul modul.';if(!/^video\//i.test(file.type))return $('fvUploadStatus').textContent='File harus berupa video.';const btn=$('fvUploadSubmit');btn.disabled=true;$('fvUploadStatus').textContent='☁️ Mengupload video ke Top4Top…';try{const fd=new FormData();fd.append('file',file);const td=await requestPublicJSON(TOP4TOP,{method:'POST',body:fd});if(!td.ok||!td.url)throw Error(td.error||'Top4Top tidak mengembalikan URL video yang valid.');$('fvUploadStatus').textContent='✓ Video tersimpan. Menyimpan metadata FunLearn…';const d=await requestPublicJSON(API+'/public-videos',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,moduleTitle,description,videoUrl:td.url})});hideUpload();$('fvTitle').value='';$('fvModule').value='';$('fvDesc').value='';$('fvFile').value='';$('fvPreview').hidden=true;await loadVideos();openComments(d.video.id)}catch(e){$('fvUploadStatus').textContent='❌ '+e.message}finally{btn.disabled=false}}
+  $('fvUploadSubmit').onclick=upload;
+  async function openComments(id){activeVideo=videos.find(v=>String(v.id)===String(id));if(!activeVideo)return;$('fvcTitle').textContent='💬 '+activeVideo.title;$('fvcVideo').src=activeVideo.videoUrl;$('fvCommentsModal').classList.add('show');$('fvCommentsModal').setAttribute('aria-hidden','false');await loadPublicComments()}
+  function closeComments(){$('fvCommentsModal').classList.remove('show');$('fvCommentsModal').setAttribute('aria-hidden','true');try{$('fvcVideo').pause();$('fvcVideo').removeAttribute('src');$('fvcVideo').load()}catch(e){}activeVideo=null}
+  $('fvcClose').onclick=closeComments;$('fvCommentsModal').addEventListener('click',e=>{if(e.target===$('fvCommentsModal'))closeComments()});$('fvcRefresh').onclick=loadPublicComments;
+  function replyHtml(c){return (c.replies||[]).map(r=>`<div class="fvc-reply"><b>${esc(r.username)}</b> <span style="opacity:.55;font-size:10px">${esc(new Date(r.createdAt).toLocaleString('id-ID'))}</span><div class="fvc-text">${esc(r.reply)}</div>${me&&(r.userId===me.id||String(me.username).toLowerCase()==='fazmen')?`<button class="fvc-actions" data-del-reply="${esc(r.id)}">Hapus</button>`:''}</div>`).join('')}
+  function renderPublicComments(){const l=$('fvcList');$('fvcCount').textContent=publicComments.length+' komentar';if(!publicComments.length){l.innerHTML='<div class="fv-empty">Belum ada komentar. Mulai diskusi pertama ✨</div>'}else{l.innerHTML=publicComments.map(c=>{const own=me&&(c.userId===me.id||String(me.username).toLowerCase()==='fazmen');return `<div class="fvc-item"><div class="fvc-meta">👤 <b>${esc(c.username)}</b> • ${esc(new Date(c.createdAt).toLocaleString('id-ID'))}</div><div class="fvc-text">${esc(c.comment)}</div><div class="fvc-actions"><button data-reply="${esc(c.id)}">↩ Reply</button>${own?`<button data-del="${esc(c.id)}">🗑️ Hapus</button>`:''}</div>${replyHtml(c)}<div id="fvr-${esc(c.id)}"></div></div>`}).join('')}
+    l.querySelectorAll('[data-reply]').forEach(b=>b.onclick=()=>openReply(b.dataset.reply));l.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteComment(b.dataset.del));l.querySelectorAll('[data-del-reply]').forEach(b=>b.onclick=()=>deleteReply(b.dataset.delReply));}
+  async function loadPublicComments(){if(!activeVideo)return; $('fvcList').innerHTML='<div class="fv-empty">Memuat komentar…</div>';try{const d=await requestPublicJSON(API+'/public-videos/'+encodeURIComponent(activeVideo.id)+'/comments',{credentials:'include',cache:'no-store'});publicComments=Array.isArray(d.comments)?d.comments:[];renderPublicComments()}catch(e){$('fvcList').innerHTML='<div class="fv-empty">❌ '+esc(e.message)+'</div>'}}
+  function openReply(id){if(!me){openLogin();return}const box=$('fvr-'+id);if(box.innerHTML){box.innerHTML='';return}box.innerHTML='<div class="fvc-reply-form"><input maxlength="2000" placeholder="Tulis balasan…"><button>Balas</button></div>';const inp=box.querySelector('input');box.querySelector('button').onclick=async()=>{const reply=inp.value.trim();if(!reply)return;try{const d=await requestPublicJSON(API+'/public-videos/'+encodeURIComponent(activeVideo.id)+'/comments/'+encodeURIComponent(id)+'/replies',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({reply})});await loadPublicComments()}catch(e){alert(e.message)}};inp.focus()}
+  async function sendComment(){if(!me){openLogin();return}const input=$('fvcCommentInput');const text=input?.value.trim();if(!text)return;const btn=$('fvcSend');btn.disabled=true;try{const d=await requestPublicJSON(API+'/public-videos/'+encodeURIComponent(activeVideo.id)+'/comments',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({comment:text})});input.value='';await loadPublicComments()}catch(e){alert(e.message)}finally{btn.disabled=false}}
+  async function deleteComment(id){if(!confirm('Hapus komentar ini?'))return;try{const d=await requestPublicJSON(API+'/public-videos/'+encodeURIComponent(activeVideo.id)+'/comments/'+encodeURIComponent(id),{method:'DELETE',credentials:'include'});await loadPublicComments()}catch(e){alert(e.message)}}
+  async function deleteReply(id){if(!confirm('Hapus reply ini?'))return;try{const d=await requestPublicJSON(API+'/public-videos/'+encodeURIComponent(activeVideo.id)+'/comments/reply/'+encodeURIComponent(id),{method:'DELETE',credentials:'include'});await loadPublicComments()}catch(e){alert(e.message)}}
+  const oldRenderUser=renderUser; function refreshCompose(){const c=$('fvcCompose');if(!me){c.innerHTML='<div style="padding:13px;border-radius:14px;background:rgba(100,110,220,.07)">👋 Login untuk ikut berdiskusi. <button id="fvcLogin" class="fv-btn fv-ghost" type="button">Login</button></div>';$('fvcLogin').onclick=openLogin}else{c.innerHTML='<div style="display:flex;gap:8px"><input id="fvcCommentInput" maxlength="2000" placeholder="Tulis komentar tentang video ini…" style="flex:1;min-width:0;border:1px solid rgba(120,140,180,.25);border-radius:13px;padding:12px;background:transparent;color:inherit"><button id="fvcSend" class="fv-btn fv-primary" type="button">Kirim</button></div>';$('fvcSend').onclick=sendComment}}
+  const origRender=renderUser; renderUser=function(){origRender();refreshCompose()};
+  async function deleteVideo(id){if(!me){openLogin();return}if(!confirm('Hapus video ini dari Public Video?'))return;try{const d=await requestPublicJSON(API+'/public-videos/'+encodeURIComponent(id),{method:'DELETE',credentials:'include'});videos=videos.filter(v=>String(v.id)!==String(id));renderVideos()}catch(e){alert(e.message)}}
+  window.addEventListener('funlearn:auth-changed',async()=>{await getMe();renderVideos();if(activeVideo)refreshCompose()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){hideUpload();closeComments()}});
+  getMe().then(loadVideos);
+})();
+</script>
 
   <!-- =====================================================
        OVERALL PROGRESS
@@ -6559,14 +6668,17 @@ function setupOnlineEvents(){
    PAGE SWITCH + HAMBURGER
 ========================================================= */
 function switchPage(mode){
-  const main=document.querySelector(".main"); const localBtn=document.getElementById("localPageButton"), onlineBtn=document.getElementById("onlinePageButton");
-  const online=mode==="online"; main.classList.toggle("online-mode",online); localBtn.classList.toggle("active",!online); onlineBtn.classList.toggle("active",online);
-  document.querySelector(".course-title").textContent=online?"Online Learning 🌐":"Keep Learning 🚀";
-  document.getElementById("mainStatus").textContent=online?"Video dari internet • notes autosave • export notes":"Mulai belajar dan kumpulkan XP.";
+  const main=document.querySelector(".main"); const localBtn=document.getElementById("localPageButton"), onlineBtn=document.getElementById("onlinePageButton"), publicBtn=document.getElementById("publicPageButton");
+  const online=mode==="online", pub=mode==="public";
+  main.classList.toggle("online-mode",online); main.classList.toggle("public-mode",pub);
+  localBtn.classList.toggle("active",!online&&!pub); onlineBtn.classList.toggle("active",online); publicBtn.classList.toggle("active",pub);
+  document.querySelector(".course-title").textContent=online?"Online Learning 🌐":pub?"Public Video 🌍":"Keep Learning 🚀";
+  document.getElementById("mainStatus").textContent=online?"Video dari internet • notes autosave • export notes":pub?"Video edukasi komunitas • diskusi • modul":"Mulai belajar dan kumpulkan XP.";
   document.querySelector(".sidebar").classList.remove("mobile-open");
   if(online) renderOnlineTree();
 }
 document.getElementById("localPageButton").addEventListener("click",()=>switchPage("local"));
+document.getElementById("publicPageButton").addEventListener("click",()=>switchPage("public"));
 document.getElementById("onlinePageButton").addEventListener("click",()=>switchPage("online"));
 /* Drawer toggle is installed by the integration layer below. */
 setupOnlineEvents();
