@@ -1866,6 +1866,11 @@ main,.main,.app-main,.content,.page-content,.container{box-sizing:border-box}
   .fl-animated-emoji{width:1.25em;height:1.25em}
 }
 </style>
+<style id="funlearn-targeted-emoji-animation">
+/* Animated emojis are intentionally limited to earned Achievements and Reward Reveal only. */
+.achievement-icon .fl-earned-emoji{width:1.8em;height:1.8em;object-fit:contain;display:inline-block;vertical-align:middle;line-height:1;}
+.reward-reveal-emoji .fl-reveal-emoji{width:96px;height:96px;object-fit:contain;display:block;}
+</style>
 </head>
 
 
@@ -5555,6 +5560,23 @@ async function checkAchievements(){
    ACHIEVEMENT UI
 ========================================================= */
 
+const FUNLEARN_ANIMATED_EMOJI_CODES = {
+  "🌱":"1f331","🎯":"1f3af","🔥":"1f525","⚡":"26a1","🧠":"1f9e0","👑":"1f451","💯":"1f4af","🐉":"1f409","🏆":"1f3c6","📝":"1f4dd","📓":"1f4d3","📚":"1f4da","✍️":"270d_fe0f","✏️":"270f_fe0f","📖":"1f4d6","🎓":"1f393","🔎":"1f50e","🧪":"1f9ea","⭐":"2b50","🚀":"1f680","💎":"1f48e","🎁":"1f381","🍦":"1f366","🎮":"1f3ae","🎬":"1f3ac","🍔":"1f354","☕":"2615","🌳":"1f333","🏝️":"1f3dd_fe0f","🍕":"1f355","🍰":"1f370","🧋":"1f9cb","🎧":"1f3a7","🎨":"1f3a8","⚽":"26bd","💻":"1f4bb","📱":"1f4f1","🌈":"1f308","🛍️":"1f6cd_fe0f","✈️":"2708_fe0f","🏖️":"1f3d6_fe0f","🪙":"1fa99","❤️":"2764_fe0f","📁":"1f4c1","🌐":"1f310","🗑️":"1f5d1_fe0f","✨":"2728","🌅":"1f305","🌙":"1f319","💪":"1f4aa","⏱️":"23f1_fe0f","📈":"1f4c8","🧩":"1f9e9","💡":"1f4a1","🔒":"1f512","📤":"1f4e4","📥":"1f4e5","💾":"1f4be","🎉":"1f389","❌":"274c","✔️":"2714_fe0f","➕":"2795"
+};
+function animatedEmojiImgHTML(emoji, cls){
+  const code=FUNLEARN_ANIMATED_EMOJI_CODES[String(emoji||"")];
+  if(!code) return escapeHTML(String(emoji||""));
+  const safe=escapeHTML(String(emoji||""));
+  const c=cls||"fl-animated-emoji";
+  return `<img class="${c}" src="https://fonts.gstatic.com/s/e/notoemoji/latest/${code}/512.gif" alt="${safe}" width="32" height="32" loading="lazy">`;
+}
+function animatedAchievementEmojiHTML(emoji){
+  return animatedEmojiImgHTML(emoji,"fl-earned-emoji");
+}
+function animatedRewardRevealEmojiHTML(emoji){
+  return animatedEmojiImgHTML(emoji,"fl-reveal-emoji");
+}
+
 function renderAchievements(){
   const profile = getProfile();
   const stats = getAchievementStats();
@@ -5567,7 +5589,7 @@ function renderAchievements(){
     const element = document.createElement("div");
     element.className = "achievement" + (unlocked ? " unlocked" : "");
     element.innerHTML = `
-      <div class="achievement-icon">${achievement.icon}</div>
+      <div class="achievement-icon">${unlocked ? animatedAchievementEmojiHTML(achievement.icon) : escapeHTML(achievement.icon)}</div>
       <div class="achievement-name">${escapeHTML(achievement.name)}</div>
       <div class="achievement-desc">${escapeHTML(achievement.description)}</div>
       <div style="height:5px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;margin:10px 0 7px">
@@ -6614,7 +6636,7 @@ setupOnlineEvents();
     if(!achContainer||!(typeof ACHIEVEMENTS!=='undefined'?ACHIEVEMENTS:[]))return;
     const all=ACHIEVEMENTS.filter(a=>achFilter==='all'||(achFilter==='earned'?achievementUnlocked(a):!achievementUnlocked(a)));
     achContainer.innerHTML='';
-    all.forEach((a,i)=>{const unlocked=achievementUnlocked(a);const el=document.createElement('div');el.className='achievement'+(unlocked?' unlocked':'');el.style.animationDelay=(i*55)+'ms';const metric=getAchievementMetric(a);const target=Math.max(1,Number(a.target)||1);const pct=Math.min(100,Math.round(metric/target*100));el.innerHTML='<div class="achievement-icon">'+a.icon+'</div><div class="achievement-name">'+escape(a.name)+'</div><div class="achievement-desc">'+escape(a.description)+'</div><div class="achievement-reward">'+(unlocked?'✓ UNLOCKED':'+'+a.reward+' 🪙')+'</div><div style="height:5px;background:#252b34;border-radius:99px;margin-top:9px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--green);transition:width .5s"></div></div><div style="font-size:9px;color:var(--muted);margin-top:4px">'+(unlocked?'Selesai':metric.toLocaleString('id-ID')+' / '+target.toLocaleString('id-ID'))+'</div>';achContainer.appendChild(el);});
+    all.forEach((a,i)=>{const unlocked=achievementUnlocked(a);const el=document.createElement('div');el.className='achievement'+(unlocked?' unlocked':'');el.style.animationDelay=(i*55)+'ms';const metric=getAchievementMetric(a);const target=Math.max(1,Number(a.target)||1);const pct=Math.min(100,Math.round(metric/target*100));el.innerHTML='<div class="achievement-icon">'+(unlocked?animatedAchievementEmojiHTML(a.icon):escape(a.icon))+'</div><div class="achievement-name">'+escape(a.name)+'</div><div class="achievement-desc">'+escape(a.description)+'</div><div class="achievement-reward">'+(unlocked?'✓ UNLOCKED':'+'+a.reward+' 🪙')+'</div><div style="height:5px;background:#252b34;border-radius:99px;margin-top:9px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--green);transition:width .5s"></div></div><div style="font-size:9px;color:var(--muted);margin-top:4px">'+(unlocked?'Selesai':metric.toLocaleString('id-ID')+' / '+target.toLocaleString('id-ID'))+'</div>';achContainer.appendChild(el);});
   };
   /* Render after existing app boot. */
   setTimeout(()=>{window.renderAchievements&&window.renderAchievements();renderAchievementTabs();},100);
@@ -6955,7 +6977,7 @@ setupOnlineEvents();
     if(!overlay || !emoji || !caption || !ok)return;
 
     /* Semua data reveal berasal dari reward yang benar-benar ditukar. */
-    emoji.textContent=String(reward?.icon||"🎁");
+    emoji.innerHTML=animatedRewardRevealEmojiHTML(String(reward?.icon||"🎁"));
     caption.textContent=`Kamu mendapatkan ${String(reward?.name||"Reward")}`;
 
     /* Reset state/class agar reward berbeda maupun reward yang sama
@@ -6973,6 +6995,8 @@ setupOnlineEvents();
     void overlay.offsetWidth;
     overlay.classList.add("play");
     overlay.setAttribute("aria-hidden","false");
+    /* Sound starts together with the visual reward reveal. */
+    playRewardExchangeSound();
 
     setTimeout(()=>ok.focus(),1000);
   }
@@ -7010,8 +7034,6 @@ setupOnlineEvents();
     rewardExchangeBusy=true;
     const buttons=document.querySelectorAll(".redeem-btn");
     buttons.forEach(btn=>btn.disabled=true);
-    playRewardExchangeSound();
-
     try{
       /* Loading selalu terlihat sebelum saldo berubah. */
       setRewardPurchaseLoading(true);
@@ -7448,53 +7470,6 @@ window.funlearnLearningUpgrade={openRecall,renderLearningDashboard,addLearningMi
 </script>
 
 
-<script id="funlearn-animated-emoji-runtime">
-(function(){
-  const emojiMap={
-    "🌱":"1f331","🎯":"1f3af","🔥":"1f525","⚡":"26a1","🧠":"1f9e0","👑":"1f451","💯":"1f4af","🐉":"1f409","🏆":"1f3c6","📝":"1f4dd","📓":"1f4d3","📚":"1f4da","✍️":"270d_fe0f","✏️":"270f_fe0f","📖":"1f4d6","🎓":"1f393","🔎":"1f50e","🧪":"1f9ea","⭐":"2b50","🚀":"1f680","💎":"1f48e","🎁":"1f381","🍦":"1f366","🎮":"1f3ae","🎬":"1f3ac","🍔":"1f354","☕":"2615","🌳":"1f333","🏝️":"1f3dd_fe0f","🍕":"1f355","🍰":"1f370","🧋":"1f9cb","🎧":"1f3a7","🎨":"1f3a8","⚽":"26bd","💻":"1f4bb","📱":"1f4f1","🌈":"1f308","🛍️":"1f6cd_fe0f","✈️":"2708_fe0f","🏖️":"1f3d6_fe0f","🪙":"1fa99","❤️":"2764_fe0f","📁":"1f4c1","🌐":"1f310","🗑️":"1f5d1_fe0f","✨":"2728","🌅":"1f305","🌙":"1f319","💪":"1f4aa","⏱️":"23f1_fe0f","📈":"1f4c8","🧩":"1f9e9","💡":"1f4a1","🔒":"1f512","📤":"1f4e4","📥":"1f4e5","💾":"1f4be","🎉":"1f389","❌":"274c","✔️":"2714_fe0f","➕":"2795"
-  };
-  const keys=Object.keys(emojiMap).sort((a,b)=>b.length-a.length);
-  const rx=new RegExp(keys.map(e=>e.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'),'g');
-  function makeEmoji(e){
-    const code=emojiMap[e]; if(!code) return null;
-    const pic=document.createElement('picture');
-    pic.className='fl-animated-emoji'; pic.setAttribute('aria-hidden','true');
-    const source=document.createElement('source'); source.type='image/webp';
-    source.srcset='https://fonts.gstatic.com/s/e/notoemoji/latest/'+code+'/512.webp';
-    const img=document.createElement('img'); img.className='fl-animated-emoji';
-    img.src='https://fonts.gstatic.com/s/e/notoemoji/latest/'+code+'/512.gif';
-    img.alt=e; img.width=32; img.height=32; img.loading='lazy';
-    pic.append(source,img); return pic;
-  }
-  function convertTextNode(node){
-    const parent=node.parentElement;
-    if(!parent || /^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA|INPUT|OPTION)$/i.test(parent.tagName) || parent.closest('.fl-animated-emoji')) return;
-    if(!rx.test(node.nodeValue)){rx.lastIndex=0;return} rx.lastIndex=0;
-    const frag=document.createDocumentFragment(); let last=0, m;
-    rx.lastIndex=0;
-    while((m=rx.exec(node.nodeValue))){
-      if(m.index>last) frag.append(document.createTextNode(node.nodeValue.slice(last,m.index)));
-      const el=makeEmoji(m[0]);
-      if(el) frag.append(el); else frag.append(document.createTextNode(m[0]));
-      last=rx.lastIndex;
-    }
-    if(last<node.nodeValue.length) frag.append(document.createTextNode(node.nodeValue.slice(last)));
-    node.replaceWith(frag);
-  }
-  function scan(root){
-    if(!root) return;
-    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
-    const nodes=[]; let n; while(n=walker.nextNode()) nodes.push(n);
-    nodes.forEach(convertTextNode);
-  }
-  let scheduled=false;
-  const observer=new MutationObserver(muts=>{
-    if(scheduled)return; scheduled=true;
-    queueMicrotask(()=>{scheduled=false;muts.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)scan(n);else if(n.nodeType===3)convertTextNode(n)}));});
-  });
-  function start(){scan(document.body);observer.observe(document.body,{childList:true,subtree:true});}
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
-})();
-</script>
+
 </body>
 </html>
