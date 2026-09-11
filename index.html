@@ -1818,6 +1818,54 @@ html[data-theme="light"] .learning-card{background:linear-gradient(145deg,rgba(2
 @media(prefers-reduced-motion:reduce){.recall-card,.recall-feedback{animation:none!important}.goal-fill,.week-bar{transition:none!important}}
 </style>
 
+
+<style id="funlearn-animated-emoji-and-desktop-fix">
+/* Animated Noto Emoji */
+.fl-animated-emoji{display:inline-block;width:1.35em;height:1.35em;object-fit:contain;vertical-align:-0.28em;line-height:1;flex:0 0 auto}
+.fl-animated-emoji.fl-emoji-sm{width:1.15em;height:1.15em}
+.fl-animated-emoji.fl-emoji-lg{width:1.8em;height:1.8em}
+
+/* Desktop/laptop polish */
+:root{--fl-content-max:1440px}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.5}
+button,input,textarea,select{font:inherit}
+button{min-height:42px;border-radius:12px;font-weight:700;letter-spacing:.01em;transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease,border-color .16s ease}
+button:not(:disabled):hover{transform:translateY(-1px)}
+button:not(:disabled):active{transform:translateY(0) scale(.98)}
+input,textarea,select{min-height:42px;border-radius:11px}
+
+/* Keep the main app comfortably centered on wide laptop screens */
+main,.main,.app-main,.content,.page-content,.container{box-sizing:border-box}
+@media (min-width:901px){
+  body{overflow-x:hidden}
+  .app,.app-shell,.layout,.main-layout{max-width:1600px;margin-inline:auto}
+  main,.main,.app-main,.content,.page-content{max-width:var(--fl-content-max);margin-inline:auto}
+  .card,.panel,.section,.video-section,.online-section,.reward-section{border-radius:16px}
+  .btn,.button,.primary-btn,.secondary-btn,.action-btn,.redeem-btn{min-height:42px;padding:10px 16px}
+}
+@media (min-width:1200px){
+  html{font-size:16.5px}
+  button{min-height:44px}
+  input,textarea,select{min-height:44px}
+}
+
+/* Responsive laptop/tablet/mobile spacing */
+@media (max-width:1100px){
+  .grid,.cards,.dashboard-grid,.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media (max-width:900px){
+  .grid,.cards,.dashboard-grid,.stats-grid{grid-template-columns:1fr!important}
+  button{min-height:44px}
+  .modal,.popup,.reward-modal,.overlay{padding:14px!important}
+}
+@media (max-width:600px){
+  html{font-size:15px}
+  button{width:auto;max-width:100%}
+  input,textarea,select{width:100%;box-sizing:border-box}
+  .fl-animated-emoji{width:1.25em;height:1.25em}
+}
+</style>
 </head>
 
 
@@ -7399,5 +7447,54 @@ window.funlearnLearningUpgrade={openRecall,renderLearningDashboard,addLearningMi
 })();
 </script>
 
+
+<script id="funlearn-animated-emoji-runtime">
+(function(){
+  const emojiMap={
+    "🌱":"1f331","🎯":"1f3af","🔥":"1f525","⚡":"26a1","🧠":"1f9e0","👑":"1f451","💯":"1f4af","🐉":"1f409","🏆":"1f3c6","📝":"1f4dd","📓":"1f4d3","📚":"1f4da","✍️":"270d_fe0f","✏️":"270f_fe0f","📖":"1f4d6","🎓":"1f393","🔎":"1f50e","🧪":"1f9ea","⭐":"2b50","🚀":"1f680","💎":"1f48e","🎁":"1f381","🍦":"1f366","🎮":"1f3ae","🎬":"1f3ac","🍔":"1f354","☕":"2615","🌳":"1f333","🏝️":"1f3dd_fe0f","🍕":"1f355","🍰":"1f370","🧋":"1f9cb","🎧":"1f3a7","🎨":"1f3a8","⚽":"26bd","💻":"1f4bb","📱":"1f4f1","🌈":"1f308","🛍️":"1f6cd_fe0f","✈️":"2708_fe0f","🏖️":"1f3d6_fe0f","🪙":"1fa99","❤️":"2764_fe0f","📁":"1f4c1","🌐":"1f310","🗑️":"1f5d1_fe0f","✨":"2728","🌅":"1f305","🌙":"1f319","💪":"1f4aa","⏱️":"23f1_fe0f","📈":"1f4c8","🧩":"1f9e9","💡":"1f4a1","🔒":"1f512","📤":"1f4e4","📥":"1f4e5","💾":"1f4be","🎉":"1f389","❌":"274c","✔️":"2714_fe0f","➕":"2795"
+  };
+  const keys=Object.keys(emojiMap).sort((a,b)=>b.length-a.length);
+  const rx=new RegExp(keys.map(e=>e.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'),'g');
+  function makeEmoji(e){
+    const code=emojiMap[e]; if(!code) return null;
+    const pic=document.createElement('picture');
+    pic.className='fl-animated-emoji'; pic.setAttribute('aria-hidden','true');
+    const source=document.createElement('source'); source.type='image/webp';
+    source.srcset='https://fonts.gstatic.com/s/e/notoemoji/latest/'+code+'/512.webp';
+    const img=document.createElement('img'); img.className='fl-animated-emoji';
+    img.src='https://fonts.gstatic.com/s/e/notoemoji/latest/'+code+'/512.gif';
+    img.alt=e; img.width=32; img.height=32; img.loading='lazy';
+    pic.append(source,img); return pic;
+  }
+  function convertTextNode(node){
+    const parent=node.parentElement;
+    if(!parent || /^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA|INPUT|OPTION)$/i.test(parent.tagName) || parent.closest('.fl-animated-emoji')) return;
+    if(!rx.test(node.nodeValue)){rx.lastIndex=0;return} rx.lastIndex=0;
+    const frag=document.createDocumentFragment(); let last=0, m;
+    rx.lastIndex=0;
+    while((m=rx.exec(node.nodeValue))){
+      if(m.index>last) frag.append(document.createTextNode(node.nodeValue.slice(last,m.index)));
+      const el=makeEmoji(m[0]);
+      if(el) frag.append(el); else frag.append(document.createTextNode(m[0]));
+      last=rx.lastIndex;
+    }
+    if(last<node.nodeValue.length) frag.append(document.createTextNode(node.nodeValue.slice(last)));
+    node.replaceWith(frag);
+  }
+  function scan(root){
+    if(!root) return;
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const nodes=[]; let n; while(n=walker.nextNode()) nodes.push(n);
+    nodes.forEach(convertTextNode);
+  }
+  let scheduled=false;
+  const observer=new MutationObserver(muts=>{
+    if(scheduled)return; scheduled=true;
+    queueMicrotask(()=>{scheduled=false;muts.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)scan(n);else if(n.nodeType===3)convertTextNode(n)}));});
+  });
+  function start(){scan(document.body);observer.observe(document.body,{childList:true,subtree:true});}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
+})();
+</script>
 </body>
 </html>
