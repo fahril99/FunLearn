@@ -2590,6 +2590,16 @@ const ACHIEVEMENTS = [
   {id:"sixtyDay",icon:"🏅",name:"60 Day Streak",description:"Belajar 60 hari berturut-turut",type:"streak",target:60,reward:1000},
   {id:"hundredDay",icon:"🏆",name:"100 Day Streak",description:"Belajar 100 hari berturut-turut",type:"streak",target:100,reward:2500},
 
+  // LEARNING TIME MILESTONES
+  {id:"time15",icon:"⏰",name:"Warm Up Learner",description:"Kumpulkan 15 menit waktu belajar",type:"learningTime",target:15,reward:10},
+  {id:"time30",icon:"⏳",name:"Focused Learner",description:"Kumpulkan 30 menit waktu belajar",type:"learningTime",target:30,reward:20},
+  {id:"time60",icon:"⌛",name:"One Hour Learner",description:"Kumpulkan 60 menit waktu belajar",type:"learningTime",target:60,reward:40},
+  {id:"time90",icon:"📟",name:"Deep Study",description:"Kumpulkan 90 menit waktu belajar",type:"learningTime",target:90,reward:60},
+  {id:"time120",icon:"🔔",name:"Serious Learner",description:"Kumpulkan 120 menit waktu belajar",type:"learningTime",target:120,reward:90},
+  {id:"time240",icon:"⏰",name:"Learning Marathon",description:"Kumpulkan 240 menit waktu belajar",type:"learningTime",target:240,reward:160},
+  {id:"time400",icon:"⏳",name:"Study Champion",description:"Kumpulkan 400 menit waktu belajar",type:"learningTime",target:400,reward:300},
+  {id:"time600",icon:"⌛",name:"Learning Master",description:"Kumpulkan 600 menit waktu belajar",type:"learningTime",target:600,reward:500},
+
   // NOTE COUNT
   {id:"note1",icon:"✏️",name:"First Note",description:"Tulis notes pada 1 video",type:"notes",target:1,reward:10},
   {id:"note5",icon:"📚",name:"Note Maker",description:"Tulis notes pada 5 video",type:"notes",target:5,reward:40},
@@ -5566,7 +5576,13 @@ function getAchievementStats(){
   };
 }
 
+function getLearningTimeMinutes(){
+  const v=Number(getCookie("learning_total_minutes"));
+  return Number.isFinite(v)&&v>0?v:0;
+}
+
 function achievementProgress(achievement, stats){
+  if(achievement.type==="learningTime") return {current:getLearningTimeMinutes(),max:Number(achievement.target)||1,raw:getLearningTimeMinutes()};
   let current = 0, max = achievement.target || 1;
   switch(achievement.type){
     case "completed": current=stats.completedVideos; break;
@@ -7486,17 +7502,51 @@ function focusCookieSet(data){try{document.cookie=FOCUS_COOKIE+'='+encodeURIComp
 function focusCookieGet(){try{const m=document.cookie.match(new RegExp('(?:^|; )'+FOCUS_COOKIE.replace(/[.*+?^${}()|[\\]\\]/g,'\\$&')+'=([^;]*)'));return m?JSON.parse(decodeURIComponent(m[1])):null}catch(e){return null}}
 function focusCookieClear(){try{document.cookie=FOCUS_COOKIE+'=; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; path=/; SameSite=Lax'}catch(e){}}
 function playFocusTimeout(){try{const audio=new Audio('https://www.myinstants.com/media/sounds/subway-surfers-open-box.mp3');audio.volume=.45;audio.currentTime=0;audio.play().catch(()=>{});}catch(e){}}
-function renderFocus(){if(!$('flFocusTimer'))return;if(focusRunning)focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));const r=Math.max(0,focusRemaining),m=Math.floor(r/60),sec=r%60;$('flFocusTimer').textContent=String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');const st=$('flFocusStatus');if(st)st.textContent=focusRunning?'Fokus berjalan — tersimpan di cookie.':focusPaused?'Fokus dijeda — pause lebih dari 1 jam akan mereset sesi.':'Pilih durasi lalu mulai sesi fokus.';document.querySelectorAll('.focus-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.focus)===focusMinutes));const pause=$('flFocusPause');if(pause){pause.disabled=!focusRunning&&!focusPaused;pause.textContent=focusPaused?'Lanjut':'Pause'}const start=$('flFocusStart');if(start)start.textContent=focusPaused?'Lanjut':'Mulai'}
+function focusCookieRead(){try{return JSON.parse(getCookie("focus_session")||"null")}catch(e){return null}}
+function focusCookieWrite(o){setCookie("focus_session",JSON.stringify(o),30)}
+function focusClearCookie(){setCookie("focus_session","",-1)}
+function syncFocusFromCookie(){
+  const x=focusCookieRead();
+  if(!x){focusRunning=false;focusPaused=false;focusEndAt=0;focusRemaining=focusMinutes*60;return;}
+  focusMinutes=Number(x.minutes)||25; focusRemaining=Math.max(0,Number(x.remaining)||0); focusRunning=x.state==="running"; focusPaused=x.state==="paused";
+  if(focusRunning){
+    const remain=Math.max(0,Math.ceil((Number(x.endAt)||Date.now()-0-Date.now())/1000));
+    if(Number(x.endAt)>Date.now()) focusRemaining=remain; else finishFocusSession();
+  }
+  if(focusPaused && Number(x.pausedAt) && Date.now()-Number(x.pausedAt)>3600000){resetFocusSession(true);}
+}
 let focusEndAt=0;
-function restoreFocusSession(){const saved=focusCookieGet();if(!saved){focusRemaining=focusMinutes*60;renderFocus();return}focusMinutes=Math.max(1,Number(saved.minutes)||25);if(saved.paused){focusPaused=true;focusRunning=false;focusPauseAt=Number(saved.pauseAt)||Date.now();focusRemaining=Math.max(0,Number(saved.remaining)||0);if(Date.now()-focusPauseAt>3600000){focusCookieClear();focusPaused=false;focusRunning=false;focusRemaining=0;showToast('⏱️ Focus Session di-reset karena pause lebih dari 1 jam.','error')}renderFocus();return}focusEndAt=Number(saved.endAt)||0;focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));if(!focusEndAt||focusRemaining<=0){finishFocusSession(false);return}focusRunning=true;renderFocus()}
-function finishFocusSession(playSound=true){if(focusTimer){clearInterval(focusTimer);focusTimer=null}focusRunning=false;focusPaused=false;focusPauseAt=0;focusRemaining=0;focusCookieClear();const completedMinutes=focusMinutes;(async()=>{try{const p=ensureUpgradeData();p.focusHistory.push({date:localDate(),minutes:completedMinutes});await addLearningMinutes(completedMinutes,'Focus Session');if(typeof registerStudyDay==='function')await registerStudyDay();await persist();if(typeof checkAchievements==='function')await checkAchievements()}catch(e){console.warn('Focus Session save failed',e)}if(playSound)playFocusTimeout();showToast(`🎯 Focus Session selesai • +${completedMinutes} menit belajar`,'success');focusRemaining=completedMinutes*60;renderFocus()})()}
-function tickFocus(){if(!focusRunning)return;focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));if(focusRemaining<=0){finishFocusSession(true);return}renderFocus()}
-function startOrResumeFocus(){if(focusRunning)return;if(focusPaused){focusEndAt=Date.now()+focusRemaining*1000;focusPaused=false;focusRunning=true;focusCookieSet({running:true,paused:false,minutes:focusMinutes,remaining:focusRemaining,endAt:focusEndAt});renderFocus();if(focusTimer)clearInterval(focusTimer);focusTimer=setInterval(tickFocus,250);return}if(focusRemaining<=0)focusRemaining=focusMinutes*60;focusEndAt=Date.now()+focusRemaining*1000;focusRunning=true;focusCookieSet({running:true,paused:false,minutes:focusMinutes,remaining:focusRemaining,endAt:focusEndAt});renderFocus();if(focusTimer)clearInterval(focusTimer);focusTimer=setInterval(tickFocus,250)}
-function pauseFocus(){if(!focusRunning)return;focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));focusRunning=false;focusPaused=true;focusPauseAt=Date.now();if(focusTimer){clearInterval(focusTimer);focusTimer=null}focusCookieSet({running:false,paused:true,minutes:focusMinutes,remaining:focusRemaining,pauseAt:focusPauseAt});renderFocus()}
-document.querySelectorAll('.focus-btn').forEach(b=>b.addEventListener('click',()=>{if(focusRunning||focusPaused)return;focusMinutes=Math.max(1,Number(b.dataset.focus)||25);focusRemaining=focusMinutes*60;renderFocus()}));
-$('flFocusCustom')?.addEventListener('click',()=>{if(focusRunning||focusPaused)return;const raw=prompt('Masukkan durasi Focus Session dalam menit (contoh: 90):','90');if(raw===null)return;const n=Math.floor(Number(raw));if(!Number.isFinite(n)||n<1||n>1440){showToast('Durasi harus 1–1440 menit.','error');return}focusMinutes=n;focusRemaining=n*60;renderFocus()});
-$('flFocusStart')?.addEventListener('click',startOrResumeFocus);$('flFocusPause')?.addEventListener('click',()=>focusPaused?startOrResumeFocus():pauseFocus());$('flFocusReset')?.addEventListener('click',()=>{if(focusTimer)clearInterval(focusTimer);focusTimer=null;focusRunning=false;focusPaused=false;focusEndAt=0;focusPauseAt=0;focusRemaining=focusMinutes*60;focusCookieClear();renderFocus()});
-restoreFocusSession();
+function renderFocus(){
+  if(!$('flFocusTimer'))return;
+  const r=Math.max(0,Math.ceil(focusRemaining)); const m=Math.floor(r/60),sec=r%60;
+  $('flFocusTimer').textContent=String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+  $('flFocusStatus').textContent=focusRunning?'Fokus berjalan.':focusPaused?'Sesi dijeda — klik Lanjut untuk meneruskan.':'Pilih durasi lalu mulai sesi fokus.';
+  document.querySelectorAll('.focus-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.focus)===focusMinutes));
+  const startBtn=$('flFocusStart'); if(startBtn){startBtn.textContent=focusRunning?'Pause':focusPaused?'Lanjut':'Mulai';}
+}
+function persistFocus(){focusCookieWrite({minutes:focusMinutes,remaining:Math.max(0,focusRemaining),state:focusRunning?'running':focusPaused?'paused':'idle',endAt:focusEndAt,pausedAt:focusPaused?Date.now():0});}
+function finishFocusSession(){
+  if(focusTimer){clearInterval(focusTimer);focusTimer=null;}
+  focusRunning=false;focusPaused=false;focusEndAt=0;focusRemaining=0;focusClearCookie();
+  const p=ensureUpgradeData(); if(p){p.focusHistory.push({date:localDate(),minutes:focusMinutes});}
+  Promise.resolve(addLearningMinutes(focusMinutes,'Focus Session')).then(()=>typeof registerStudyDay==='function'?registerStudyDay():null).catch(()=>{});
+  showToast(`🎯 Focus Session selesai • +${focusMinutes} menit belajar`,'success');
+  try{const a=new Audio('https://www.myinstants.com/media/sounds/subway-surfers-open-box.mp3');a.preload='auto';a.play().catch(()=>{});}catch(e){}
+  focusRemaining=focusMinutes*60; renderFocus();
+}
+function resetFocusSession(clearCookie=true){if(focusTimer)clearInterval(focusTimer);focusTimer=null;focusRunning=false;focusPaused=false;focusEndAt=0;focusRemaining=focusMinutes*60;if(clearCookie)focusClearCookie();renderFocus();}
+function startOrToggleFocus(){
+  if(focusRunning){focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));focusRunning=false;focusPaused=true;focusEndAt=0;persistFocus();renderFocus();return;}
+  if(focusPaused){focusEndAt=Date.now()+Math.max(0,focusRemaining)*1000;focusRunning=true;focusPaused=false;persistFocus();renderFocus();return;}
+  focusRemaining=focusMinutes*60;focusEndAt=Date.now()+focusRemaining*1000;focusRunning=true;focusPaused=false;persistFocus();renderFocus();
+  if(focusTimer)clearInterval(focusTimer);
+  focusTimer=setInterval(()=>{if(!focusRunning)return;focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));renderFocus();persistFocus();if(focusRemaining<=0)finishFocusSession();},250);
+}
+document.querySelectorAll('.focus-btn').forEach(b=>b.addEventListener('click',()=>{if(focusRunning)return;focusMinutes=Number(b.dataset.focus)||25;focusRemaining=focusMinutes*60;focusPaused=false;focusClearCookie();renderFocus();}));
+$('flFocusStart')?.addEventListener('click',startOrToggleFocus);
+$('flFocusReset')?.addEventListener('click',()=>resetFocusSession(true));
+syncFocusFromCookie();renderFocus();
+function addLearningMinutes(minutes,source){const n=Math.max(0,Number(minutes)||0);if(!n)return;recordStudyMinutesCookie(n);const p=ensureUpgradeData();if(p)p.learningTime=getStudyMinutesCookie().total;try{if(typeof checkAchievements==='function')Promise.resolve(checkAchievements()).catch(()=>{});}catch(e){}try{if(typeof renderLearningDashboard==='function')renderLearningDashboard();}catch(e){}}
 function countVideoLearning(){const v=$('videoPlayer');if(!v||v.paused||v.ended||document.hidden)return;const now=v.currentTime;if(now>lastLocalVideoTime){const delta=Math.min(2,now-lastLocalVideoTime);if(delta>.15)addLearningMinutes(delta/60,'Local Video')}lastLocalVideoTime=now}setInterval(countVideoLearning,1000);$('videoPlayer')?.addEventListener('play',()=>{lastLocalVideoTime=$('videoPlayer').currentTime||0});$('videoPlayer')?.addEventListener('pause',()=>{lastLocalVideoTime=$('videoPlayer').currentTime||0});
 let onlineLast={};setInterval(()=>{if(document.hidden||typeof onlineProgress==='undefined')return;for(const [id,p] of Object.entries(onlineProgress||{})){const cur=Number(p.currentTime)||0,old=Number(onlineLast[id]);if(Number.isFinite(old)&&cur>old){const delta=Math.min(6,cur-old);if(delta>.15)addLearningMinutes(delta/60,'Online Video')}onlineLast[id]=cur}},5000);
 const oldYT=window.funlearnTrackYouTube;if(typeof oldYT==='function'){window.funlearnTrackYouTube=function(iframe,module){onlineLast[module.id]=Number((typeof getOnlineProgress==='function'?getOnlineProgress(module.id):{}).currentTime)||0;return oldYT.apply(this,arguments)}}
@@ -7517,6 +7567,11 @@ window.funlearnLearningUpgrade={openRecall,renderLearningDashboard,addLearningMi
   document.querySelectorAll('video').forEach(watch);
   new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1){if(n.matches&&n.matches('video'))watch(n);n.querySelectorAll?.('video').forEach(watch)}}))).observe(document.body,{childList:true,subtree:true});
 })();
+
+window.funlearnAchievementEmojiHTML=function(icon){const map={
+  "✏️":["270f_fe0f","✏"],"📚":["1f4da","📚"],"⏰":["23f0","⏰"],"⏳":["23f3","⏳"],"⌛":["231b","⌛"],"📟":["1f4df","📟"],"🔔":["1f514","🔔"]};
+  const x=map[icon]; if(!x)return icon; const base='https://fonts.gstatic.com/s/e/notoemoji/latest/'+x[0]+'/512'; return '<picture><source srcset="'+base+'.webp" type="image/webp"><img src="'+base+'.gif" alt="'+x[1]+'" width="32" height="32" class="fl-animated-emoji"></picture>';
+};
 </script>
 </body>
 </html>
