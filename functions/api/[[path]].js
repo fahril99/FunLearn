@@ -456,11 +456,20 @@ export async function onRequest(context) {
 
   const method = request.method.toUpperCase();
 
+  // ==========================================================
+  // REQUEST BODY
+  //
+  // Hanya POST / PUT / PATCH yang membaca JSON.
+  // DELETE tidak membaca JSON karena DELETE komentar
+  // hanya membutuhkan ID yang ada di URL.
+  // ==========================================================
+
   let body = {};
 
   if (
-    method !== "GET" &&
-    method !== "HEAD"
+    method === "POST" ||
+    method === "PUT" ||
+    method === "PATCH"
   ) {
     try {
       body = await request.json();
@@ -649,7 +658,7 @@ export async function onRequest(context) {
   }
 
   // ==========================================================
-  // GET CURRENT USER
+  // CURRENT USER
   // ==========================================================
 
   const user = await requireUser(
@@ -658,10 +667,13 @@ export async function onRequest(context) {
   );
 
   // ==========================================================
-  // COMMENTS API
+  // COMMENTS
   // ==========================================================
 
+  // ----------------------------------------------------------
   // GET /comments
+  // ----------------------------------------------------------
+
   if (
     route === "/comments" &&
     method === "GET"
@@ -686,9 +698,9 @@ export async function onRequest(context) {
     });
   }
 
-  // ==========================================================
-  // POST COMMENT
-  // ==========================================================
+  // ----------------------------------------------------------
+  // POST /comments
+  // ----------------------------------------------------------
 
   if (
     route === "/comments" &&
@@ -769,15 +781,15 @@ export async function onRequest(context) {
     );
   }
 
-  // ==========================================================
-  // DELETE COMMENT
+  // ----------------------------------------------------------
+  // DELETE /comments/:id
   //
   // Pemilik komentar:
-  //     boleh menghapus komentarnya sendiri
+  //   bisa menghapus komentar sendiri
   //
   // fazmen:
-  //     boleh menghapus komentar siapa pun
-  // ==========================================================
+  //   bisa menghapus komentar siapa pun
+  // ----------------------------------------------------------
 
   if (
     route.startsWith("/comments/") &&
@@ -873,8 +885,7 @@ export async function onRequest(context) {
     if (!user) {
       return json(
         {
-          error:
-            "Sesi tidak valid."
+          error: "Sesi tidak valid."
         },
         401,
         {
