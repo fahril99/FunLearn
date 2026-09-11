@@ -1916,7 +1916,28 @@ html[data-theme="light"] .account-area{gap:9px}
 @media(max-width:700px){.focus-actions{grid-template-columns:1fr 1fr}.focus-actions #flFocusReset{grid-column:auto}.account-area{width:100%;max-width:100%;overflow:visible;position:relative;z-index:10050}.account-area>*{min-width:0}.account-menu{z-index:10060;max-width:min(240px,calc(100vw - 28px))}}
 @media(min-width:701px) and (max-width:1100px){.account-area{display:grid;grid-template-columns:auto minmax(150px,1fr) minmax(120px,1fr);align-items:center}.account-area .sync-pill{min-width:0;overflow:hidden;text-overflow:ellipsis}}
 </style>
-</head>
+<style id="funlearn-premium-dock-fix">
+body.dark #funlearnPublicVideoPage{color:#eef2ff}
+body.dark .fv-shell{background:linear-gradient(180deg,rgba(12,17,30,.98),rgba(9,13,24,.98));border-color:rgba(148,163,184,.14);box-shadow:0 28px 80px rgba(0,0,0,.28)}
+body.dark .fv-ghost{background:rgba(148,163,184,.10);color:#eaf0ff;border:1px solid rgba(148,163,184,.14)}
+body.dark .fv-empty{border-color:rgba(148,163,184,.20);background:rgba(255,255,255,.025)}
+body.dark .fv-delete{background:rgba(248,113,113,.10)!important;color:#fda4af!important;border:1px solid rgba(248,113,113,.18)!important}
+body.dark .fv-form input,body.dark .fv-form textarea,body.dark .fvc-reply-form input,body.dark #fvcCommentInput{background:rgba(3,7,18,.58)!important;border-color:rgba(148,163,184,.20)!important;color:#f5f7ff!important}
+body.dark .fv-form input::placeholder,body.dark .fv-form textarea::placeholder,body.dark .fvc-reply-form input::placeholder,body.dark #fvcCommentInput::placeholder{color:#8290aa}
+body.dark .fvc-item{background:rgba(255,255,255,.025);border-color:rgba(148,163,184,.15)}
+body.dark .fvc-reply{background:rgba(99,102,241,.08);border-left-color:rgba(129,140,248,.38)}
+body.dark .fv-user-note{background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(34,211,238,.06));border:1px solid rgba(129,140,248,.12)}
+body.dark .fv-close{background:rgba(148,163,184,.10);color:#eef2ff}
+body.dark .fv-modal{background:linear-gradient(145deg,#171d2d,#101625);border:1px solid rgba(148,163,184,.16);box-shadow:0 35px 110px rgba(0,0,0,.55)}
+body.dark .fv-upload-modal,body.dark .fv-comments-modal{background:rgba(1,4,12,.78)}
+#fl-ai-fab,#fl-comments-fab{display:none!important}
+.fl-command-dock{position:fixed;right:22px;bottom:22px;z-index:10060;width:74px;height:74px;pointer-events:none}
+.fl-command-main{position:absolute;right:0;bottom:0;width:66px;height:66px;border:1px solid rgba(255,255,255,.22);border-radius:22px;background:linear-gradient(145deg,#6d5dfc,#27c7ff);color:#fff;display:grid;place-items:center;cursor:pointer;pointer-events:auto;box-shadow:0 20px 55px rgba(53,70,190,.42),inset 0 1px rgba(255,255,255,.25);transition:.35s cubic-bezier(.2,.9,.2,1)}
+.fl-command-main:before{content:"";position:absolute;inset:-8px;border-radius:27px;border:1px solid rgba(124,92,255,.25);animation:flDockPulse 2.4s infinite}.fl-command-main:hover{transform:translateY(-3px) scale(1.04)}
+.fl-command-icon{font-size:29px;line-height:1;transition:.35s}.fl-command-dock.open .fl-command-main{transform:rotate(45deg) scale(1.04)}.fl-command-dock.open .fl-command-icon{transform:rotate(-45deg)}
+.fl-command-option{position:absolute;right:3px;bottom:3px;width:58px;height:58px;border:1px solid rgba(255,255,255,.22);border-radius:19px;color:#fff;display:grid;place-items:center;cursor:pointer;pointer-events:none;opacity:0;transform:translate(0,0) scale(.45);transition:.38s cubic-bezier(.16,1,.3,1);box-shadow:0 15px 35px rgba(0,0,0,.22);z-index:-1}.fl-command-option span{font-size:25px}.fl-command-option small{position:absolute;right:68px;white-space:nowrap;padding:8px 11px;border-radius:10px;background:#101827;color:#fff;font-size:11px;font-weight:900;opacity:0;transform:translateX(6px);transition:.2s}.fl-command-dock.open .fl-command-option{pointer-events:auto;opacity:1}.fl-command-dock.open .fl-command-option.ai{transform:translate(-2px,-145px) scale(1);background:linear-gradient(145deg,#705cff,#3b82f6);z-index:1}.fl-command-dock.open .fl-command-option.comments{transform:translate(-102px,-102px) scale(1);background:linear-gradient(145deg,#f05a9d,#8b5cf6);z-index:1}.fl-command-option:hover small{opacity:1;transform:none}@keyframes flDockPulse{50%{transform:scale(1.1);opacity:.15}100%{transform:scale(1);opacity:.7}}
+@media(max-width:700px){.fl-command-dock{right:14px;bottom:14px}.fl-command-main{width:58px;height:58px;border-radius:19px}.fl-command-option{width:53px;height:53px;border-radius:17px}.fl-command-dock.open .fl-command-option.ai{transform:translate(-2px,-128px) scale(1)}.fl-command-dock.open .fl-command-option.comments{transform:translate(-91px,-91px) scale(1)}.fl-command-option small{display:none}}
+</style></head>
 
 
 <body>
@@ -7990,5 +8011,19 @@ window.funlearnAchievementEmojiHTML=function(icon){const map={
 })();
 </script>
 
-</body>
+<div class="fl-command-dock" id="flCommandDock" aria-label="Menu cepat FunLearn">
+<button class="fl-command-option ai" id="flDockAI" type="button" aria-label="Buka FunLearn AI"><span>✦</span><small>FunLearn AI</small></button>
+<button class="fl-command-option comments" id="flDockComments" type="button" aria-label="Buka komentar"><span>💬</span><small>Komunitas</small></button>
+<button class="fl-command-main" id="flCommandMain" type="button" aria-label="Buka menu cepat" aria-expanded="false"><span class="fl-command-icon">＋</span></button>
+</div>
+<script id="funlearn-command-dock-js">
+(function(){
+const d=document.getElementById('flCommandDock'),m=document.getElementById('flCommandMain'),a=document.getElementById('flDockAI'),c=document.getElementById('flDockComments');
+function close(){d.classList.remove('open');m.setAttribute('aria-expanded','false')}
+m.onclick=e=>{e.stopPropagation();const o=d.classList.toggle('open');m.setAttribute('aria-expanded',String(o))};
+a.onclick=e=>{e.stopPropagation();close();const b=document.getElementById('fl-ai-fab');if(b){b.style.display='grid';b.click();b.style.display='none'}else{document.getElementById('flAiPanel')?.classList.add('show')}};
+c.onclick=e=>{e.stopPropagation();close();const b=document.getElementById('fl-comments-fab');if(b){b.style.display='grid';b.click();b.style.display='none'}else{document.getElementById('funlearn-comments-section')?.scrollIntoView({behavior:'smooth',block:'start'})}};
+document.addEventListener('click',e=>{if(!d.contains(e.target))close()});
+})();
+</script></body>
 </html>
