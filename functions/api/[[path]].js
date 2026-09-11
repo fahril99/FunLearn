@@ -135,17 +135,17 @@ function parseCookies(request) {
   const out = {};
 
   for (
-    const part of
-    (request.headers.get("cookie") || "").split(";")
+    const part of (
+      request.headers.get("cookie") || ""
+    ).split(";")
   ) {
     const i = part.indexOf("=");
 
     if (i > 0) {
-      out[
-        part.slice(0, i).trim()
-      ] = decodeURIComponent(
-        part.slice(i + 1).trim()
-      );
+      out[part.slice(0, i).trim()] =
+        decodeURIComponent(
+          part.slice(i + 1).trim()
+        );
     }
   }
 
@@ -177,16 +177,9 @@ function defaultState() {
 
 function errorDetail(err) {
   return String(
-    err?.message ||
-    err ||
-    "Unknown error"
+    err?.message || err || "Unknown error"
   ).slice(0, 1000);
 }
-
-
-/* =========================================================
-   AUTH
-========================================================= */
 
 async function getUser(request, env) {
   const token =
@@ -194,189 +187,101 @@ async function getUser(request, env) {
 
   if (!token) return null;
 
-  const sid =
-    await hashToken(token);
+  const sid = await hashToken(token);
 
   return await env.DB
-    .prepare(`
-      SELECT
-        u.id,
-        u.username
-      FROM sessions s
-      JOIN users u
-        ON u.id = s.user_id
-      WHERE
-        s.id_hash = ?
-        AND s.expires_at > datetime('now')
-    `)
+    .prepare(
+      "SELECT u.id,u.username FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.id_hash=? AND s.expires_at>datetime('now')"
+    )
     .bind(sid)
     .first();
 }
 
-
-/* =========================================================
-   USER STATE
-========================================================= */
-
 async function readState(env, userId) {
   const row = await env.DB
-    .prepare(`
-      SELECT
-        schema_version,
-        app_database_json,
-        online_data_json,
-        rewards_json
-      FROM user_data
-      WHERE user_id = ?
-    `)
+    .prepare(
+      "SELECT schema_version,app_database_json,online_data_json,rewards_json FROM user_data WHERE user_id=?"
+    )
     .bind(userId)
     .first();
 
   const state = row
     ? {
-        appDatabase:
-          safeJson(
-            row.app_database_json,
-            null
-          ),
-
-        onlineData:
-          safeJson(
-            row.online_data_json,
-            null
-          ),
-
+        appDatabase: safeJson(
+          row.app_database_json,
+          null
+        ),
+        onlineData: safeJson(
+          row.online_data_json,
+          null
+        ),
         onlineProgress: {},
-
-        rewards:
-          safeJson(
-            row.rewards_json,
-            []
-          ),
-
+        rewards: safeJson(
+          row.rewards_json,
+          []
+        ),
         onlineNotes: {},
-
         schemaVersion:
           row.schema_version || 1
       }
     : defaultState();
 
-  const progress =
-    await env.DB
-      .prepare(`
-        SELECT
-          module_id,
-          video_url,
-          current_time,
-          duration,
-          progress_percentage,
-          completed,
-          last_watched_at
-        FROM video_progress
-        WHERE user_id = ?
-      `)
-      .bind(userId)
-      .all();
+  const progress = await env.DB
+    .prepare(
+      "SELECT module_id,video_url,current_time,duration,progress_percentage,completed,last_watched_at FROM video_progress WHERE user_id=?"
+    )
+    .bind(userId)
+    .all();
 
-  for (
-    const p of
-    progress.results || []
-  ) {
-    state.onlineProgress[
-      p.module_id
-    ] = {
-      currentTime:
-        p.current_time,
-
-      duration:
-        p.duration,
-
-      percent:
-        p.progress_percentage,
-
-      completed:
-        !!p.completed,
-
-      completedDate:
-        p.completed
-          ? (
-              p.last_watched_at || ""
-            ).slice(0, 10)
-          : null,
-
-      lastWatchedAt:
-        p.last_watched_at,
-
-      videoUrl:
-        p.video_url
+  for (const p of progress.results || []) {
+    state.onlineProgress[p.module_id] = {
+      currentTime: p.current_time,
+      duration: p.duration,
+      percent: p.progress_percentage,
+      completed: !!p.completed,
+      completedDate: p.completed
+        ? (p.last_watched_at || "").slice(
+            0,
+            10
+          )
+        : null,
+      lastWatchedAt: p.last_watched_at,
+      videoUrl: p.video_url
     };
   }
 
   return state;
 }
 
-
-async function writeState(
-  env,
-  userId,
-  body
-) {
+async function writeState(env, userId, body) {
   const state = body || {};
 
-  const app =
-    JSON.stringify(
-      state.appDatabase &&
+  const app = JSON.stringify(
+    state.appDatabase &&
       typeof state.appDatabase === "object"
-        ? state.appDatabase
-        : {}
-    );
+      ? state.appDatabase
+      : {}
+  );
 
-  const online =
-    JSON.stringify(
-      state.onlineData &&
+  const online = JSON.stringify(
+    state.onlineData &&
       typeof state.onlineData === "object"
-        ? state.onlineData
-        : {}
-    );
+      ? state.onlineData
+      : {}
+  );
 
-  const rewards =
-    JSON.stringify(
-      Array.isArray(state.rewards)
-        ? state.rewards
-        : []
-    );
+  const rewards = JSON.stringify(
+    Array.isArray(state.rewards)
+      ? state.rewards
+      : []
+  );
 
   const ts = now();
 
   await env.DB
-    .prepare(`
-      INSERT INTO user_data(
-        user_id,
-        schema_version,
-        app_database_json,
-        online_data_json,
-        rewards_json,
-        updated_at
-      )
-      VALUES(?,?,?,?,?,?)
-
-      ON CONFLICT(user_id)
-      DO UPDATE SET
-        schema_version =
-          excluded.schema_version,
-
-        app_database_json =
-          excluded.app_database_json,
-
-        online_data_json =
-          excluded.online_data_json,
-
-        rewards_json =
-          excluded.rewards_json,
-
-        updated_at =
-          excluded.updated_at
-    `)
+    .prepare(
+      "INSERT INTO user_data(user_id,schema_version,app_database_json,online_data_json,rewards_json,updated_at) VALUES(?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET schema_version=excluded.schema_version,app_database_json=excluded.app_database_json,online_data_json=excluded.online_data_json,rewards_json=excluded.rewards_json,updated_at=excluded.updated_at"
+    )
     .bind(
       userId,
       1,
@@ -396,88 +301,42 @@ async function writeState(
   const stmts = [];
 
   for (
-    const [moduleId, p] of
-    Object.entries(modules).slice(
-      0,
-      5000
-    )
+    const [moduleId, p] of Object.entries(
+      modules
+    ).slice(0, 5000)
   ) {
-    const current =
+    const current = Math.max(
+      0,
+      Number(p.currentTime) || 0
+    );
+
+    const duration = Math.max(
+      0,
+      Number(p.duration) || 0
+    );
+
+    const percent = Math.min(
+      100,
       Math.max(
         0,
-        Number(p.currentTime) || 0
-      );
-
-    const duration =
-      Math.max(
-        0,
-        Number(p.duration) || 0
-      );
-
-    const percent =
-      Math.min(
-        100,
-        Math.max(
-          0,
-          Number(p.percent) || 0
-        )
-      );
+        Number(p.percent) || 0
+      )
+    );
 
     const completed =
-      p.completed === true
-        ? 1
-        : 0;
+      p.completed === true ? 1 : 0;
 
     stmts.push(
       env.DB
-        .prepare(`
-          INSERT INTO video_progress(
-            user_id,
-            module_id,
-            video_url,
-            current_time,
-            duration,
-            progress_percentage,
-            completed,
-            last_watched_at
-          )
-          VALUES(?,?,?,?,?,?,?,?)
-
-          ON CONFLICT(user_id,module_id)
-          DO UPDATE SET
-            video_url =
-              excluded.video_url,
-
-            current_time =
-              excluded.current_time,
-
-            duration =
-              excluded.duration,
-
-            progress_percentage =
-              excluded.progress_percentage,
-
-            completed =
-              MAX(
-                video_progress.completed,
-                excluded.completed
-              ),
-
-            last_watched_at =
-              excluded.last_watched_at
-        `)
+        .prepare(
+          "INSERT INTO video_progress(user_id,module_id,video_url,current_time,duration,progress_percentage,completed,last_watched_at) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(user_id,module_id) DO UPDATE SET video_url=excluded.video_url,current_time=excluded.current_time,duration=excluded.duration,progress_percentage=excluded.progress_percentage,completed=MAX(video_progress.completed,excluded.completed),last_watched_at=excluded.last_watched_at"
+        )
         .bind(
           userId,
-          String(moduleId).slice(
-            0,
-            200
-          ),
+          String(moduleId).slice(0, 200),
           String(
             p.videoUrl || ""
-          ).slice(
-            0,
-            2000
-          ),
+          ).slice(0, 2000),
           current,
           duration,
           percent,
@@ -492,45 +351,35 @@ async function writeState(
   }
 }
 
-
-/* =========================================================
-   SCHEMA HELPERS
-========================================================= */
-
 async function ensureColumn(
   env,
   table,
   column,
   definition
 ) {
-  const result =
-    await env.DB
-      .prepare(
-        `PRAGMA table_info(${table})`
-      )
-      .all();
+  const result = await env.DB
+    .prepare(
+      `PRAGMA table_info(${table})`
+    )
+    .all();
 
   if (
-    !(result.results || [])
-      .some(
-        c => c.name === column
-      )
+    !(result.results || []).some(
+      c => c.name === column
+    )
   ) {
     await env.DB
       .prepare(
-        `ALTER TABLE ${table}
-         ADD COLUMN ${column}
-         ${definition}`
+        `ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`
       )
       .run();
   }
 }
 
-
 async function ensureReplySchema(env) {
   await env.DB
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS comment_replies (
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS comment_replies (
         id TEXT PRIMARY KEY,
         comment_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
@@ -538,35 +387,30 @@ async function ensureReplySchema(env) {
         reply TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
-      )
-    `)
+      )`
+    )
     .run();
 
   await env.DB
-    .prepare(`
-      CREATE INDEX IF NOT EXISTS
-      idx_comment_replies_comment
-      ON comment_replies(
-        comment_id,
-        created_at
-      )
-    `)
+    .prepare(
+      `CREATE INDEX IF NOT EXISTS idx_comment_replies_comment
+       ON comment_replies(comment_id,created_at)`
+    )
     .run();
 }
 
-
 async function ensureGlobalCommentSchema(env) {
   await env.DB
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS comments (
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS comments (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         username TEXT NOT NULL,
         comment TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
-      )
-    `)
+      )`
+    )
     .run();
 
   for (
@@ -589,68 +433,47 @@ async function ensureGlobalCommentSchema(env) {
   await ensureReplySchema(env);
 
   await env.DB
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS comment_likes (
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS comment_likes (
         comment_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
         created_at TEXT NOT NULL,
-        PRIMARY KEY(
-          comment_id,
-          user_id
-        )
-      )
-    `)
+        PRIMARY KEY(comment_id,user_id)
+      )`
+    )
     .run();
 
   await env.DB
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS comment_reply_likes (
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS comment_reply_likes (
         reply_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
         created_at TEXT NOT NULL,
-        PRIMARY KEY(
-          reply_id,
-          user_id
-        )
-      )
-    `)
+        PRIMARY KEY(reply_id,user_id)
+      )`
+    )
     .run();
 }
 
-
-/* =========================================================
-   PUBLIC VIDEO SCHEMA
-========================================================= */
-
 async function ensurePublicVideoSchema(env) {
-
   await env.DB
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS public_videos (
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS public_videos (
         id TEXT PRIMARY KEY,
-
         user_id TEXT,
         username TEXT,
-
         title TEXT NOT NULL,
         module_title TEXT NOT NULL,
-
         description TEXT,
-
         video_url TEXT NOT NULL,
-
         created_at TEXT NOT NULL,
-
         owner_id TEXT,
         object_key TEXT,
-
         category TEXT,
-
         thumbnail_url TEXT,
-
         views INTEGER NOT NULL DEFAULT 0
-      )
-    `)
+      )`
+    )
     .run();
 
   for (
@@ -666,10 +489,7 @@ async function ensurePublicVideoSchema(env) {
       ["object_key", "TEXT"],
       ["category", "TEXT"],
       ["thumbnail_url", "TEXT"],
-      [
-        "views",
-        "INTEGER NOT NULL DEFAULT 0"
-      ]
+      ["views", "INTEGER NOT NULL DEFAULT 0"]
     ]
   ) {
     await ensureColumn(
@@ -681,136 +501,74 @@ async function ensurePublicVideoSchema(env) {
   }
 
   await env.DB
-    .prepare(`
-      CREATE INDEX IF NOT EXISTS
-      idx_public_videos_created
-      ON public_videos(
-        created_at DESC
-      )
-    `)
+    .prepare(
+      `CREATE INDEX IF NOT EXISTS idx_public_videos_created
+       ON public_videos(created_at DESC)`
+    )
     .run();
 
-
-  /* VIDEO LIKE / DISLIKE */
-
   await env.DB
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS
-      public_video_reactions (
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS public_video_reactions (
         video_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
-
         reaction TEXT NOT NULL
-          CHECK(
-            reaction IN (
-              'like',
-              'dislike'
-            )
-          ),
-
+          CHECK(reaction IN ('like','dislike')),
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
-
-        PRIMARY KEY(
-          video_id,
-          user_id
-        )
-      )
-    `)
+        PRIMARY KEY(video_id,user_id)
+      )`
+    )
     .run();
 
-
-  /* VIEW DEDUPLICATION */
-
   await env.DB
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS
-      public_video_views (
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS public_video_views (
         video_id TEXT NOT NULL,
-
         viewer_key TEXT NOT NULL,
-
         created_at TEXT NOT NULL,
-
         last_seen_at TEXT NOT NULL,
-
-        PRIMARY KEY(
-          video_id,
-          viewer_key
-        )
-      )
-    `)
+        PRIMARY KEY(video_id,viewer_key)
+      )`
+    )
     .run();
 
-
-  /* PUBLIC COMMENT LIKES */
-
   await env.DB
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS
-      public_video_comment_likes (
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS public_video_comment_likes (
         comment_id TEXT NOT NULL,
-
         user_id TEXT NOT NULL,
-
         created_at TEXT NOT NULL,
-
-        PRIMARY KEY(
-          comment_id,
-          user_id
-        )
-      )
-    `)
+        PRIMARY KEY(comment_id,user_id)
+      )`
+    )
     .run();
 
-
-  /* PUBLIC VIDEO NOTES */
-
   await env.DB
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS
-      public_video_notes (
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS public_video_notes (
         video_id TEXT NOT NULL,
-
         user_id TEXT NOT NULL,
-
-        note TEXT NOT NULL
-          DEFAULT '',
-
+        note TEXT NOT NULL DEFAULT '',
         updated_at TEXT NOT NULL,
-
-        PRIMARY KEY(
-          video_id,
-          user_id
-        )
-      )
-    `)
+        PRIMARY KEY(video_id,user_id)
+      )`
+    )
     .run();
 
-
-  /* PUBLIC VIDEO REPLIES */
-
   await env.DB
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS
-      public_video_replies (
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS public_video_replies (
         id TEXT PRIMARY KEY,
-
         comment_id TEXT NOT NULL,
-
         video_id TEXT NOT NULL,
-
         user_id TEXT NOT NULL,
-
         username TEXT NOT NULL,
-
         reply TEXT NOT NULL,
-
         created_at TEXT NOT NULL,
-
         updated_at TEXT NOT NULL
-      )
-    `)
+      )`
+    )
     .run();
 
   for (
@@ -833,40 +591,25 @@ async function ensurePublicVideoSchema(env) {
   }
 
   await env.DB
-    .prepare(`
-      CREATE INDEX IF NOT EXISTS
-      idx_public_video_replies_comment
-      ON public_video_replies(
-        comment_id,
-        created_at
-      )
-    `)
+    .prepare(
+      `CREATE INDEX IF NOT EXISTS idx_public_video_replies_comment
+       ON public_video_replies(comment_id,created_at)`
+    )
     .run();
 
-
-  /* PUBLIC VIDEO COMMENTS */
-
   await env.DB
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS
-      public_video_comments (
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS public_video_comments (
         id TEXT PRIMARY KEY,
-
         video_id TEXT NOT NULL,
-
         user_id TEXT NOT NULL,
-
         username TEXT NOT NULL,
-
         content TEXT NOT NULL,
-
         comment TEXT NOT NULL,
-
         created_at TEXT NOT NULL,
-
         updated_at TEXT NOT NULL
-      )
-    `)
+      )`
+    )
     .run();
 
   for (
@@ -889,21 +632,12 @@ async function ensurePublicVideoSchema(env) {
   }
 
   await env.DB
-    .prepare(`
-      CREATE INDEX IF NOT EXISTS
-      idx_public_video_comments_video
-      ON public_video_comments(
-        video_id,
-        created_at
-      )
-    `)
+    .prepare(
+      `CREATE INDEX IF NOT EXISTS idx_public_video_comments_video
+       ON public_video_comments(video_id,created_at)`
+    )
     .run();
 }
-
-
-/* =========================================================
-   PUBLIC VIDEO ROW
-========================================================= */
 
 async function publicVideoRow(
   env,
@@ -911,91 +645,43 @@ async function publicVideoRow(
   userId = null
 ) {
   return await env.DB
-    .prepare(`
-      SELECT
-
+    .prepare(
+      `SELECT
         v.id,
-
-        COALESCE(
-          v.user_id,
-          v.owner_id
-        ) AS userId,
-
-        COALESCE(
-          v.username,
-          ''
-        ) AS username,
-
+        COALESCE(v.user_id,v.owner_id) AS userId,
+        COALESCE(v.username,'') AS username,
         v.title,
-
-        COALESCE(
-          v.module_title,
-          ''
-        ) AS moduleTitle,
-
-        COALESCE(
-          v.description,
-          ''
-        ) AS description,
-
-        COALESCE(
-          v.video_url,
-          v.object_key
-        ) AS videoUrl,
-
-        COALESCE(
-          v.category,
-          'Lainnya'
-        ) AS category,
-
-        COALESCE(
-          v.thumbnail_url,
-          ''
-        ) AS thumbnailUrl,
-
+        COALESCE(v.module_title,'') AS moduleTitle,
+        COALESCE(v.description,'') AS description,
+        COALESCE(v.video_url,v.object_key) AS videoUrl,
+        COALESCE(v.category,'Lainnya') AS category,
+        COALESCE(v.thumbnail_url,'') AS thumbnailUrl,
         v.created_at AS createdAt,
-
-        COALESCE(
-          v.views,
-          0
-        ) AS views,
+        COALESCE(v.views,0) AS views,
 
         (
           SELECT COUNT(*)
           FROM public_video_reactions r
-          WHERE
-            r.video_id = v.id
-            AND r.reaction = 'like'
+          WHERE r.video_id=v.id
+          AND r.reaction='like'
         ) AS likes,
 
         (
           SELECT COUNT(*)
           FROM public_video_reactions r
-          WHERE
-            r.video_id = v.id
-            AND r.reaction = 'dislike'
+          WHERE r.video_id=v.id
+          AND r.reaction='dislike'
         ) AS dislikes,
 
         ${
           userId
-            ? `
-              (
-                SELECT reaction
-                FROM public_video_reactions r
-                WHERE
-                  r.video_id = v.id
-                  AND r.user_id = ?
-                LIMIT 1
-              )
-            `
+            ? "(SELECT reaction FROM public_video_reactions r WHERE r.video_id=v.id AND r.user_id=? LIMIT 1)"
             : "NULL"
-        }
-        AS viewerReaction
+        } AS viewerReaction
 
       FROM public_videos v
-
-      WHERE v.id = ?
-    `)
+      WHERE v.id=?`
+    )
     .bind(
       ...(userId
         ? [userId, idValue]
@@ -1003,11 +689,6 @@ async function publicVideoRow(
     )
     .first();
 }
-
-
-/* =========================================================
-   MAIN ROUTER
-========================================================= */
 
 export async function onRequest(
   context
@@ -1030,7 +711,6 @@ export async function onRequest(
   }
 
   try {
-
     const route =
       "/" +
       (params.path || []).join("/");
@@ -1046,20 +726,18 @@ export async function onRequest(
       method !== "DELETE" &&
       method !== "OPTIONS"
     ) {
-
-      const contentType =
+      const ct =
         request.headers.get(
           "content-type"
         ) || "";
 
       if (
-        contentType.includes(
+        ct.includes(
           "application/json"
         )
       ) {
         try {
-          body =
-            await request.json();
+          body = await request.json();
         } catch {
           return json(
             {
@@ -1073,25 +751,17 @@ export async function onRequest(
       }
     }
 
-
-    /* =====================================================
-       REGISTER
-    ===================================================== */
-
     if (
       route === "/register" &&
       method === "POST"
     ) {
-
       const username =
         normalizeUsername(
           body.username
         );
 
       const password =
-        String(
-          body.password || ""
-        );
+        String(body.password || "");
 
       if (
         !USERNAME_RE.test(
@@ -1109,29 +779,16 @@ export async function onRequest(
         );
       }
 
-      const userId =
-        id("usr");
-
+      const userId = id("usr");
       const ts = now();
-
       const hash =
-        await passwordHash(
-          password
-        );
+        await passwordHash(password);
 
       try {
-
         await env.DB
-          .prepare(`
-            INSERT INTO users(
-              id,
-              username,
-              password_hash,
-              created_at,
-              updated_at
-            )
-            VALUES(?,?,?,?,?)
-          `)
+          .prepare(
+            "INSERT INTO users(id,username,password_hash,created_at,updated_at) VALUES(?,?,?,?,?)"
+          )
           .bind(
             userId,
             username,
@@ -1140,9 +797,7 @@ export async function onRequest(
             ts
           )
           .run();
-
-      } catch {
-
+      } catch (e) {
         return json(
           {
             error:
@@ -1159,39 +814,24 @@ export async function onRequest(
       );
     }
 
-
-    /* =====================================================
-       LOGIN
-    ===================================================== */
-
     if (
       route === "/login" &&
       method === "POST"
     ) {
-
       const username =
         normalizeUsername(
           body.username
         );
 
       const password =
-        String(
-          body.password || ""
-        );
+        String(body.password || "");
 
-      const u =
-        await env.DB
-          .prepare(`
-            SELECT
-              id,
-              username,
-              password_hash
-            FROM users
-            WHERE username = ?
-            COLLATE NOCASE
-          `)
-          .bind(username)
-          .first();
+      const u = await env.DB
+        .prepare(
+          "SELECT id,username,password_hash FROM users WHERE username=? COLLATE NOCASE"
+        )
+        .bind(username)
+        .first();
 
       if (
         !u ||
@@ -1216,40 +856,27 @@ export async function onRequest(
       );
     }
 
-
-    /* =====================================================
-       LOGOUT
-    ===================================================== */
-
     if (
       route === "/logout" &&
       method === "POST"
     ) {
-
       const token =
-        parseCookies(
-          request
-        ).funlearn_session;
+        parseCookies(request)
+          .funlearn_session;
 
       if (token) {
-
         await env.DB
-          .prepare(`
-            DELETE FROM sessions
-            WHERE id_hash = ?
-          `)
+          .prepare(
+            "DELETE FROM sessions WHERE id_hash=?"
+          )
           .bind(
-            await hashToken(
-              token
-            )
+            await hashToken(token)
           )
           .run();
       }
 
       return json(
-        {
-          ok: true
-        },
+        { ok: true },
         200,
         {
           "set-cookie":
@@ -1260,117 +887,64 @@ export async function onRequest(
       );
     }
 
-
     const user =
       await getUser(
         request,
         env
       );
 
-
-    /* =====================================================
-       PUBLIC VIDEO LIST
-    ===================================================== */
+    // ============================================================
+    // PUBLIC VIDEO
+    // ============================================================
 
     if (
       route === "/public-videos" &&
       method === "GET"
     ) {
-
       await ensurePublicVideoSchema(
         env
       );
 
       const result =
         await env.DB
-          .prepare(`
-            SELECT
-
+          .prepare(
+            `SELECT
               v.id,
-
-              COALESCE(
-                v.user_id,
-                v.owner_id
-              ) AS userId,
-
-              COALESCE(
-                v.username,
-                ''
-              ) AS username,
-
+              COALESCE(v.user_id,v.owner_id) AS userId,
+              COALESCE(v.username,'') AS username,
               v.title,
-
-              COALESCE(
-                v.module_title,
-                ''
-              ) AS moduleTitle,
-
-              COALESCE(
-                v.description,
-                ''
-              ) AS description,
-
-              COALESCE(
-                v.video_url,
-                v.object_key
-              ) AS videoUrl,
-
-              COALESCE(
-                v.category,
-                'Lainnya'
-              ) AS category,
-
-              COALESCE(
-                v.thumbnail_url,
-                ''
-              ) AS thumbnailUrl,
-
+              COALESCE(v.module_title,'') AS moduleTitle,
+              COALESCE(v.description,'') AS description,
+              COALESCE(v.video_url,v.object_key) AS videoUrl,
+              COALESCE(v.category,'Lainnya') AS category,
+              COALESCE(v.thumbnail_url,'') AS thumbnailUrl,
               v.created_at AS createdAt,
-
-              COALESCE(
-                v.views,
-                0
-              ) AS views,
+              COALESCE(v.views,0) AS views,
 
               (
                 SELECT COUNT(*)
                 FROM public_video_reactions r
-                WHERE
-                  r.video_id = v.id
-                  AND r.reaction = 'like'
+                WHERE r.video_id=v.id
+                AND r.reaction='like'
               ) AS likes,
 
               (
                 SELECT COUNT(*)
                 FROM public_video_reactions r
-                WHERE
-                  r.video_id = v.id
-                  AND r.reaction = 'dislike'
+                WHERE r.video_id=v.id
+                AND r.reaction='dislike'
               ) AS dislikes,
 
               ${
                 user
-                  ? `
-                    (
-                      SELECT reaction
-                      FROM public_video_reactions r
-                      WHERE
-                        r.video_id = v.id
-                        AND r.user_id = ?
-                      LIMIT 1
-                    )
-                  `
+                  ? "(SELECT reaction FROM public_video_reactions r WHERE r.video_id=v.id AND r.user_id=? LIMIT 1)"
                   : "NULL"
-              }
-              AS viewerReaction
+              } AS viewerReaction
 
             FROM public_videos v
-
-            ORDER BY
-              v.created_at DESC
-
-            LIMIT 500
-          `)
+            ORDER BY v.created_at DESC
+            LIMIT 500`
+          )
           .bind(
             ...(user
               ? [user.id]
@@ -1378,25 +952,17 @@ export async function onRequest(
           )
           .all();
 
-      return json(
-        {
-          ok: true,
-          videos:
-            result.results || []
-        }
-      );
+      return json({
+        ok: true,
+        videos:
+          result.results || []
+      });
     }
-
-
-    /* =====================================================
-       PUBLIC VIDEO CREATE
-    ===================================================== */
 
     if (
       route === "/public-videos" &&
       method === "POST"
     ) {
-
       if (!user) {
         return json(
           {
@@ -1436,6 +1002,13 @@ export async function onRequest(
           body.videoUrl || ""
         ).trim();
 
+      /*
+       * Thumbnail sekarang boleh berupa:
+       * - data:image/jpeg;base64,...
+       * - URL HTTPS biasa
+       *
+       * Jadi thumbnail TIDAK perlu dikirim ke Top4Top.
+       */
       const thumbnailUrl =
         String(
           body.thumbnailUrl || ""
@@ -1462,7 +1035,7 @@ export async function onRequest(
         category.length > 80 ||
         description.length > 600 ||
         videoUrl.length > 4000 ||
-        thumbnailUrl.length > 4000
+        thumbnailUrl.length > 350000
       ) {
         return json(
           {
@@ -1487,15 +1060,32 @@ export async function onRequest(
         );
       }
 
+      if (
+        thumbnailUrl &&
+        !/^https:\/\//i.test(
+          thumbnailUrl
+        ) &&
+        !/^data:image\/(jpeg|jpg|png|webp);base64,/i.test(
+          thumbnailUrl
+        )
+      ) {
+        return json(
+          {
+            error:
+              "Format thumbnail tidak valid."
+          },
+          400
+        );
+      }
+
       const videoId =
         id("pvideo");
 
-      const ts =
-        now();
+      const ts = now();
 
       await env.DB
-        .prepare(`
-          INSERT INTO public_videos(
+        .prepare(
+          `INSERT INTO public_videos(
             id,
             owner_id,
             title,
@@ -1511,21 +1101,9 @@ export async function onRequest(
             views
           )
           VALUES(
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            0
-          )
-        `)
+            ?,?,?,?,?,?,?,?,?,?,?,?,0
+          )`
+        )
         .bind(
           videoId,
           user.id,
@@ -1556,11 +1134,6 @@ export async function onRequest(
       );
     }
 
-
-    /* =====================================================
-       PUBLIC VIDEO EDIT
-    ===================================================== */
-
     const pvm =
       route.match(
         /^\/public-videos\/([^/]+)$/
@@ -1570,7 +1143,6 @@ export async function onRequest(
       pvm &&
       method === "PATCH"
     ) {
-
       if (!user) {
         return json(
           {
@@ -1585,27 +1157,14 @@ export async function onRequest(
         env
       );
 
-      const videoId =
-        pvm[1];
+      const vid = pvm[1];
 
       const old =
         await env.DB
-          .prepare(`
-            SELECT
-              id,
-              COALESCE(
-                user_id,
-                owner_id
-              ) AS owner_id,
-              title,
-              module_title,
-              description,
-              category,
-              thumbnail_url
-            FROM public_videos
-            WHERE id = ?
-          `)
-          .bind(videoId)
+          .prepare(
+            "SELECT id,COALESCE(user_id,owner_id) AS owner_id,title,module_title,description,category,thumbnail_url FROM public_videos WHERE id=?"
+          )
+          .bind(vid)
           .first();
 
       if (!old) {
@@ -1618,23 +1177,13 @@ export async function onRequest(
         );
       }
 
-      const isOwner =
-        String(
-          old.owner_id
-        ) ===
-        String(
-          user.id
-        );
-
-      const isDeveloper =
+      if (
+        String(old.owner_id) !==
+          String(user.id) &&
         String(
           user.username
-        ).toLowerCase() ===
-        "fazmen";
-
-      if (
-        !isOwner &&
-        !isDeveloper
+        ).toLowerCase() !==
+          "fazmen"
       ) {
         return json(
           {
@@ -1648,34 +1197,34 @@ export async function onRequest(
       const title =
         String(
           body.title ??
-          old.title
+            old.title
         ).trim();
 
       const moduleTitle =
         String(
           body.moduleTitle ??
-          old.module_title
+            old.module_title
         ).trim();
 
       const category =
         String(
           body.category ??
-          old.category ??
-          "Lainnya"
+            old.category ??
+            "Lainnya"
         ).trim();
 
       const description =
         String(
           body.description ??
-          old.description ??
-          ""
+            old.description ??
+            ""
         ).trim();
 
       const thumbnailUrl =
         String(
           body.thumbnailUrl ??
-          old.thumbnail_url ??
-          ""
+            old.thumbnail_url ??
+            ""
         ).trim();
 
       if (
@@ -1697,7 +1246,7 @@ export async function onRequest(
         moduleTitle.length > 100 ||
         category.length > 80 ||
         description.length > 600 ||
-        thumbnailUrl.length > 4000
+        thumbnailUrl.length > 350000
       ) {
         return json(
           {
@@ -1708,52 +1257,53 @@ export async function onRequest(
         );
       }
 
+      if (
+        thumbnailUrl &&
+        !/^https:\/\//i.test(
+          thumbnailUrl
+        ) &&
+        !/^data:image\/(jpeg|jpg|png|webp);base64,/i.test(
+          thumbnailUrl
+        )
+      ) {
+        return json(
+          {
+            error:
+              "Format thumbnail tidak valid."
+          },
+          400
+        );
+      }
+
       await env.DB
-        .prepare(`
-          UPDATE public_videos
-
-          SET
-            title = ?,
-            module_title = ?,
-            category = ?,
-            description = ?,
-            thumbnail_url = ?
-
-          WHERE id = ?
-        `)
+        .prepare(
+          "UPDATE public_videos SET title=?,module_title=?,category=?,description=?,thumbnail_url=? WHERE id=?"
+        )
         .bind(
           title,
           moduleTitle,
           category,
           description,
           thumbnailUrl,
-          videoId
+          vid
         )
         .run();
 
-      return json(
-        {
-          ok: true,
-          video:
-            await publicVideoRow(
-              env,
-              videoId,
-              user.id
-            )
-        }
-      );
+      return json({
+        ok: true,
+        video:
+          await publicVideoRow(
+            env,
+            vid,
+            user.id
+          )
+      });
     }
-
-
-    /* =====================================================
-       PUBLIC VIDEO DELETE
-    ===================================================== */
 
     if (
       pvm &&
       method === "DELETE"
     ) {
-
       if (!user) {
         return json(
           {
@@ -1768,22 +1318,14 @@ export async function onRequest(
         env
       );
 
-      const videoId =
-        pvm[1];
+      const vid = pvm[1];
 
       const v =
         await env.DB
-          .prepare(`
-            SELECT
-              id,
-              COALESCE(
-                user_id,
-                owner_id
-              ) AS owner_id
-            FROM public_videos
-            WHERE id = ?
-          `)
-          .bind(videoId)
+          .prepare(
+            "SELECT id,COALESCE(user_id,owner_id) AS owner_id FROM public_videos WHERE id=?"
+          )
+          .bind(vid)
           .first();
 
       if (!v) {
@@ -1796,19 +1338,14 @@ export async function onRequest(
         );
       }
 
-      const allowed =
-        String(
-          v.owner_id
-        ) ===
-        String(
-          user.id
-        ) ||
+      if (
+        String(v.owner_id) !==
+          String(user.id) &&
         String(
           user.username
-        ).toLowerCase() ===
-        "fazmen";
-
-      if (!allowed) {
+        ).toLowerCase() !==
+          "fazmen"
+      ) {
         return json(
           {
             error:
@@ -1820,62 +1357,48 @@ export async function onRequest(
 
       await env.DB.batch([
         env.DB
-          .prepare(`
-            DELETE FROM public_video_replies
-            WHERE video_id = ?
-          `)
-          .bind(videoId),
+          .prepare(
+            "DELETE FROM public_video_replies WHERE video_id=?"
+          )
+          .bind(vid),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_comments
-            WHERE video_id = ?
-          `)
-          .bind(videoId),
+          .prepare(
+            "DELETE FROM public_video_comments WHERE video_id=?"
+          )
+          .bind(vid),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_reactions
-            WHERE video_id = ?
-          `)
-          .bind(videoId),
+          .prepare(
+            "DELETE FROM public_video_reactions WHERE video_id=?"
+          )
+          .bind(vid),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_views
-            WHERE video_id = ?
-          `)
-          .bind(videoId),
+          .prepare(
+            "DELETE FROM public_video_views WHERE video_id=?"
+          )
+          .bind(vid),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_notes
-            WHERE video_id = ?
-          `)
-          .bind(videoId),
+          .prepare(
+            "DELETE FROM public_video_notes WHERE video_id=?"
+          )
+          .bind(vid),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_videos
-            WHERE id = ?
-          `)
-          .bind(videoId)
+          .prepare(
+            "DELETE FROM public_videos WHERE id=?"
+          )
+          .bind(vid)
       ]);
 
-      return json(
-        {
-          ok: true,
-          deleted: true,
-          videoId
-        }
-      );
+      return json({
+        ok: true,
+        deleted: true,
+        videoId: vid
+      });
     }
-
-
-    /* =====================================================
-       VIDEO VIEW
-       1 DEVICE = 1 VIEW
-    ===================================================== */
 
     const pview =
       route.match(
@@ -1886,25 +1409,21 @@ export async function onRequest(
       pview &&
       method === "POST"
     ) {
-
       await ensurePublicVideoSchema(
         env
       );
 
-      const videoId =
-        pview[1];
+      const vid = pview[1];
 
-      const video =
+      const v =
         await env.DB
-          .prepare(`
-            SELECT id
-            FROM public_videos
-            WHERE id = ?
-          `)
-          .bind(videoId)
+          .prepare(
+            "SELECT id FROM public_videos WHERE id=?"
+          )
+          .bind(vid)
           .first();
 
-      if (!video) {
+      if (!v) {
         return json(
           {
             error:
@@ -1915,103 +1434,65 @@ export async function onRequest(
       }
 
       const cookies =
-        parseCookies(
-          request
-        );
+        parseCookies(request);
 
       let device =
         cookies.funlearn_view_device;
 
-      let setCookie =
-        null;
+      let setCookie = null;
 
       if (!device) {
         device =
-          b64(
-            randomBytes(24)
-          );
+          b64(randomBytes(24));
 
-        setCookie =
-          cookie(
-            "funlearn_view_device",
-            device,
-            31536000
-          );
+        setCookie = cookie(
+          "funlearn_view_device",
+          device,
+          31536000
+        );
       }
 
       const viewerKey =
-        await hashToken(
-          device
-        );
+        await hashToken(device);
 
       const existing =
         await env.DB
-          .prepare(`
-            SELECT
-              video_id
-            FROM public_video_views
-            WHERE
-              video_id = ?
-              AND viewer_key = ?
-          `)
+          .prepare(
+            "SELECT video_id FROM public_video_views WHERE video_id=? AND viewer_key=?"
+          )
           .bind(
-            videoId,
+            vid,
             viewerKey
           )
           .first();
 
       if (!existing) {
-
-        const ts =
-          now();
-
         await env.DB.batch([
-
           env.DB
-            .prepare(`
-              INSERT INTO public_video_views(
-                video_id,
-                viewer_key,
-                created_at,
-                last_seen_at
-              )
-              VALUES(?,?,?,?)
-            `)
+            .prepare(
+              "INSERT INTO public_video_views(video_id,viewer_key,created_at,last_seen_at) VALUES(?,?,?,?)"
+            )
             .bind(
-              videoId,
+              vid,
               viewerKey,
-              ts,
-              ts
+              now(),
+              now()
             ),
 
           env.DB
-            .prepare(`
-              UPDATE public_videos
-              SET views =
-                COALESCE(
-                  views,
-                  0
-                ) + 1
-              WHERE id = ?
-            `)
-            .bind(videoId)
+            .prepare(
+              "UPDATE public_videos SET views=COALESCE(views,0)+1 WHERE id=?"
+            )
+            .bind(vid)
         ]);
-
       } else {
-
         await env.DB
-          .prepare(`
-            UPDATE public_video_views
-
-            SET last_seen_at = ?
-
-            WHERE
-              video_id = ?
-              AND viewer_key = ?
-          `)
+          .prepare(
+            "UPDATE public_video_views SET last_seen_at=? WHERE video_id=? AND viewer_key=?"
+          )
           .bind(
             now(),
-            videoId,
+            vid,
             viewerKey
           )
           .run();
@@ -2020,15 +1501,14 @@ export async function onRequest(
       const row =
         await publicVideoRow(
           env,
-          videoId,
+          vid,
           user?.id || null
         );
 
       return json(
         {
           ok: true,
-          counted:
-            !existing,
+          counted: !existing,
           video: row
         },
         200,
@@ -2041,11 +1521,6 @@ export async function onRequest(
       );
     }
 
-
-    /* =====================================================
-       VIDEO LIKE / DISLIKE
-    ===================================================== */
-
     const pvreact =
       route.match(
         /^\/public-videos\/([^/]+)\/reaction$/
@@ -2055,7 +1530,6 @@ export async function onRequest(
       pvreact &&
       method === "POST"
     ) {
-
       if (!user) {
         return json(
           {
@@ -2070,7 +1544,7 @@ export async function onRequest(
         env
       );
 
-      const videoId =
+      const vid =
         pvreact[1];
 
       const reaction =
@@ -2079,10 +1553,7 @@ export async function onRequest(
         ).toLowerCase();
 
       if (
-        ![
-          "like",
-          "dislike"
-        ].includes(
+        !["like", "dislike"].includes(
           reaction
         )
       ) {
@@ -2095,17 +1566,15 @@ export async function onRequest(
         );
       }
 
-      const video =
+      const v =
         await env.DB
-          .prepare(`
-            SELECT id
-            FROM public_videos
-            WHERE id = ?
-          `)
-          .bind(videoId)
+          .prepare(
+            "SELECT id FROM public_videos WHERE id=?"
+          )
+          .bind(vid)
           .first();
 
-      if (!video) {
+      if (!v) {
         return json(
           {
             error:
@@ -2117,16 +1586,11 @@ export async function onRequest(
 
       const old =
         await env.DB
-          .prepare(`
-            SELECT reaction
-            FROM public_video_reactions
-
-            WHERE
-              video_id = ?
-              AND user_id = ?
-          `)
+          .prepare(
+            "SELECT reaction FROM public_video_reactions WHERE video_id=? AND user_id=?"
+          )
           .bind(
-            videoId,
+            vid,
             user.id
           )
           .first();
@@ -2135,48 +1599,22 @@ export async function onRequest(
         old?.reaction ===
         reaction
       ) {
-
         await env.DB
-          .prepare(`
-            DELETE FROM public_video_reactions
-
-            WHERE
-              video_id = ?
-              AND user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM public_video_reactions WHERE video_id=? AND user_id=?"
+          )
           .bind(
-            videoId,
+            vid,
             user.id
           )
           .run();
-
       } else {
-
         await env.DB
-          .prepare(`
-            INSERT INTO public_video_reactions(
-              video_id,
-              user_id,
-              reaction,
-              created_at,
-              updated_at
-            )
-            VALUES(?,?,?,?,?)
-
-            ON CONFLICT(
-              video_id,
-              user_id
-            )
-
-            DO UPDATE SET
-              reaction =
-                excluded.reaction,
-
-              updated_at =
-                excluded.updated_at
-          `)
+          .prepare(
+            "INSERT INTO public_video_reactions(video_id,user_id,reaction,created_at,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(video_id,user_id) DO UPDATE SET reaction=excluded.reaction,updated_at=excluded.updated_at"
+          )
           .bind(
-            videoId,
+            vid,
             user.id,
             reaction,
             now(),
@@ -2185,23 +1623,16 @@ export async function onRequest(
           .run();
       }
 
-      return json(
-        {
-          ok: true,
-          video:
-            await publicVideoRow(
-              env,
-              videoId,
-              user.id
-            )
-        }
-      );
+      return json({
+        ok: true,
+        video:
+          await publicVideoRow(
+            env,
+            vid,
+            user.id
+          )
+      });
     }
-
-
-    /* =====================================================
-       PUBLIC VIDEO NOTE GET
-    ===================================================== */
 
     const pvnote =
       route.match(
@@ -2212,7 +1643,6 @@ export async function onRequest(
       pvnote &&
       method === "GET"
     ) {
-
       if (!user) {
         return json(
           {
@@ -2227,46 +1657,29 @@ export async function onRequest(
         env
       );
 
-      const result =
+      const r =
         await env.DB
-          .prepare(`
-            SELECT
-              note,
-              updated_at AS updatedAt
-            FROM public_video_notes
-
-            WHERE
-              video_id = ?
-              AND user_id = ?
-          `)
+          .prepare(
+            "SELECT note,updated_at AS updatedAt FROM public_video_notes WHERE video_id=? AND user_id=?"
+          )
           .bind(
             pvnote[1],
             user.id
           )
           .first();
 
-      return json(
-        {
-          ok: true,
-          note:
-            result?.note || "",
-          updatedAt:
-            result?.updatedAt ||
-            null
-        }
-      );
+      return json({
+        ok: true,
+        note: r?.note || "",
+        updatedAt:
+          r?.updatedAt || null
+      });
     }
-
-
-    /* =====================================================
-       PUBLIC VIDEO NOTE SAVE
-    ===================================================== */
 
     if (
       pvnote &&
       method === "PUT"
     ) {
-
       if (!user) {
         return json(
           {
@@ -2286,9 +1699,7 @@ export async function onRequest(
           body.note || ""
         );
 
-      if (
-        note.length > 5000
-      ) {
+      if (note.length > 5000) {
         return json(
           {
             error:
@@ -2298,31 +1709,12 @@ export async function onRequest(
         );
       }
 
-      const ts =
-        now();
+      const ts = now();
 
       await env.DB
-        .prepare(`
-          INSERT INTO public_video_notes(
-            video_id,
-            user_id,
-            note,
-            updated_at
-          )
-          VALUES(?,?,?,?)
-
-          ON CONFLICT(
-            video_id,
-            user_id
-          )
-
-          DO UPDATE SET
-            note =
-              excluded.note,
-
-            updated_at =
-              excluded.updated_at
-        `)
+        .prepare(
+          "INSERT INTO public_video_notes(video_id,user_id,note,updated_at) VALUES(?,?,?,?) ON CONFLICT(video_id,user_id) DO UPDATE SET note=excluded.note,updated_at=excluded.updated_at"
+        )
         .bind(
           pvnote[1],
           user.id,
@@ -2331,19 +1723,12 @@ export async function onRequest(
         )
         .run();
 
-      return json(
-        {
-          ok: true,
-          note,
-          updatedAt: ts
-        }
-      );
+      return json({
+        ok: true,
+        note,
+        updatedAt: ts
+      });
     }
-
-
-    /* =====================================================
-       PUBLIC VIDEO COMMENTS GET
-    ===================================================== */
 
     const pvc =
       route.match(
@@ -2354,151 +1739,85 @@ export async function onRequest(
       pvc &&
       method === "GET"
     ) {
-
       await ensurePublicVideoSchema(
         env
       );
 
-      const videoId =
-        pvc[1];
+      const vid = pvc[1];
 
       const cr =
         await env.DB
-          .prepare(`
-            SELECT
-
+          .prepare(
+            `SELECT
               c.id,
-
               c.video_id AS videoId,
-
               c.user_id AS userId,
-
               c.username,
-
               c.comment,
-
               c.created_at AS createdAt,
-
               c.updated_at AS updatedAt,
 
               (
                 SELECT COUNT(*)
                 FROM public_video_comment_likes l
-
-                WHERE
-                  l.comment_id =
-                    c.id
+                WHERE l.comment_id=c.id
               ) AS likes,
 
               ${
                 user
-                  ? `
-                    EXISTS(
-                      SELECT 1
-                      FROM public_video_comment_likes l
-
-                      WHERE
-                        l.comment_id =
-                          c.id
-
-                        AND l.user_id =
-                          ?
-                    )
-                  `
+                  ? "EXISTS(SELECT 1 FROM public_video_comment_likes l WHERE l.comment_id=c.id AND l.user_id=?)"
                   : "0"
-              }
-
-              AS liked
+              } AS liked
 
             FROM public_video_comments c
-
-            WHERE
-              c.video_id = ?
-
-            ORDER BY
-              c.created_at ASC
-          `)
+            WHERE c.video_id=?
+            ORDER BY c.created_at ASC`
+          )
           .bind(
             ...(user
               ? [
                   user.id,
-                  videoId
+                  vid
                 ]
-              : [videoId])
+              : [vid])
           )
           .all();
 
       const rr =
         await env.DB
-          .prepare(`
-            SELECT
-
-              id,
-
-              comment_id AS commentId,
-
-              video_id AS videoId,
-
-              user_id AS userId,
-
-              username,
-
-              reply,
-
-              created_at AS createdAt,
-
-              updated_at AS updatedAt
-
-            FROM public_video_replies
-
-            WHERE video_id = ?
-
-            ORDER BY created_at ASC
-          `)
-          .bind(videoId)
+          .prepare(
+            "SELECT id,comment_id AS commentId,video_id AS videoId,user_id AS userId,username,reply,created_at AS createdAt,updated_at AS updatedAt FROM public_video_replies WHERE video_id=? ORDER BY created_at ASC"
+          )
+          .bind(vid)
           .all();
 
       const comments =
-        (
-          cr.results || []
-        ).map(c => ({
-          ...c,
-
-          liked:
-            !!c.liked,
-
-          replies:
-            (
-              rr.results || []
-            ).filter(
-              r =>
-                String(
-                  r.commentId
-                ) ===
-                String(
-                  c.id
+        (cr.results || []).map(
+          c => ({
+            ...c,
+            liked: !!c.liked,
+            replies:
+              (rr.results || [])
+                .filter(
+                  r =>
+                    String(
+                      r.commentId
+                    ) ===
+                    String(c.id)
                 )
-            )
-        }));
+          })
+        );
 
-      return json(
-        {
-          ok: true,
-          comments
-        }
-      );
+      return json({
+        ok: true,
+        comments
+      });
     }
-
-
-    /* =====================================================
-       PUBLIC VIDEO COMMENT CREATE
-    ===================================================== */
 
     if (
       pvc &&
       method === "POST"
     ) {
-
       if (!user) {
         return json(
           {
@@ -2513,14 +1832,13 @@ export async function onRequest(
         env
       );
 
-      const videoId =
-        pvc[1];
+      const vid = pvc[1];
 
       const comment =
         String(
           body.comment ||
-          body.text ||
-          ""
+            body.text ||
+            ""
         ).trim();
 
       if (!comment) {
@@ -2533,10 +1851,7 @@ export async function onRequest(
         );
       }
 
-      if (
-        comment.length >
-        2000
-      ) {
+      if (comment.length > 2000) {
         return json(
           {
             error:
@@ -2546,29 +1861,18 @@ export async function onRequest(
         );
       }
 
-      const commentId =
+      const cid =
         id("pvcomment");
 
-      const ts =
-        now();
+      const ts = now();
 
       await env.DB
-        .prepare(`
-          INSERT INTO public_video_comments(
-            id,
-            video_id,
-            user_id,
-            username,
-            content,
-            comment,
-            created_at,
-            updated_at
-          )
-          VALUES(?,?,?,?,?,?,?,?)
-        `)
+        .prepare(
+          "INSERT INTO public_video_comments(id,video_id,user_id,username,content,comment,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)"
+        )
         .bind(
-          commentId,
-          videoId,
+          cid,
+          vid,
           user.id,
           user.username,
           comment,
@@ -2581,42 +1885,23 @@ export async function onRequest(
       return json(
         {
           ok: true,
-
           comment: {
-            id:
-              commentId,
-
-            videoId,
-
-            userId:
-              user.id,
-
+            id: cid,
+            videoId: vid,
+            userId: user.id,
             username:
               user.username,
-
             comment,
-
-            createdAt:
-              ts,
-
-            updatedAt:
-              ts,
-
+            createdAt: ts,
+            updatedAt: ts,
             likes: 0,
-
             liked: false,
-
             replies: []
           }
         },
         201
       );
     }
-
-
-    /* =====================================================
-       PUBLIC VIDEO COMMENT LIKE
-    ===================================================== */
 
     const pvcl =
       route.match(
@@ -2627,7 +1912,6 @@ export async function onRequest(
       pvcl &&
       method === "POST"
     ) {
-
       if (!user) {
         return json(
           {
@@ -2642,29 +1926,18 @@ export async function onRequest(
         env
       );
 
-      const videoId =
-        pvcl[1];
+      const vid = pvcl[1];
+      const cid = pvcl[2];
 
-      const commentId =
-        pvcl[2];
-
-      const comment =
+      const c =
         await env.DB
-          .prepare(`
-            SELECT id
-            FROM public_video_comments
-
-            WHERE
-              id = ?
-              AND video_id = ?
-          `)
-          .bind(
-            commentId,
-            videoId
+          .prepare(
+            "SELECT id FROM public_video_comments WHERE id=? AND video_id=?"
           )
+          .bind(cid, vid)
           .first();
 
-      if (!comment) {
+      if (!c) {
         return json(
           {
             error:
@@ -2676,49 +1949,32 @@ export async function onRequest(
 
       const old =
         await env.DB
-          .prepare(`
-            SELECT comment_id
-            FROM public_video_comment_likes
-
-            WHERE
-              comment_id = ?
-              AND user_id = ?
-          `)
+          .prepare(
+            "SELECT comment_id FROM public_video_comment_likes WHERE comment_id=? AND user_id=?"
+          )
           .bind(
-            commentId,
+            cid,
             user.id
           )
           .first();
 
       if (old) {
-
         await env.DB
-          .prepare(`
-            DELETE FROM public_video_comment_likes
-
-            WHERE
-              comment_id = ?
-              AND user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM public_video_comment_likes WHERE comment_id=? AND user_id=?"
+          )
           .bind(
-            commentId,
+            cid,
             user.id
           )
           .run();
-
       } else {
-
         await env.DB
-          .prepare(`
-            INSERT INTO public_video_comment_likes(
-              comment_id,
-              user_id,
-              created_at
-            )
-            VALUES(?,?,?)
-          `)
+          .prepare(
+            "INSERT INTO public_video_comment_likes(comment_id,user_id,created_at) VALUES(?,?,?)"
+          )
           .bind(
-            commentId,
+            cid,
             user.id,
             now()
           )
@@ -2727,35 +1983,19 @@ export async function onRequest(
 
       const count =
         await env.DB
-          .prepare(`
-            SELECT COUNT(*) AS n
-
-            FROM public_video_comment_likes
-
-            WHERE comment_id = ?
-          `)
-          .bind(commentId)
+          .prepare(
+            "SELECT COUNT(*) AS n FROM public_video_comment_likes WHERE comment_id=?"
+          )
+          .bind(cid)
           .first();
 
-      return json(
-        {
-          ok: true,
-
-          liked:
-            !old,
-
-          likes:
-            Number(
-              count?.n
-            ) || 0
-        }
-      );
+      return json({
+        ok: true,
+        liked: !old,
+        likes:
+          Number(count?.n) || 0
+      });
     }
-
-
-    /* =====================================================
-       PUBLIC VIDEO REPLY
-    ===================================================== */
 
     const pvr =
       route.match(
@@ -2766,7 +2006,6 @@ export async function onRequest(
       pvr &&
       method === "POST"
     ) {
-
       if (!user) {
         return json(
           {
@@ -2781,26 +2020,15 @@ export async function onRequest(
         env
       );
 
-      const videoId =
-        pvr[1];
-
-      const commentId =
-        pvr[2];
+      const vid = pvr[1];
+      const cid = pvr[2];
 
       const parent =
         await env.DB
-          .prepare(`
-            SELECT id
-            FROM public_video_comments
-
-            WHERE
-              id = ?
-              AND video_id = ?
-          `)
-          .bind(
-            commentId,
-            videoId
+          .prepare(
+            "SELECT id FROM public_video_comments WHERE id=? AND video_id=?"
           )
+          .bind(cid, vid)
           .first();
 
       if (!parent) {
@@ -2816,9 +2044,9 @@ export async function onRequest(
       const reply =
         String(
           body.reply ||
-          body.comment ||
-          body.text ||
-          ""
+            body.comment ||
+            body.text ||
+            ""
         ).trim();
 
       if (!reply) {
@@ -2831,10 +2059,7 @@ export async function onRequest(
         );
       }
 
-      if (
-        reply.length >
-        2000
-      ) {
+      if (reply.length > 2000) {
         return json(
           {
             error:
@@ -2844,30 +2069,19 @@ export async function onRequest(
         );
       }
 
-      const replyId =
+      const rid =
         id("pvreply");
 
-      const ts =
-        now();
+      const ts = now();
 
       await env.DB
-        .prepare(`
-          INSERT INTO public_video_replies(
-            id,
-            comment_id,
-            video_id,
-            user_id,
-            username,
-            reply,
-            created_at,
-            updated_at
-          )
-          VALUES(?,?,?,?,?,?,?,?)
-        `)
+        .prepare(
+          "INSERT INTO public_video_replies(id,comment_id,video_id,user_id,username,reply,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)"
+        )
         .bind(
-          replyId,
-          commentId,
-          videoId,
+          rid,
+          cid,
+          vid,
           user.id,
           user.username,
           reply,
@@ -2879,38 +2093,21 @@ export async function onRequest(
       return json(
         {
           ok: true,
-
           reply: {
-            id:
-              replyId,
-
-            commentId,
-
-            videoId,
-
-            userId:
-              user.id,
-
+            id: rid,
+            commentId: cid,
+            videoId: vid,
+            userId: user.id,
             username:
               user.username,
-
             reply,
-
-            createdAt:
-              ts,
-
-            updatedAt:
-              ts
+            createdAt: ts,
+            updatedAt: ts
           }
         },
         201
       );
     }
-
-
-    /* =====================================================
-       PUBLIC COMMENT DELETE
-    ===================================================== */
 
     const pvcd =
       route.match(
@@ -2921,7 +2118,6 @@ export async function onRequest(
       pvcd &&
       method === "DELETE"
     ) {
-
       if (!user) {
         return json(
           {
@@ -2936,31 +2132,18 @@ export async function onRequest(
         env
       );
 
-      const videoId =
-        pvcd[1];
+      const vid = pvcd[1];
+      const cid = pvcd[2];
 
-      const commentId =
-        pvcd[2];
-
-      const comment =
+      const c =
         await env.DB
-          .prepare(`
-            SELECT
-              id,
-              user_id
-            FROM public_video_comments
-
-            WHERE
-              id = ?
-              AND video_id = ?
-          `)
-          .bind(
-            commentId,
-            videoId
+          .prepare(
+            "SELECT id,user_id FROM public_video_comments WHERE id=? AND video_id=?"
           )
+          .bind(cid, vid)
           .first();
 
-      if (!comment) {
+      if (!c) {
         return json(
           {
             error:
@@ -2970,19 +2153,14 @@ export async function onRequest(
         );
       }
 
-      const allowed =
-        String(
-          comment.user_id
-        ) ===
-        String(
-          user.id
-        ) ||
+      if (
+        String(c.user_id) !==
+          String(user.id) &&
         String(
           user.username
-        ).toLowerCase() ===
-        "fazmen";
-
-      if (!allowed) {
+        ).toLowerCase() !==
+          "fazmen"
+      ) {
         return json(
           {
             error:
@@ -2993,45 +2171,31 @@ export async function onRequest(
       }
 
       await env.DB.batch([
+        env.DB
+          .prepare(
+            "DELETE FROM public_video_comment_likes WHERE comment_id=?"
+          )
+          .bind(cid),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_comment_likes
-
-            WHERE comment_id = ?
-          `)
-          .bind(commentId),
+          .prepare(
+            "DELETE FROM public_video_replies WHERE comment_id=?"
+          )
+          .bind(cid),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_replies
-
-            WHERE comment_id = ?
-          `)
-          .bind(commentId),
-
-        env.DB
-          .prepare(`
-            DELETE FROM public_video_comments
-
-            WHERE id = ?
-          `)
-          .bind(commentId)
+          .prepare(
+            "DELETE FROM public_video_comments WHERE id=?"
+          )
+          .bind(cid)
       ]);
 
-      return json(
-        {
-          ok: true,
-          deleted: true,
-          commentId
-        }
-      );
+      return json({
+        ok: true,
+        deleted: true,
+        commentId: cid
+      });
     }
-
-
-    /* =====================================================
-       PUBLIC REPLY DELETE
-    ===================================================== */
 
     const pvrd =
       route.match(
@@ -3042,7 +2206,6 @@ export async function onRequest(
       pvrd &&
       method === "DELETE"
     ) {
-
       if (!user) {
         return json(
           {
@@ -3057,28 +2220,20 @@ export async function onRequest(
         env
       );
 
-      const replyId =
-        pvrd[2];
+      const rid = pvrd[2];
 
-      const reply =
+      const r =
         await env.DB
-          .prepare(`
-            SELECT
-              id,
-              user_id
-            FROM public_video_replies
-
-            WHERE
-              id = ?
-              AND video_id = ?
-          `)
+          .prepare(
+            "SELECT id,user_id FROM public_video_replies WHERE id=? AND video_id=?"
+          )
           .bind(
-            replyId,
+            rid,
             pvrd[1]
           )
           .first();
 
-      if (!reply) {
+      if (!r) {
         return json(
           {
             error:
@@ -3088,19 +2243,14 @@ export async function onRequest(
         );
       }
 
-      const allowed =
-        String(
-          reply.user_id
-        ) ===
-        String(
-          user.id
-        ) ||
+      if (
+        String(r.user_id) !==
+          String(user.id) &&
         String(
           user.username
-        ).toLowerCase() ===
-        "fazmen";
-
-      if (!allowed) {
+        ).toLowerCase() !==
+          "fazmen"
+      ) {
         return json(
           {
             error:
@@ -3111,88 +2261,57 @@ export async function onRequest(
       }
 
       await env.DB
-        .prepare(`
-          DELETE FROM public_video_replies
-
-          WHERE id = ?
-        `)
-        .bind(replyId)
+        .prepare(
+          "DELETE FROM public_video_replies WHERE id=?"
+        )
+        .bind(rid)
         .run();
 
-      return json(
-        {
-          ok: true,
-          deleted: true,
-          replyId
-        }
-      );
+      return json({
+        ok: true,
+        deleted: true,
+        replyId: rid
+      });
     }
 
-
-    /* =====================================================
-       GLOBAL COMMENTS GET
-    ===================================================== */
+    // ============================================================
+    // GLOBAL COMMENTS
+    // ============================================================
 
     if (
       route === "/comments" &&
       method === "GET"
     ) {
-
       await ensureGlobalCommentSchema(
         env
       );
 
       const result =
         await env.DB
-          .prepare(`
-            SELECT
-
+          .prepare(
+            `SELECT
               c.id,
-
               c.user_id AS userId,
-
               c.username,
-
               c.comment,
-
               c.created_at AS createdAt,
-
               c.updated_at AS updatedAt,
 
               (
                 SELECT COUNT(*)
                 FROM comment_likes l
-
-                WHERE
-                  l.comment_id =
-                    c.id
+                WHERE l.comment_id=c.id
               ) AS likes,
 
               ${
                 user
-                  ? `
-                    EXISTS(
-                      SELECT 1
-                      FROM comment_likes l
-
-                      WHERE
-                        l.comment_id =
-                          c.id
-
-                        AND l.user_id =
-                          ?
-                    )
-                  `
+                  ? "EXISTS(SELECT 1 FROM comment_likes l WHERE l.comment_id=c.id AND l.user_id=?)"
                   : "0"
-              }
-
-              AS liked
+              } AS liked
 
             FROM comments c
-
-            ORDER BY
-              c.created_at DESC
-          `)
+            ORDER BY c.created_at DESC`
+          )
           .bind(
             ...(user
               ? [user.id]
@@ -3202,28 +2321,9 @@ export async function onRequest(
 
       const repliesResult =
         await env.DB
-          .prepare(`
-            SELECT
-
-              id,
-
-              comment_id AS commentId,
-
-              user_id AS userId,
-
-              username,
-
-              reply,
-
-              created_at AS createdAt,
-
-              updated_at AS updatedAt
-
-            FROM comment_replies
-
-            ORDER BY
-              created_at ASC
-          `)
+          .prepare(
+            "SELECT id,comment_id AS commentId,user_id AS userId,username,reply,created_at AS createdAt,updated_at AS updatedAt FROM comment_replies ORDER BY created_at ASC"
+          )
           .all();
 
       const replyMap =
@@ -3231,7 +2331,8 @@ export async function onRequest(
 
       for (
         const r of
-        repliesResult.results || []
+          repliesResult.results ||
+          []
       ) {
         if (
           !replyMap.has(
@@ -3249,39 +2350,25 @@ export async function onRequest(
           .push(r);
       }
 
-      const comments =
-        (
-          result.results || []
-        ).map(c => ({
-          ...c,
-
-          liked:
-            !!c.liked,
-
-          replies:
-            replyMap.get(
-              c.id
-            ) || []
-        }));
-
-      return json(
-        {
-          ok: true,
-          comments
-        }
-      );
+      return json({
+        ok: true,
+        comments:
+          (result.results || [])
+            .map(c => ({
+              ...c,
+              liked: !!c.liked,
+              replies:
+                replyMap.get(
+                  c.id
+                ) || []
+            }))
+      });
     }
-
-
-    /* =====================================================
-       GLOBAL COMMENT CREATE
-    ===================================================== */
 
     if (
       route === "/comments" &&
       method === "POST"
     ) {
-
       if (!user) {
         return json(
           {
@@ -3311,10 +2398,7 @@ export async function onRequest(
         );
       }
 
-      if (
-        comment.length >
-        2000
-      ) {
+      if (comment.length > 2000) {
         return json(
           {
             error:
@@ -3324,71 +2408,44 @@ export async function onRequest(
         );
       }
 
-      const commentId =
+      const cid =
         id("comment");
 
-      const timestamp =
-        now();
+      const ts = now();
 
       await env.DB
-        .prepare(`
-          INSERT INTO comments(
-            id,
-            user_id,
-            username,
-            comment,
-            created_at,
-            updated_at
-          )
-          VALUES(?,?,?,?,?,?)
-        `)
+        .prepare(
+          "INSERT INTO comments(id,user_id,username,comment,created_at,updated_at) VALUES(?,?,?,?,?,?)"
+        )
         .bind(
-          commentId,
+          cid,
           user.id,
           user.username,
           comment,
-          timestamp,
-          timestamp
+          ts,
+          ts
         )
         .run();
 
       return json(
         {
           ok: true,
-
           comment: {
-            id:
-              commentId,
-
-            userId:
-              user.id,
-
+            id: cid,
+            userId: user.id,
             username:
               user.username,
-
             comment,
-
-            createdAt:
-              timestamp,
-
-            updatedAt:
-              timestamp,
-
+            createdAt: ts,
+            updatedAt: ts,
             likes: 0,
-
             liked: false,
-
             replies: []
           }
         },
         201
       );
     }
-
-
-    /* =====================================================
-       GLOBAL COMMENT LIKE
-    ===================================================== */
 
     const glike =
       route.match(
@@ -3399,7 +2456,6 @@ export async function onRequest(
       glike &&
       method === "POST"
     ) {
-
       if (!user) {
         return json(
           {
@@ -3414,21 +2470,18 @@ export async function onRequest(
         env
       );
 
-      const commentId =
+      const cid =
         glike[1];
 
-      const comment =
+      const c =
         await env.DB
-          .prepare(`
-            SELECT id
-            FROM comments
-
-            WHERE id = ?
-          `)
-          .bind(commentId)
+          .prepare(
+            "SELECT id FROM comments WHERE id=?"
+          )
+          .bind(cid)
           .first();
 
-      if (!comment) {
+      if (!c) {
         return json(
           {
             error:
@@ -3440,49 +2493,32 @@ export async function onRequest(
 
       const old =
         await env.DB
-          .prepare(`
-            SELECT comment_id
-            FROM comment_likes
-
-            WHERE
-              comment_id = ?
-              AND user_id = ?
-          `)
+          .prepare(
+            "SELECT comment_id FROM comment_likes WHERE comment_id=? AND user_id=?"
+          )
           .bind(
-            commentId,
+            cid,
             user.id
           )
           .first();
 
       if (old) {
-
         await env.DB
-          .prepare(`
-            DELETE FROM comment_likes
-
-            WHERE
-              comment_id = ?
-              AND user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM comment_likes WHERE comment_id=? AND user_id=?"
+          )
           .bind(
-            commentId,
+            cid,
             user.id
           )
           .run();
-
       } else {
-
         await env.DB
-          .prepare(`
-            INSERT INTO comment_likes(
-              comment_id,
-              user_id,
-              created_at
-            )
-            VALUES(?,?,?)
-          `)
+          .prepare(
+            "INSERT INTO comment_likes(comment_id,user_id,created_at) VALUES(?,?,?)"
+          )
           .bind(
-            commentId,
+            cid,
             user.id,
             now()
           )
@@ -3491,34 +2527,19 @@ export async function onRequest(
 
       const count =
         await env.DB
-          .prepare(`
-            SELECT COUNT(*) AS n
-            FROM comment_likes
-
-            WHERE comment_id = ?
-          `)
-          .bind(commentId)
+          .prepare(
+            "SELECT COUNT(*) AS n FROM comment_likes WHERE comment_id=?"
+          )
+          .bind(cid)
           .first();
 
-      return json(
-        {
-          ok: true,
-
-          liked:
-            !old,
-
-          likes:
-            Number(
-              count?.n
-            ) || 0
-        }
-      );
+      return json({
+        ok: true,
+        liked: !old,
+        likes:
+          Number(count?.n) || 0
+      });
     }
-
-
-    /* =====================================================
-       GLOBAL REPLY CREATE
-    ===================================================== */
 
     if (
       route.match(
@@ -3526,7 +2547,6 @@ export async function onRequest(
       ) &&
       method === "POST"
     ) {
-
       if (!user) {
         return json(
           {
@@ -3541,17 +2561,15 @@ export async function onRequest(
         env
       );
 
-      const commentId =
+      const cid =
         route.split("/")[2];
 
       const parent =
         await env.DB
-          .prepare(`
-            SELECT id
-            FROM comments
-            WHERE id = ?
-          `)
-          .bind(commentId)
+          .prepare(
+            "SELECT id FROM comments WHERE id=?"
+          )
+          .bind(cid)
           .first();
 
       if (!parent) {
@@ -3579,10 +2597,7 @@ export async function onRequest(
         );
       }
 
-      if (
-        reply.length >
-        2000
-      ) {
+      if (reply.length > 2000) {
         return json(
           {
             error:
@@ -3592,69 +2607,43 @@ export async function onRequest(
         );
       }
 
-      const replyId =
+      const rid =
         id("reply");
 
-      const timestamp =
-        now();
+      const ts = now();
 
       await env.DB
-        .prepare(`
-          INSERT INTO comment_replies(
-            id,
-            comment_id,
-            user_id,
-            username,
-            reply,
-            created_at,
-            updated_at
-          )
-          VALUES(?,?,?,?,?,?,?)
-        `)
+        .prepare(
+          "INSERT INTO comment_replies(id,comment_id,user_id,username,reply,created_at,updated_at) VALUES(?,?,?,?,?,?,?)"
+        )
         .bind(
-          replyId,
-          commentId,
+          rid,
+          cid,
           user.id,
           user.username,
           reply,
-          timestamp,
-          timestamp
+          ts,
+          ts
         )
         .run();
 
       return json(
         {
           ok: true,
-
           reply: {
-            id:
-              replyId,
-
-            commentId,
-
-            userId:
-              user.id,
-
+            id: rid,
+            commentId: cid,
+            userId: user.id,
             username:
               user.username,
-
             reply,
-
-            createdAt:
-              timestamp,
-
-            updatedAt:
-              timestamp
+            createdAt: ts,
+            updatedAt: ts
           }
         },
         201
       );
     }
-
-
-    /* =====================================================
-       GLOBAL REPLY DELETE
-    ===================================================== */
 
     if (
       route.startsWith(
@@ -3662,7 +2651,6 @@ export async function onRequest(
       ) &&
       method === "DELETE"
     ) {
-
       if (!user) {
         return json(
           {
@@ -3677,23 +2665,18 @@ export async function onRequest(
         env
       );
 
-      const replyId =
+      const rid =
         route.split("/")[3];
 
-      const row =
+      const r =
         await env.DB
-          .prepare(`
-            SELECT
-              id,
-              user_id
-            FROM comment_replies
-
-            WHERE id = ?
-          `)
-          .bind(replyId)
+          .prepare(
+            "SELECT id,user_id FROM comment_replies WHERE id=?"
+          )
+          .bind(rid)
           .first();
 
-      if (!row) {
+      if (!r) {
         return json(
           {
             error:
@@ -3703,19 +2686,14 @@ export async function onRequest(
         );
       }
 
-      const allowed =
-        String(
-          row.user_id
-        ) ===
-        String(
-          user.id
-        ) ||
+      if (
+        String(r.user_id) !==
+          String(user.id) &&
         String(
           user.username
-        ).toLowerCase() ===
-        "fazmen";
-
-      if (!allowed) {
+        ).toLowerCase() !==
+          "fazmen"
+      ) {
         return json(
           {
             error:
@@ -3726,34 +2704,25 @@ export async function onRequest(
       }
 
       await env.DB
-        .prepare(`
-          DELETE FROM comment_reply_likes
-          WHERE reply_id = ?
-        `)
-        .bind(replyId)
+        .prepare(
+          "DELETE FROM comment_reply_likes WHERE reply_id=?"
+        )
+        .bind(rid)
         .run();
 
       await env.DB
-        .prepare(`
-          DELETE FROM comment_replies
-          WHERE id = ?
-        `)
-        .bind(replyId)
+        .prepare(
+          "DELETE FROM comment_replies WHERE id=?"
+        )
+        .bind(rid)
         .run();
 
-      return json(
-        {
-          ok: true,
-          deleted: true,
-          replyId
-        }
-      );
+      return json({
+        ok: true,
+        deleted: true,
+        replyId: rid
+      });
     }
-
-
-    /* =====================================================
-       GLOBAL COMMENT DELETE
-    ===================================================== */
 
     if (
       route.startsWith(
@@ -3761,7 +2730,6 @@ export async function onRequest(
       ) &&
       method === "DELETE"
     ) {
-
       if (!user) {
         return json(
           {
@@ -3776,23 +2744,18 @@ export async function onRequest(
         env
       );
 
-      const commentId =
+      const cid =
         route.split("/")[2];
 
-      const comment =
+      const c =
         await env.DB
-          .prepare(`
-            SELECT
-              id,
-              user_id
-            FROM comments
-
-            WHERE id = ?
-          `)
-          .bind(commentId)
+          .prepare(
+            "SELECT id,user_id FROM comments WHERE id=?"
+          )
+          .bind(cid)
           .first();
 
-      if (!comment) {
+      if (!c) {
         return json(
           {
             error:
@@ -3802,19 +2765,14 @@ export async function onRequest(
         );
       }
 
-      const allowed =
-        String(
-          comment.user_id
-        ) ===
-        String(
-          user.id
-        ) ||
+      if (
+        String(c.user_id) !==
+          String(user.id) &&
         String(
           user.username
-        ).toLowerCase() ===
-        "fazmen";
-
-      if (!allowed) {
+        ).toLowerCase() !==
+          "fazmen"
+      ) {
         return json(
           {
             error:
@@ -3825,48 +2783,40 @@ export async function onRequest(
       }
 
       await env.DB.batch([
+        env.DB
+          .prepare(
+            "DELETE FROM comment_likes WHERE comment_id=?"
+          )
+          .bind(cid),
 
         env.DB
-          .prepare(`
-            DELETE FROM comment_likes
-            WHERE comment_id = ?
-          `)
-          .bind(commentId),
+          .prepare(
+            "DELETE FROM comment_replies WHERE comment_id=?"
+          )
+          .bind(cid),
 
         env.DB
-          .prepare(`
-            DELETE FROM comment_replies
-            WHERE comment_id = ?
-          `)
-          .bind(commentId),
-
-        env.DB
-          .prepare(`
-            DELETE FROM comments
-            WHERE id = ?
-          `)
-          .bind(commentId)
+          .prepare(
+            "DELETE FROM comments WHERE id=?"
+          )
+          .bind(cid)
       ]);
 
-      return json(
-        {
-          ok: true,
-          deleted: true,
-          commentId
-        }
-      );
+      return json({
+        ok: true,
+        deleted: true,
+        commentId: cid
+      });
     }
 
-
-    /* =====================================================
-       DELETE ACCOUNT
-    ===================================================== */
+    // ============================================================
+    // DELETE ACCOUNT
+    // ============================================================
 
     if (
       route === "/delete-account" &&
       method === "POST"
     ) {
-
       if (!user) {
         return json(
           {
@@ -3909,193 +2859,118 @@ export async function onRequest(
       );
 
       await env.DB.batch([
-
         env.DB
-          .prepare(`
-            DELETE FROM video_progress
-            WHERE user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM video_progress WHERE user_id=?"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM user_data
-            WHERE user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM user_data WHERE user_id=?"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_reactions
-            WHERE user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM public_video_reactions WHERE user_id=?"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_notes
-            WHERE user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM public_video_notes WHERE user_id=?"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_comment_likes
-            WHERE user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM public_video_comment_likes WHERE user_id=?"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_comments
-            WHERE user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM public_video_comments WHERE user_id=?"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_replies
-            WHERE user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM public_video_replies WHERE user_id=?"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM comment_likes
-            WHERE user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM comment_likes WHERE user_id=?"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM comment_reply_likes
-            WHERE user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM comment_reply_likes WHERE user_id=?"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM comment_replies
-            WHERE user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM comment_replies WHERE user_id=?"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM comments
-            WHERE user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM comments WHERE user_id=?"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_replies
-
-            WHERE video_id IN (
-              SELECT id
-              FROM public_videos
-
-              WHERE
-                COALESCE(
-                  user_id,
-                  owner_id
-                ) = ?
-            )
-          `)
+          .prepare(
+            "DELETE FROM public_video_replies WHERE video_id IN (SELECT id FROM public_videos WHERE COALESCE(user_id,owner_id)=?)"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_comments
-
-            WHERE video_id IN (
-              SELECT id
-              FROM public_videos
-
-              WHERE
-                COALESCE(
-                  user_id,
-                  owner_id
-                ) = ?
-            )
-          `)
+          .prepare(
+            "DELETE FROM public_video_comments WHERE video_id IN (SELECT id FROM public_videos WHERE COALESCE(user_id,owner_id)=?)"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_reactions
-
-            WHERE video_id IN (
-              SELECT id
-              FROM public_videos
-
-              WHERE
-                COALESCE(
-                  user_id,
-                  owner_id
-                ) = ?
-            )
-          `)
+          .prepare(
+            "DELETE FROM public_video_reactions WHERE video_id IN (SELECT id FROM public_videos WHERE COALESCE(user_id,owner_id)=?)"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_views
-
-            WHERE video_id IN (
-              SELECT id
-              FROM public_videos
-
-              WHERE
-                COALESCE(
-                  user_id,
-                  owner_id
-                ) = ?
-            )
-          `)
+          .prepare(
+            "DELETE FROM public_video_views WHERE video_id IN (SELECT id FROM public_videos WHERE COALESCE(user_id,owner_id)=?)"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_video_notes
-
-            WHERE video_id IN (
-              SELECT id
-              FROM public_videos
-
-              WHERE
-                COALESCE(
-                  user_id,
-                  owner_id
-                ) = ?
-            )
-          `)
+          .prepare(
+            "DELETE FROM public_video_notes WHERE video_id IN (SELECT id FROM public_videos WHERE COALESCE(user_id,owner_id)=?)"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM public_videos
-
-            WHERE
-              COALESCE(
-                user_id,
-                owner_id
-              ) = ?
-          `)
+          .prepare(
+            "DELETE FROM public_videos WHERE COALESCE(user_id,owner_id)=?"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM sessions
-            WHERE user_id = ?
-          `)
+          .prepare(
+            "DELETE FROM sessions WHERE user_id=?"
+          )
           .bind(user.id),
 
         env.DB
-          .prepare(`
-            DELETE FROM users
-            WHERE id = ?
-          `)
+          .prepare(
+            "DELETE FROM users WHERE id=?"
+          )
           .bind(user.id)
       ]);
 
@@ -4114,16 +2989,10 @@ export async function onRequest(
       );
     }
 
-
-    /* =====================================================
-       ME
-    ===================================================== */
-
     if (
       route === "/me" &&
       method === "GET"
     ) {
-
       return user
         ? json({
             user,
@@ -4141,16 +3010,10 @@ export async function onRequest(
           );
     }
 
-
-    /* =====================================================
-       SYNC
-    ===================================================== */
-
     if (
       route === "/sync" &&
       method === "POST"
     ) {
-
       if (!user) {
         return json(
           {
@@ -4167,24 +3030,16 @@ export async function onRequest(
         body
       );
 
-      return json(
-        {
-          ok: true,
-          syncedAt: now()
-        }
-      );
+      return json({
+        ok: true,
+        syncedAt: now()
+      });
     }
-
-
-    /* =====================================================
-       ONLINE VIDEO PROGRESS
-    ===================================================== */
 
     if (
       route === "/progress" &&
       method === "POST"
     ) {
-
       if (!user) {
         return json(
           {
@@ -4203,13 +3058,9 @@ export async function onRequest(
 
       state.onlineProgress = {
         ...(state.onlineProgress || {}),
-
-        [
-          String(
-            body.moduleId
-          )
-        ]:
-          body
+        [String(
+          body.moduleId
+        )]: body
       };
 
       await writeState(
@@ -4223,17 +3074,13 @@ export async function onRequest(
       });
     }
 
-
     return json(
       {
-        error:
-          "Not found"
+        error: "Not found"
       },
       404
     );
-
   } catch (err) {
-
     console.error(
       "FUNLEARN_API_ERROR",
       err
@@ -4242,10 +3089,8 @@ export async function onRequest(
     return json(
       {
         ok: false,
-
         error:
           "Terjadi kesalahan pada API FunLearn.",
-
         detail:
           errorDetail(err)
       },
@@ -4254,21 +3099,13 @@ export async function onRequest(
   }
 }
 
-
-/* =========================================================
-   SESSION
-========================================================= */
-
 async function createSession(
   env,
   userId,
   username
 ) {
-
   const raw =
-    b64(
-      randomBytes(32)
-    );
+    b64(randomBytes(32));
 
   const sid =
     await hashToken(raw);
@@ -4276,20 +3113,14 @@ async function createSession(
   const expires =
     new Date(
       Date.now() +
-      SESSION_DAYS *
-      86400000
+        SESSION_DAYS *
+          86400000
     ).toISOString();
 
   await env.DB
-    .prepare(`
-      INSERT INTO sessions(
-        id_hash,
-        user_id,
-        expires_at,
-        created_at
-      )
-      VALUES(?,?,?,?)
-    `)
+    .prepare(
+      "INSERT INTO sessions(id_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)"
+    )
     .bind(
       sid,
       userId,
@@ -4301,11 +3132,8 @@ async function createSession(
   return json(
     {
       ok: true,
-
       user: {
-        id:
-          userId,
-
+        id: userId,
         username
       }
     },
@@ -4315,8 +3143,7 @@ async function createSession(
         cookie(
           "funlearn_session",
           raw,
-          SESSION_DAYS *
-            86400
+          SESSION_DAYS * 86400
         )
     }
   );
