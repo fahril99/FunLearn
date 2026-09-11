@@ -1803,7 +1803,7 @@ html[data-theme="light"] .account-menu button{color:var(--text)}
 @media(max-width:560px){.theme-toggle{min-height:42px;padding:9px 10px;font-size:12px}.theme-toggle .theme-label{display:none}}
 
 
-.fl-focus-complete-fire{display:inline-block;font-size:1.15em;vertical-align:-.08em;animation:flFocusFire .9s ease-in-out infinite alternate;filter:drop-shadow(0 0 8px rgba(255,120,0,.65));}
+.fl-focus-complete-fire{display:inline-flex;align-items:center;justify-content:center;width:1.35em;height:1.35em;vertical-align:-.22em;animation:flFocusFire .9s ease-in-out infinite alternate;filter:drop-shadow(0 0 8px rgba(255,120,0,.65))}.fl-focus-complete-fire img{display:block;width:100%;height:100%;object-fit:contain}
 @keyframes flFocusFire{from{transform:scale(1) translateY(0) rotate(-3deg)}to{transform:scale(1.18) translateY(-2px) rotate(3deg)}}
 </style>
 
@@ -1821,6 +1821,7 @@ html[data-theme="light"] .learning-card{background:linear-gradient(145deg,rgba(2
 @media(max-width:800px){.learning-upgrade-grid{grid-template-columns:1fr}.analytics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.learning-card{padding:13px;border-radius:14px}.goal-row{align-items:flex-start}.analytics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.recall-overlay{padding:9px}.recall-card{padding:14px;border-radius:15px}.recall-actions{grid-template-columns:1fr}.focus-actions{flex-direction:column}}
 @media(prefers-reduced-motion:reduce){.recall-card,.recall-feedback{animation:none!important}.goal-fill,.week-bar{transition:none!important}}
+.study-lab-card{margin:0 0 16px}.study-lab-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.study-lab-head h3{margin:3px 0 4px}.study-lab-head p{margin:0;color:var(--muted);font-size:11px;line-height:1.5}.study-lab-kicker{font-size:9px;letter-spacing:.14em;font-weight:950;color:var(--green)}.study-lab-badge{flex:0 0 auto;border:1px solid var(--border);background:rgba(92,213,33,.08);color:var(--green);border-radius:999px;padding:7px 10px;font-size:10px;font-weight:900}.study-lab-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:13px}.study-tool-btn{display:grid;grid-template-columns:auto 1fr;column-gap:9px;align-items:center;text-align:left;border:1px solid var(--border);background:var(--card2);color:var(--text);border-radius:13px;padding:11px;cursor:pointer}.study-tool-btn span{grid-row:1/3;font-size:25px}.study-tool-btn strong{font-size:13px}.study-tool-btn small{color:var(--muted);font-size:10px;margin-top:2px}.study-tool-btn:hover{border-color:var(--green);box-shadow:0 8px 24px rgba(0,0,0,.12)}.flashcard-create{margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}.flashcard-create-title{font-size:11px;font-weight:900;margin-bottom:8px}.flashcard-form-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:7px}.flashcard-form-grid input,.quiz-input-wrap input{width:100%;box-sizing:border-box;border:1px solid var(--border);background:var(--card2);color:var(--text);border-radius:10px;padding:10px;outline:none}.flashcard-form-grid button,.study-secondary-btn{border:1px solid var(--border);background:var(--card2);color:var(--text);border-radius:10px;padding:10px 12px;font-weight:900;cursor:pointer}.flashcard-form-grid button{background:var(--green);color:#071000;border-color:var(--green)}.study-secondary-btn{margin-top:7px;font-size:11px}.quiz-overlay,.flash-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(0,0,0,.64);backdrop-filter:blur(6px);z-index:1310}.quiz-overlay.show,.flash-overlay.show{display:flex}.quiz-card,.flash-card-modal{width:min(620px,100%);max-height:90vh;overflow:auto;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:18px;box-shadow:0 30px 100px rgba(0,0,0,.55);animation:flStudyPop .24s ease both}.quiz-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.quiz-top h2{margin:4px 0 0;font-size:20px}.modal-x{width:38px;min-height:38px;border:1px solid var(--border);background:var(--card2);color:var(--text);border-radius:11px;font-size:24px;cursor:pointer}.quiz-progress{font-size:10px;color:var(--muted);margin:14px 0 7px}.quiz-question{font-size:16px;font-weight:950;line-height:1.5;margin-bottom:12px}.quiz-options{display:grid;gap:8px}.quiz-option{width:100%;text-align:left;border:1px solid var(--border);background:var(--card2);color:var(--text);border-radius:11px;padding:11px;cursor:pointer}.quiz-option.selected{border-color:var(--green);background:rgba(92,213,33,.1)}.quiz-option.correct{border-color:#5cd521;background:rgba(92,213,33,.15)}.quiz-option.wrong{border-color:#e36b6b;background:rgba(227,107,107,.1)}.quiz-input-wrap{margin-top:10px}.quiz-feedback{min-height:22px;margin-top:10px;font-size:12px;font-weight:900}.quiz-feedback.good{color:var(--green)}.quiz-feedback.bad{color:#ff8b8b}.quiz-actions{display:flex;gap:8px;margin-top:12px}.quiz-actions button{flex:1;border:1px solid var(--border);background:var(--card2);color:var(--text);border-radius:10px;padding:10px;font-weight:900;cursor:pointer}.quiz-actions .primary{background:var(--green);color:#071000;border-color:var(--green)}.flash-meta{color:var(--muted);font-size:11px;margin:14px 0 8px}.flash-face{width:100%;min-height:230px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(145deg,var(--card2),rgba(92,213,33,.06));color:var(--text);padding:24px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.flash-face span{font-size:22px;font-weight:950;line-height:1.45}.flash-face small{display:block;margin-top:16px;color:var(--muted);font-size:14px;line-height:1.55}.flash-rating{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}.flash-rating button{border:1px solid var(--border);background:var(--card2);color:var(--text);border-radius:10px;padding:9px 6px;font-weight:900;cursor:pointer}.flash-rating span{display:block;color:var(--muted);font-size:9px;font-weight:600;margin-top:3px}.flash-empty{text-align:center;color:var(--muted);padding:28px 12px;font-size:12px}@keyframes flStudyPop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}html[data-theme="light"] .quiz-card,html[data-theme="light"] .flash-card-modal{background:var(--bg)}@media(max-width:600px){.study-lab-grid{grid-template-columns:1fr}.flashcard-form-grid{grid-template-columns:1fr}.flashcard-form-grid button{width:100%}.flash-rating{grid-template-columns:repeat(2,1fr)}.study-lab-head{gap:8px}.quiz-card,.flash-card-modal{padding:14px;border-radius:16px}.flash-face{min-height:190px}.flash-face span{font-size:19px}}
 </style>
 
 
@@ -2141,7 +2142,7 @@ html[data-theme="light"] .account-area{gap:9px}
   <section class="learning-card">
     <div class="goal-row">
       <div><h3>🎯 Today's Goal</h3><div class="goal-value"><span id="flGoalMinutes">0</span> / <span id="flGoalTarget">30</span> menit</div><div class="goal-sub" id="flGoalMessage">Mulai belajar untuk mengisi target hari ini.</div></div>
-      <select id="flGoalSelect" class="goal-select" aria-label="Target belajar harian"><option value="15">15 menit</option><option value="30" selected>30 menit</option><option value="45">45 menit</option><option value="60">60 menit</option></select>
+      <div class="goal-controls"><select id="flGoalSelect" class="goal-select" aria-label="Target belajar harian"><option value="15">15 menit</option><option value="30" selected>30 menit</option><option value="45">45 menit</option><option value="60">60 menit</option></select><button id="flGoalCustom" class="goal-custom-btn" type="button">+</button></div>
     </div>
     <div class="goal-bar"><div class="goal-fill" id="flGoalFill"></div></div><div class="goal-complete" id="flGoalComplete" hidden>✓ Target hari ini tercapai • 🔥 Streak terlindungi</div>
   </section>
@@ -2151,9 +2152,19 @@ html[data-theme="light"] .account-area{gap:9px}
   </section>
 </div>
 
+<section class="learning-card study-lab-card" id="funlearnStudyLab">
+  <div class="study-lab-head"><div><div class="study-lab-kicker">ACTIVE RECALL • SPACED REPETITION</div><h3>🧠 Study Lab</h3><p>Uji ingatan setelah video dan ulangi flashcard tepat saat hampir lupa.</p></div><div class="study-lab-badge" id="flStudyDueBadge">0 due</div></div>
+  <div class="study-lab-grid"><button class="study-tool-btn" id="flOpenQuiz" type="button"><span>📝</span><strong>Kuis Cepat</strong><small>✨ Disusun AI dari Notes aktif</small></button><button class="study-tool-btn" id="flOpenFlashcards" type="button"><span>🗂️</span><strong>Flashcards</strong><small><span id="flFlashcardCount">0</span> kartu • <span id="flFlashcardDue">0</span> perlu diulang</small></button></div>
+  <div class="flashcard-create"><div class="flashcard-create-title">＋ Buat flashcard</div><div class="flashcard-form-grid"><input id="flCardFront" placeholder="Depan — istilah / pertanyaan" maxlength="180"><input id="flCardBack" placeholder="Belakang — jawaban / definisi" maxlength="500"><button id="flAddCard" type="button">Tambah</button></div><button id="flGenerateCards" class="study-secondary-btn" type="button">✨ Generate Flashcards dari Notes aktif</button></div>
+</section>
+
 <div class="recall-overlay" id="flRecallOverlay" role="dialog" aria-modal="true" aria-labelledby="flRecallTitle">
-  <div class="recall-card"><div class="recall-icon">🧠</div><h2 id="flRecallTitle">Quick Recall</h2><p>Videonya selesai! Sebelum lanjut, coba ingat kembali apa yang baru kamu pelajari.</p><div class="recall-question">Apa 3 hal terpenting yang baru kamu pelajari dari video ini?</div><textarea id="flRecallAnswer" placeholder="Tulis apa yang masih kamu ingat..." aria-label="Jawaban Active Recall"></textarea><div class="recall-feedback" id="flRecallFeedback">🧠 Recall Complete!<br>+30 XP &nbsp; +15 🪙</div><div class="recall-actions"><button id="flRecallSkip">Skip</button><button id="flRecallSubmit" class="primary">Submit Recall</button></div></div>
+  <div class="recall-card"><div class="recall-icon">🧠</div><h2 id="flRecallTitle">Quick Recall</h2><p id="flRecallIntro">Videonya selesai! Sebelum melihat catatan, coba keluarkan kembali yang kamu ingat.</p><div class="recall-question">Apa 3 hal terpenting yang baru kamu pelajari dari video ini?</div><textarea id="flRecallAnswer" placeholder="Tulis apa yang masih kamu ingat..." aria-label="Jawaban Active Recall"></textarea><div class="recall-feedback" id="flRecallFeedback"></div><div class="recall-actions"><button id="flRecallSkip">Lewati</button><button id="flRecallSubmit" class="primary">Submit Recall</button></div></div>
 </div>
+
+<div class="quiz-overlay" id="flQuizOverlay" role="dialog" aria-modal="true" aria-labelledby="flQuizTitle"><div class="quiz-card"><div class="quiz-top"><div><div class="study-lab-kicker">ACTIVE RECALL</div><h2 id="flQuizTitle">📝 Kuis Cepat</h2></div><button id="flQuizClose" class="modal-x" type="button" aria-label="Tutup">×</button></div><div class="quiz-progress" id="flQuizProgress"></div><div class="quiz-question" id="flQuizQuestion"></div><div id="flQuizOptions" class="quiz-options"></div><div id="flQuizInputWrap" class="quiz-input-wrap" hidden><input id="flQuizInput" maxlength="220" placeholder="Ketik jawabanmu..."></div><div id="flQuizFeedback" class="quiz-feedback"></div><div class="quiz-actions"><button id="flQuizCheck" class="primary" type="button">Periksa</button><button id="flQuizNext" type="button" hidden>Lanjut</button></div></div></div>
+
+<div class="flash-overlay" id="flFlashOverlay" role="dialog" aria-modal="true" aria-labelledby="flFlashTitle"><div class="flash-card-modal"><div class="quiz-top"><div><div class="study-lab-kicker">SPACED REPETITION</div><h2 id="flFlashTitle">🗂️ Flashcards</h2></div><button id="flFlashClose" class="modal-x" type="button" aria-label="Tutup">×</button></div><div class="flash-meta" id="flFlashMeta"></div><button id="flFlashFace" class="flash-face" type="button" aria-label="Balik kartu"><span id="flFlashFront">Tidak ada kartu jatuh tempo.</span><small id="flFlashBack" hidden></small></button><div id="flFlashDueTimer" class="flash-due-timer" hidden></div><div id="flFlashRating" class="flash-rating" hidden><button data-rate="again">Again<span>Ulang 10 menit</span></button><button data-rate="hard">Hard<span>Sulit • interval pendek</span></button><button data-rate="good">Good<span>Ingat • interval naik</span></button><button data-rate="easy">Easy<span>Mudah • interval lebih panjang</span></button></div><div class="flash-actions"><button id="flFlashSkip" type="button">Lewati kartu</button><button id="flFlashManage" type="button">📋 Kelola kartu</button></div><div class="flash-help"><b>Artinya:</b> Again = belum ingat, ulang cepat • Hard = ingat tapi sulit • Good = ingat normal • Easy = sangat mudah. Kamu selalu bisa melewati kartu atau menutup sesi.</div><div class="flash-manage" id="flFlashManagePanel" hidden><div class="flash-manage-title">Kelola Flashcards</div><div id="flFlashManageList"></div></div><div class="flash-empty" id="flFlashEmpty" hidden>Belum ada flashcard. Buat manual atau generate dari Notes aktif.</div></div></div>
 
 
   <!-- =====================================================
@@ -7512,188 +7523,120 @@ function setStudyMinutesCookie(d){try{document.cookie=STUDY_COOKIE+'='+encodeURI
 function recordStudyMinutesCookie(minutes){const n=Math.max(0,Number(minutes)||0);if(!n)return;const d=getStudyMinutesCookie(),day=localDate();d.total=(Number(d.total)||0)+n;d.days[day]=(Number(d.days[day])||0)+n;setStudyMinutesCookie(d)}
 let recallContext=null, focusMinutes=25, focusRemaining=1500, focusTimer=null, focusRunning=false, focusPaused=false, focusPauseAt=0;
 const FOCUS_COOKIE='funlearn_focus_session_v2';
-function focusCookieSet(data){try{document.cookie=FOCUS_COOKIE+'='+encodeURIComponent(JSON.stringify(data))+'; max-age=31536000; path=/; SameSite=Lax'}catch(e){}}
-function focusCookieGet(){try{const m=document.cookie.match(new RegExp('(?:^|; )'+FOCUS_COOKIE.replace(/[.*+?^${}()|[\\]\\]/g,'\\$&')+'=([^;]*)'));return m?JSON.parse(decodeURIComponent(m[1])):null}catch(e){return null}}
-function focusCookieClear(){try{document.cookie=FOCUS_COOKIE+'=; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; path=/; SameSite=Lax'}catch(e){}}
-function playFocusTimeout(){try{const audio=new Audio('https://www.myinstants.com/media/sounds/subway-surfers-open-box.mp3');audio.volume=.45;audio.currentTime=0;audio.play().catch(()=>{});}catch(e){}}
 function focusCookieRead(){try{return JSON.parse(getCookie("focus_session")||"null")}catch(e){return null}}
 function focusCookieWrite(o){setCookie("focus_session",JSON.stringify(o),30)}
 function focusClearCookie(){setCookie("focus_session","",-1)}
+let focusEndAt=0, focusCompleted=false, focusAudioCtx=null;
+function unlockFocusAudio(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;focusAudioCtx=focusAudioCtx||new AC();if(focusAudioCtx.state==='suspended')focusAudioCtx.resume().catch(()=>{});}catch(e){}}
+async function playFocusTimeout(){
+  let externalPlayed=false;
+  try{const a=new Audio('https://www.myinstants.com/media/sounds/subway-surfers-open-box.mp3');a.volume=.5;a.preload='auto';await a.play();externalPlayed=true;}catch(e){}
+  if(externalPlayed)return;
+  try{
+    if(!focusAudioCtx)return;
+    if(focusAudioCtx.state==='suspended')await focusAudioCtx.resume();
+    const now=focusAudioCtx.currentTime;
+    [0,0.16,0.34].forEach((delay,i)=>{const o=focusAudioCtx.createOscillator(),g=focusAudioCtx.createGain();o.type='sine';o.frequency.value=[660,880,1046][i];g.gain.setValueAtTime(.0001,now+delay);g.gain.exponentialRampToValueAtTime(.12,now+delay+.02);g.gain.exponentialRampToValueAtTime(.0001,now+delay+.13);o.connect(g).connect(focusAudioCtx.destination);o.start(now+delay);o.stop(now+delay+.15);});
+  }catch(e){}
+}
 function syncFocusFromCookie(){
   const x=focusCookieRead();
-  if(!x){
-    focusCompleted=false;
-    focusRunning=false;focusPaused=false;focusEndAt=0;
-    focusRemaining=focusMinutes*60;
-    return;
-  }
-  focusMinutes=Math.max(1,Number(x.minutes)||25);
-  focusRemaining=Math.max(0,Number(x.remaining)||focusMinutes*60);
-  focusRunning=x.state==='running';
-  focusPaused=x.state==='paused';
-  focusEndAt=Number(x.endAt)||0;
-
-  // Timer yang sedang berjalan tetap berjalan setelah refresh.
-  if(focusRunning){
-    if(focusEndAt>Date.now()){
-      focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));
-      startFocusTicker();
-    }else{
-      finishFocusSession();
-    }
-  }
-
-  // Sesi yang dijeda lebih dari 1 jam otomatis kembali ke 0.
-  if(focusPaused && Number(x.pausedAt) && Date.now()-Number(x.pausedAt)>3600000){
-    resetFocusSession(true,true);
-  }
+  if(!x){focusCompleted=false;focusRunning=false;focusPaused=false;focusEndAt=0;focusRemaining=focusMinutes*60;return;}
+  focusMinutes=Math.max(1,Number(x.minutes)||25);focusRemaining=Math.max(0,Number(x.remaining)||focusMinutes*60);focusRunning=x.state==='running';focusPaused=x.state==='paused';focusEndAt=Number(x.endAt)||0;
+  if(focusRunning){if(focusEndAt>Date.now()){focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));startFocusTicker();}else{finishFocusSession();}}
+  if(focusPaused&&Number(x.pausedAt)&&Date.now()-Number(x.pausedAt)>3600000)resetFocusSession(true,true);
 }
-let focusEndAt=0;
-let focusCompleted=false;
 function renderFocus(){
   if(!$('flFocusTimer'))return;
-  const r=Math.max(0,Math.ceil(focusRemaining));
-  const m=Math.floor(r/60),sec=r%60;
-  const timerEl=$('flFocusTimer');
-  const statusEl=$('flFocusStatus');
-  if(focusCompleted){
-    timerEl.innerHTML='<span class="fl-focus-complete-fire" aria-hidden="true">🔥</span> Waktu selesai';
-    statusEl.textContent='🎉 Focus Session selesai! Waktu belajar sudah dicatat.';
-  }else{
-    timerEl.textContent=String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
-    statusEl.textContent=focusRunning?'Fokus berjalan.':focusPaused?'Sesi dijeda — klik Lanjut untuk meneruskan.':'Pilih durasi lalu mulai sesi fokus.';
-  }
+  const r=Math.max(0,Math.ceil(focusRemaining)),m=Math.floor(r/60),sec=r%60,timerEl=$('flFocusTimer'),statusEl=$('flFocusStatus');
+  if(focusCompleted){timerEl.innerHTML='<span class="fl-focus-complete-fire" aria-hidden="true"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f525/512.gif" alt="🔥"></span> Waktu selesai';statusEl.textContent='🎉 Focus Session selesai! Waktu belajar sudah dicatat.';}
+  else{timerEl.textContent=String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');statusEl.textContent=focusRunning?'Fokus berjalan.':focusPaused?'Sesi dijeda — klik Lanjut untuk meneruskan.':'Pilih durasi lalu mulai sesi fokus.';}
   document.querySelectorAll('.focus-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.focus)===focusMinutes));
-  const startBtn=$('flFocusStart');
-  if(startBtn){
-    startBtn.textContent=focusRunning?'Pause':focusPaused?'Lanjut':'Mulai';
-    startBtn.setAttribute('aria-label',focusRunning?'Jeda Focus Session':focusPaused?'Lanjutkan Focus Session':'Mulai Focus Session');
-  }
+  const startBtn=$('flFocusStart');if(startBtn){startBtn.textContent=focusRunning?'Pause':focusPaused?'Lanjut':'Mulai';startBtn.setAttribute('aria-label',focusRunning?'Jeda Focus Session':focusPaused?'Lanjutkan Focus Session':'Mulai Focus Session');}
 }
-function persistFocus(){
-  focusCookieWrite({
-    minutes:focusMinutes,
-    remaining:Math.max(0,focusRemaining),
-    state:focusRunning?'running':focusPaused?'paused':'idle',
-    endAt:focusEndAt,
-    pausedAt:focusPaused?focusPauseAt:0
-  });
-}
-function startFocusTicker(){
-  if(focusTimer)clearInterval(focusTimer);
-  focusTimer=setInterval(()=>{
-    if(!focusRunning)return;
-    focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));
-    renderFocus();
-    if(focusRemaining<=0){
-      finishFocusSession();
-    }else{
-      // Simpan timestamp secara berkala agar refresh tetap akurat.
-      persistFocus();
-    }
-  },250);
-}
+function persistFocus(){focusCookieWrite({minutes:focusMinutes,remaining:Math.max(0,focusRemaining),state:focusRunning?'running':focusPaused?'paused':'idle',endAt:focusEndAt,pausedAt:focusPaused?focusPauseAt:0})}
+function startFocusTicker(){if(focusTimer)clearInterval(focusTimer);focusTimer=setInterval(()=>{if(!focusRunning)return;focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));renderFocus();renderLearningDashboard();if(focusRemaining<=0)finishFocusSession();else persistFocus();},250)}
 function finishFocusSession(){
-  if(focusTimer){clearInterval(focusTimer);focusTimer=null;}
-  if(!focusRunning && focusRemaining<=0)return;
-  focusRunning=false;focusPaused=false;focusEndAt=0;focusPauseAt=0;focusRemaining=0;focusCompleted=true;
-  focusClearCookie();
-  const completedMinutes=Math.max(1,Number(focusMinutes)||25);
-  const p=ensureUpgradeData();
-  if(p){
-    p.focusHistory=p.focusHistory||[];
-    p.focusHistory.push({date:localDate(),minutes:completedMinutes});
-  }
-  Promise.resolve(addLearningMinutes(completedMinutes,'Focus Session'))
-    .then(()=>typeof registerStudyDay==='function'?registerStudyDay():null)
-    .catch(()=>{});
-  showToast(`🎯 Focus Session selesai • +${completedMinutes} menit belajar`,'success');
-  try{const a=new Audio('https://www.myinstants.com/media/sounds/subway-surfers-open-box.mp3');a.preload='auto';a.play().catch(()=>{});}catch(e){}
-  focusRemaining=completedMinutes*60;
-  renderFocus();
+  if(focusTimer){clearInterval(focusTimer);focusTimer=null;}if(!focusRunning&&focusRemaining<=0)return;
+  focusRunning=false;focusPaused=false;focusEndAt=0;focusPauseAt=0;focusRemaining=0;focusCompleted=true;focusClearCookie();
+  const completedMinutes=Math.max(1,Number(focusMinutes)||25),p=ensureUpgradeData();if(p){p.focusHistory=p.focusHistory||[];p.focusHistory.push({date:localDate(),minutes:completedMinutes});}
+  Promise.resolve(addLearningMinutes(completedMinutes,'Focus Session')).then(()=>typeof registerStudyDay==='function'?registerStudyDay():null).catch(()=>{});
+  showToast(`🎯 Focus Session selesai • +${completedMinutes} menit belajar`,'success');void playFocusTimeout();renderFocus();
 }
-function resetFocusSession(clearCookie=true,zero=false){
-  if(focusTimer)clearInterval(focusTimer);
-  focusTimer=null;focusRunning=false;focusPaused=false;focusEndAt=0;focusPauseAt=0;focusCompleted=false;
-  focusRemaining=zero?0:focusMinutes*60;
-  if(clearCookie)focusClearCookie();
-  renderFocus();
-}
+function resetFocusSession(clearCookie=true,zero=false){if(focusTimer)clearInterval(focusTimer);focusTimer=null;focusRunning=false;focusPaused=false;focusEndAt=0;focusPauseAt=0;focusCompleted=false;focusRemaining=zero?0:focusMinutes*60;if(clearCookie)focusClearCookie();renderFocus()}
 function startOrToggleFocus(){
-  if(focusRunning){
-    focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));
-    focusRunning=false;focusPaused=true;focusPauseAt=Date.now();focusEndAt=0;
-    if(focusTimer){clearInterval(focusTimer);focusTimer=null;}
-    persistFocus();renderFocus();return;
-  }
-  if(focusPaused){
-    if(focusPauseAt && Date.now()-focusPauseAt>3600000){resetFocusSession(true,true);return;}
-    if(focusRemaining<=0){resetFocusSession(true,false);return;}
-    focusEndAt=Date.now()+Math.max(0,focusRemaining)*1000;
-    focusRunning=true;focusPaused=false;focusPauseAt=0;
-    persistFocus();renderFocus();startFocusTicker();return;
-  }
-  focusRemaining=focusMinutes*60;
-  focusEndAt=Date.now()+focusRemaining*1000;
-  focusRunning=true;focusPaused=false;focusPauseAt=0;
-  persistFocus();renderFocus();startFocusTicker();
+  unlockFocusAudio();
+  if(focusRunning){focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));focusRunning=false;focusPaused=true;focusPauseAt=Date.now();focusEndAt=0;if(focusTimer){clearInterval(focusTimer);focusTimer=null;}persistFocus();renderFocus();return;}
+  if(focusPaused){if(focusPauseAt&&Date.now()-focusPauseAt>3600000){resetFocusSession(true,true);return;}if(focusRemaining<=0){resetFocusSession(true,false);return;}focusEndAt=Date.now()+Math.max(0,focusRemaining)*1000;focusRunning=true;focusPaused=false;focusPauseAt=0;persistFocus();renderFocus();startFocusTicker();return;}
+  focusCompleted=false;focusRemaining=focusMinutes*60;focusEndAt=Date.now()+focusRemaining*1000;focusRunning=true;focusPaused=false;focusPauseAt=0;persistFocus();renderFocus();startFocusTicker();
 }
-
-// Preset duration
- document.querySelectorAll('.focus-btn').forEach(b=>b.addEventListener('click',()=>{
-  if(focusRunning)return;
-  focusMinutes=Math.max(1,Number(b.dataset.focus)||25);
-  focusRemaining=focusMinutes*60;
-  focusPaused=false;focusPauseAt=0;focusEndAt=0;
-  focusClearCookie();renderFocus();
-}));
-
-// Custom duration popup yang responsive dan tidak bergantung pada prompt browser.
+document.querySelectorAll('.focus-btn').forEach(b=>b.addEventListener('click',()=>{if(focusRunning)return;focusMinutes=Math.max(1,Number(b.dataset.focus)||25);focusRemaining=focusMinutes*60;focusPaused=false;focusPauseAt=0;focusEndAt=0;focusCompleted=false;focusClearCookie();renderFocus();}));
 function openFocusCustomModal(){
-  const old=$('flFocusCustomModal');if(old)old.remove();
-  const overlay=document.createElement('div');
-  overlay.id='flFocusCustomModal';overlay.className='fl-focus-custom-overlay';
-  overlay.innerHTML=`
-    <div class="fl-focus-custom-card" role="dialog" aria-modal="true" aria-labelledby="flFocusCustomTitle">
-      <button class="fl-focus-custom-close" type="button" aria-label="Tutup">×</button>
-      <div class="fl-focus-custom-icon">⏱️</div>
-      <div class="fl-focus-custom-kicker">FOCUS SESSION</div>
-      <h3 id="flFocusCustomTitle">Atur waktu fokus</h3>
-      <p>Tentukan sendiri berapa menit kamu ingin belajar fokus.</p>
-      <label class="fl-focus-custom-label" for="flFocusCustomInput">Durasi</label>
-      <div class="fl-focus-custom-input-wrap"><input id="flFocusCustomInput" type="number" min="1" max="600" step="1" value="${Math.max(1,Number(focusMinutes)||25)}"><span>menit</span></div>
-      <div class="fl-focus-custom-presets">
-        <button type="button" data-custom-min="10">10m</button>
-        <button type="button" data-custom-min="30">30m</button>
-        <button type="button" data-custom-min="90">90m</button>
-        <button type="button" data-custom-min="120">120m</button>
-      </div>
-      <div class="fl-focus-custom-error" id="flFocusCustomError"></div>
-      <button type="button" class="fl-focus-custom-save" id="flFocusCustomSave">Gunakan durasi</button>
-    </div>`;
-  document.body.appendChild(overlay);
-  const input=$('flFocusCustomInput');
-  const close=()=>overlay.remove();
-  overlay.querySelector('.fl-focus-custom-close').onclick=close;
-  overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
-  overlay.querySelectorAll('[data-custom-min]').forEach(btn=>btn.onclick=()=>{input.value=btn.dataset.customMin;input.focus()});
-  $('flFocusCustomSave').onclick=()=>{
-    const n=Math.floor(Number(input.value));
-    const err=$('flFocusCustomError');
-    if(!Number.isFinite(n)||n<1||n>600){err.textContent='Masukkan durasi 1–600 menit.';return;}
-    focusMinutes=n;focusRemaining=n*60;focusRunning=false;focusPaused=false;focusPauseAt=0;focusEndAt=0;focusClearCookie();renderFocus();close();showToast(`⏱️ Durasi fokus diatur ${n} menit.`,'success');
-  };
-  input.addEventListener('keydown',e=>{if(e.key==='Enter')$('flFocusCustomSave').click();if(e.key==='Escape')close()});
-  setTimeout(()=>{input.focus();input.select()},30);
+  const old=$('flFocusCustomModal');if(old)old.remove();const overlay=document.createElement('div');overlay.id='flFocusCustomModal';overlay.className='fl-focus-custom-overlay';
+  overlay.innerHTML=`<div class="fl-focus-custom-card" role="dialog" aria-modal="true" aria-labelledby="flFocusCustomTitle"><button class="fl-focus-custom-close" type="button" aria-label="Tutup">×</button><div class="fl-focus-custom-icon">⏱️</div><div class="fl-focus-custom-kicker">FOCUS SESSION</div><h3 id="flFocusCustomTitle">Atur waktu fokus</h3><p>Tentukan sendiri berapa menit kamu ingin belajar fokus.</p><label class="fl-focus-custom-label" for="flFocusCustomInput">Durasi</label><div class="fl-focus-custom-input-wrap"><input id="flFocusCustomInput" type="number" min="1" max="600" step="1" value="${Math.max(1,Number(focusMinutes)||25)}"><span>menit</span></div><div class="fl-focus-custom-presets"><button type="button" data-custom-min="10">10m</button><button type="button" data-custom-min="30">30m</button><button type="button" data-custom-min="90">90m</button><button type="button" data-custom-min="120">120m</button></div><div class="fl-focus-custom-error" id="flFocusCustomError"></div><button type="button" class="fl-focus-custom-save" id="flFocusCustomSave">Gunakan durasi</button></div>`;
+  document.body.appendChild(overlay);const input=$('flFocusCustomInput'),close=()=>overlay.remove();overlay.querySelector('.fl-focus-custom-close').onclick=close;overlay.addEventListener('click',e=>{if(e.target===overlay)close()});overlay.querySelectorAll('[data-custom-min]').forEach(btn=>btn.onclick=()=>{input.value=btn.dataset.customMin;input.focus()});
+  $('flFocusCustomSave').onclick=()=>{const n=Math.floor(Number(input.value)),err=$('flFocusCustomError');if(!Number.isFinite(n)||n<1||n>600){err.textContent='Masukkan durasi 1–600 menit.';return;}focusMinutes=n;focusRemaining=n*60;focusRunning=false;focusPaused=false;focusPauseAt=0;focusEndAt=0;focusCompleted=false;focusClearCookie();renderFocus();close();showToast(`⏱️ Durasi fokus diatur ${n} menit.`,'success');};
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')$('flFocusCustomSave').click();if(e.key==='Escape')close()});setTimeout(()=>{input.focus();input.select()},30);
 }
-$('flFocusCustom')?.addEventListener('click',openFocusCustomModal);
-$('flFocusStart')?.addEventListener('click',startOrToggleFocus);
-$('flFocusReset')?.addEventListener('click',()=>resetFocusSession(true,false));
+$('flFocusCustom')?.addEventListener('click',openFocusCustomModal);$('flFocusStart')?.addEventListener('click',startOrToggleFocus);$('flFocusReset')?.addEventListener('click',()=>resetFocusSession(true,false));
 
-// Setelah refresh, render langsung lalu hidupkan ticker bila session masih running.
-syncFocusFromCookie();
-renderFocus();
+/* Realtime Goal + Custom Goal */
+function focusElapsedMinutesPreview(){if(typeof focusRunning!=="undefined"&&focusRunning&&typeof focusEndAt!=="undefined"){const elapsed=Math.max(0,(Number(focusMinutes)||25)*60-Math.max(0,(Number(focusEndAt)-Date.now())/1000));return elapsed/60}return 0}
+function getTodayGoalDisplayMinutes(){const p=ensureUpgradeData();if(!p)return 0;const day=typeof localDate==='function'?localDate():localStudyDate();return (Number(p.learningDaily?.[day])||0)+focusElapsedMinutesPreview()}
+function openGoalCustomModal(){const old=$("flGoalCustomModal");if(old)old.remove();const ov=document.createElement("div");ov.id="flGoalCustomModal";ov.className="fl-focus-custom-overlay";const current=Math.max(1,Number(ensureUpgradeData()?.dailyGoal)||30);ov.innerHTML=`<div class="fl-focus-custom-card" role="dialog" aria-modal="true"><button class="fl-focus-custom-close" type="button">×</button><div class="fl-focus-custom-icon">🎯</div><div class="fl-focus-custom-kicker">TODAY'S GOAL</div><h3>Atur target belajar</h3><p>Target custom ini menjadi acuan progress Focus Session.</p><label class="fl-focus-custom-label" for="flGoalCustomInput">Target</label><div class="fl-focus-custom-input-wrap"><input id="flGoalCustomInput" type="number" min="1" max="600" value="${current}"><span>menit</span></div><div class="fl-focus-custom-presets"><button type="button" data-goal-min="10">10m</button><button type="button" data-goal-min="30">30m</button><button type="button" data-goal-min="60">60m</button><button type="button" data-goal-min="120">120m</button></div><div class="fl-focus-custom-error" id="flGoalCustomError"></div><button type="button" class="fl-focus-custom-save" id="flGoalCustomSave">Gunakan target</button></div>`;document.body.appendChild(ov);const input=$("flGoalCustomInput");const close=()=>ov.remove();ov.querySelector('.fl-focus-custom-close').onclick=close;ov.addEventListener('click',e=>{if(e.target===ov)close()});ov.querySelectorAll('[data-goal-min]').forEach(b=>b.onclick=()=>{input.value=b.dataset.goalMin});$("flGoalCustomSave").onclick=()=>{const n=Math.floor(Number(input.value)),err=$("flGoalCustomError");if(!Number.isFinite(n)||n<1||n>600){err.textContent='Masukkan target 1–600 menit.';return}const p=ensureUpgradeData();p.dailyGoal=n;persist();renderLearningDashboard();close();showToast(`🎯 Target harian diatur ${n} menit.`,'success')};input.addEventListener('keydown',e=>{if(e.key==='Enter')$("flGoalCustomSave").click();if(e.key==='Escape')close()});setTimeout(()=>{input.focus();input.select()},30)}
+$("flGoalCustom")?.addEventListener('click',openGoalCustomModal);
 
+/* Learning state + Study Lab */
+function localStudyDate(){return new Date().toISOString().slice(0,10)}
+function ensureUpgradeData(){try{normalizeDatabase?.();const p=getProfile();p.learningDaily=p.learningDaily&&typeof p.learningDaily==='object'?p.learningDaily:{};p.dailyGoal=Math.max(1,Number(p.dailyGoal)||30);p.focusHistory=Array.isArray(p.focusHistory)?p.focusHistory:[];p.studyLab=p.studyLab&&typeof p.studyLab==='object'?p.studyLab:{flashcards:[],quizAttempts:{},generated:[]};p.studyLab.flashcards=Array.isArray(p.studyLab.flashcards)?p.studyLab.flashcards:[];p.studyLab.quizAttempts=p.studyLab.quizAttempts||{};return p;}catch(e){return null}}
+async function persist(){try{if(typeof saveDatabase==='function')return await saveDatabase()}catch(e){console.warn('Learning persist failed',e)}}
+function renderLearningDashboard(){const p=ensureUpgradeData();if(!p)return;const target=Number(p.dailyGoal)||30,mins=getTodayGoalDisplayMinutes();const a=$('flGoalMinutes'),b=$('flGoalTarget'),f=$('flGoalFill'),m=$('flGoalMessage'),c=$('flGoalComplete');if(a)a.textContent=Math.floor(mins);if(b)b.textContent=target;if(f)f.style.width=Math.min(100,mins/target*100)+'%';if(m)m.textContent=mins>=target?'Target hari ini tercapai. Mantap!':focusRunning?`Focus Session berjalan • +${Math.floor(focusElapsedMinutesPreview())} menit`:'Tambah sedikit lagi untuk mencapai target hari ini.';if(c)c.hidden=mins<target;const sel=$('flGoalSelect');if(sel)sel.value=[15,30,45,60].includes(target)?String(target):'';renderStudyLabStats()}
+function addLearningMinutes(minutes,source){const n=Math.max(0,Number(minutes)||0);if(!n)return;const p=ensureUpgradeData();if(!p)return;const day=typeof localDate==='function'?localDate():localStudyDate();p.learningDaily[day]=(Number(p.learningDaily[day])||0)+n;recordStudyMinutesCookie(n);p.learningTime=getStudyMinutesCookie().total;persist();try{if(typeof checkAchievements==='function')Promise.resolve(checkAchievements()).catch(()=>{});}catch(e){}renderLearningDashboard()}
+function studyLab(){const p=ensureUpgradeData();return p?.studyLab}
+function normalizeStudyText(s){return String(s||'').replace(/\s+/g,' ').trim()}
+function currentStudyContext(fallback){
+  const c=fallback||{};let id=c.id||null,type=c.type||'general',title='',notes='';
+  if(!id&&typeof onlineData!=='undefined'&&onlineData?.activeModuleId){id=onlineData.activeModuleId;type='online';}
+  if(type==='online'&&id){const m=typeof getAllOnlineModules==='function'?getAllOnlineModules().find(x=>x.id===id):null;title=m?.title||'';notes=typeof getOnlineNote==='function'?getOnlineNote(id):'';}
+  else if(type==='local'&&id){const v=appDatabase?.videos?.[id]||{};title=v.title||id.split('/').pop()||'Video';notes=v.notes||'';}
+  if(!title&&typeof currentPathValue!=='undefined'&&currentPathValue){const v=appDatabase?.videos?.[currentPathValue]||{};title=v.title||String(currentPathValue).split('/').pop()||'Video';notes=v.notes||'';if(type==='general'){id=currentPathValue;type='local';}}
+  return {id:id||('general_'+Date.now()),type,title:title||'Materi FunLearn',notes:normalizeStudyText(notes)};
+}
+function notePairs(text){return String(text||'').split(/\n|[.!?]\s+/).map(x=>x.trim()).filter(Boolean).map(line=>{const m=line.match(/^(.{2,100}?)(?:\s*[:=–—-]\s*)(.{2,500})$/);return m?{front:m[1].trim(),back:m[2].trim()}:null}).filter(Boolean)}
+function saveStudyLab(){persist();renderStudyLabStats()}
+function makeFlashcard(front,back,source){const p=ensureUpgradeData();if(!p)return null;front=normalizeStudyText(front);back=normalizeStudyText(back);if(!front||!back)return null;const duplicate=p.studyLab.flashcards.some(c=>c.front.toLowerCase()===front.toLowerCase()&&c.back.toLowerCase()===back.toLowerCase());if(duplicate)return null;const card={id:'fc_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),front,back,source:source||'manual',dueAt:Date.now(),interval:0,ease:2.5,reps:0,lapses:0};p.studyLab.flashcards.push(card);saveStudyLab();return card}
+function generateFlashcardsFromNotes(context){const ctx=currentStudyContext(context),pairs=notePairs(ctx.notes);if(!pairs.length){showToast('⚠️ Notes aktif belum memakai format istilah: definisi. Tambahkan beberapa baris seperti “Mitosis: pembelahan sel”.','error');return 0}let added=0;pairs.slice(0,12).forEach(x=>{if(makeFlashcard(x.front,x.back,ctx.id))added++});showToast(added?`✨ ${added} flashcard berhasil dibuat.`:'Kartu dari notes itu sudah ada.','success');return added}
+function renderStudyLabStats(){const p=ensureUpgradeData();if(!p)return;const cards=p.studyLab.flashcards||[],due=cards.filter(c=>Number(c.dueAt||0)<=Date.now()).length;const a=$('flFlashcardCount'),b=$('flFlashcardDue'),c=$('flStudyDueBadge');if(a)a.textContent=cards.length;if(b)b.textContent=due;if(c)c.textContent=due+' due'}
+let quizState={items:[],index:0,selected:null,checked:false,context:null,score:0};
+function quizQuestionsFromNotes(context){const ctx=currentStudyContext(context),pairs=notePairs(ctx.notes);if(!pairs.length)return [];const pool=pairs.slice(0,8),items=[];pool.slice(0,4).forEach((pair,i)=>{const others=pool.filter((_,j)=>j!==i).map(x=>x.back);const opts=[pair.back,...others.slice(0,3)].sort(()=>Math.random()-.5);items.push({type:'mcq',q:`Apa yang paling tepat menjelaskan “${pair.front}”?`,options:opts,answer:pair.back});});if(pool[0])items.push({type:'text',q:`Tuliskan istilah yang sesuai dengan definisi: “${pool[0].back}”`,answer:pool[0].front});return items.slice(0,5)}
+async function openQuiz(context,auto=false){const ctx=currentStudyContext(context),ov=$('flQuizOverlay');if(!ov)return;const notes=String(ctx.notes||'').trim();if(!notes){showToast('📝 Notes aktif masih kosong. Isi Notes dulu agar AI bisa membuat kuis.','error');return;}const oldBtn=$('flQuizCheck');if(oldBtn)oldBtn.disabled=true;ov.classList.add('show');$('flQuizProgress').textContent='AI sedang menyusun kuis dari Notes…';$('flQuizQuestion').innerHTML='<div class="fl-ai-quiz-busy"><span class="fl-ai-mini-spin"></span> AI sedang membaca catatan…</div>';$('flQuizOptions').innerHTML='';$('flQuizFeedback').textContent='';$('flQuizInputWrap').hidden=true;try{const aiItems=await window.funlearnAI.generateQuiz(notes,ctx.title);const items=Array.isArray(aiItems)?aiItems:[];if(!items.length)throw new Error('AI tidak menghasilkan soal yang valid.');quizState={items:items.slice(0,8),index:0,selected:null,checked:false,context:ctx,score:0};renderQuizQuestion();}catch(e){console.warn('AI quiz failed, fallback ke generator lokal',e);const fallback=quizQuestionsFromNotes(context);if(fallback.length){quizState={items:fallback,index:0,selected:null,checked:false,context:ctx,score:0};renderQuizQuestion();showToast('⚠️ AI sedang tidak tersedia. Kuis dibuat dengan generator lokal.','error');}else{$('flQuizQuestion').textContent='AI tidak dapat membuat kuis dari Notes ini.';$('flQuizFeedback').textContent=e.message||'Coba lagi sebentar.';}}finally{if(oldBtn)oldBtn.disabled=false;}}
+function renderQuizQuestion(){const q=quizState.items[quizState.index];$('flQuizProgress').textContent=`Soal ${quizState.index+1} / ${quizState.items.length} • ${quizState.score} benar`;$('flQuizQuestion').textContent=q.q;$('flQuizFeedback').textContent='';$('flQuizFeedback').className='quiz-feedback';$('flQuizCheck').hidden=false;$('flQuizNext').hidden=true;$('flQuizInputWrap').hidden=q.type!=='text';const opts=$('flQuizOptions');opts.innerHTML='';quizState.selected=null;quizState.checked=false;if(q.type==='mcq'){q.options.forEach(o=>{const b=document.createElement('button');b.className='quiz-option';b.type='button';b.textContent=o;b.onclick=()=>{if(quizState.checked)return;quizState.selected=o;opts.querySelectorAll('.quiz-option').forEach(x=>x.classList.remove('selected'));b.classList.add('selected')};opts.appendChild(b)})}else opts.innerHTML=''}
+function finishQuiz(){const key=quizState.context.id+'_'+new Date().toISOString().slice(0,10);const p=ensureUpgradeData();if(p.studyLab.quizAttempts[key])return;const score=quizState.score,total=quizState.items.length;p.studyLab.quizAttempts[key]={score,total,date:new Date().toISOString()};persist();const xp=Math.max(5,score*10),coins=Math.max(1,score*3);Promise.resolve(addXP(xp)).catch(()=>{});Promise.resolve(addCoins(coins,'Kuis selesai')).catch(()=>{});showToast(`🏆 Kuis selesai • ${score}/${total} benar • +${xp} XP`,'success')}
+$('flQuizCheck')?.addEventListener('click',()=>{const q=quizState.items[quizState.index];let answer=quizState.selected;if(q.type==='text')answer=normalizeStudyText($('flQuizInput').value);if(!answer){$('flQuizFeedback').textContent='Pilih atau isi jawaban dulu.';$('flQuizFeedback').className='quiz-feedback bad';return}const correct=q.type==='text'?answer.toLowerCase()===String(q.answer).toLowerCase():answer===q.answer;quizState.checked=true;if(correct)quizState.score++;$('flQuizFeedback').textContent=correct?'✓ Benar!':'✗ Belum tepat. Jawaban: '+q.answer;$('flQuizFeedback').className='quiz-feedback '+(correct?'good':'bad');$('flQuizCheck').hidden=true;$('flQuizNext').hidden=false;$('flQuizOptions').querySelectorAll('.quiz-option').forEach(b=>{if(b.textContent===q.answer)b.classList.add('correct');else if(b.textContent===answer&&!correct)b.classList.add('wrong')});if(quizState.index===quizState.items.length-1){$('flQuizNext').textContent='Selesai'}});
+$('flQuizNext')?.addEventListener('click',()=>{if(!quizState.checked)return;if(quizState.index>=quizState.items.length-1){finishQuiz();$('flQuizOverlay').classList.remove('show');return;}quizState.index++;renderQuizQuestion()});$('flQuizClose')?.addEventListener('click',()=>$('flQuizOverlay').classList.remove('show'));
+let flashState={queue:[],index:0,revealed:false};let flashDueTimer=null;
+function formatFlashRemaining(ms){const sec=Math.max(0,Math.ceil(ms/1000)),m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
+function renderFlashDueTimer(card){const el=$("flFlashDueTimer");if(!el)return;if(flashDueTimer){clearInterval(flashDueTimer);flashDueTimer=null}if(!card||Number(card.dueAt||0)<=Date.now()){el.hidden=true;return}el.hidden=false;const tick=()=>{const left=Number(card.dueAt)-Date.now();if(left<=0){clearInterval(flashDueTimer);flashDueTimer=null;el.hidden=true;renderStudyLabStats();return}el.textContent='⏳ Kartu berikutnya bisa diulang dalam '+formatFlashRemaining(left)};tick();flashDueTimer=setInterval(tick,250)}
+function escFlash(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderFlashManage(){const p=ensureUpgradeData(),list=$("flFlashManageList");if(!list)return;const cards=p.studyLab.flashcards||[];list.innerHTML=cards.length?cards.map(c=>'<div class="flash-manage-item"><div><b>'+escFlash(c.front)+'</b><small>'+escFlash(c.back)+'</small></div><div><button type="button" data-preview-card="'+c.id+'">Preview</button><button type="button" data-delete-card="'+c.id+'">Hapus</button></div></div>').join(''):'<div class="flash-empty">Belum ada flashcard.</div>'}
+
+function openFlashcards(){const p=ensureUpgradeData(),cards=(p.studyLab.flashcards||[]).filter(c=>Number(c.dueAt||0)<=Date.now()).sort((a,b)=>(a.dueAt||0)-(b.dueAt||0));const ov=$('flFlashOverlay');if(!ov)return;ov.classList.add('show');flashState={queue:cards,index:0,revealed:false};renderFlashcard()}
+function renderFlashcard(){const q=flashState.queue[flashState.index],face=$('flFlashFace'),rating=$('flFlashRating'),empty=$('flFlashEmpty');if(!q){$('flFlashMeta').textContent='Tidak ada kartu yang perlu diulang sekarang.';face.hidden=true;rating.hidden=true;empty.hidden=false;return}face.hidden=false;empty.hidden=true;rating.hidden=!flashState.revealed;$('flFlashMeta').textContent=`Kartu ${flashState.index+1} / ${flashState.queue.length} • klik kartu untuk membalik`;$('flFlashFront').textContent=flashState.revealed?q.back:q.front;$('flFlashBack').hidden=true;renderFlashDueTimer(q)}
+$('flFlashFace')?.addEventListener('click',()=>{if(!flashState.queue[flashState.index])return;flashState.revealed=!flashState.revealed;renderFlashcard()});
+$('flFlashRating')?.addEventListener('click',e=>{const btn=e.target.closest('[data-rate]');if(!btn)return;const q=flashState.queue[flashState.index],p=ensureUpgradeData(),r=btn.dataset.rate;if(!q||!p)return;const card=p.studyLab.flashcards.find(x=>x.id===q.id);if(!card)return;const now=Date.now();card.reps=Number(card.reps)||0;card.ease=Number(card.ease)||2.5;if(r==='again'){card.lapses=(Number(card.lapses)||0)+1;card.reps=0;card.interval=0;card.ease=Math.max(1.3,card.ease-.2);card.dueAt=now+10*60000}else if(r==='hard'){card.interval=Math.max(1,Math.round((Number(card.interval)||1)*1.2));card.ease=Math.max(1.3,card.ease-.15);card.reps++;card.dueAt=now+card.interval*86400000}else if(r==='good'){card.interval=card.reps===0?1:Math.max(1,Math.round((Number(card.interval)||1)*card.ease));card.reps++;card.dueAt=now+card.interval*86400000}else{card.interval=card.reps===0?4:Math.max(2,Math.round((Number(card.interval)||1)*card.ease*1.3));card.ease+=.15;card.reps++;card.dueAt=now+card.interval*86400000}persist();flashState.index++;flashState.revealed=false;renderFlashcard();renderStudyLabStats()});
+$('flFlashSkip')?.addEventListener('click',()=>{if(!flashState.queue[flashState.index])return;flashState.index++;flashState.revealed=false;renderFlashcard()});
+$('flFlashManage')?.addEventListener('click',()=>{const p=$("flFlashManagePanel");if(!p)return;p.hidden=!p.hidden;if(!p.hidden)renderFlashManage()});
+$('flFlashManageList')?.addEventListener('click',e=>{const del=e.target.closest('[data-delete-card]'),prev=e.target.closest('[data-preview-card]'),p=ensureUpgradeData();if(del&&p){const id=del.dataset.deleteCard,card=p.studyLab.flashcards.find(c=>c.id===id);if(!card||!confirm('Hapus flashcard “'+card.front+'”?'))return;p.studyLab.flashcards=p.studyLab.flashcards.filter(c=>c.id!==id);persist();renderFlashManage();renderStudyLabStats();showToast('🗑️ Flashcard dihapus.','success');return}if(prev&&p){const card=p.studyLab.flashcards.find(c=>c.id===prev.dataset.previewCard);if(!card)return;flashState={queue:[card],index:0,revealed:false};renderFlashcard()}});
+$('flFlashClose')?.addEventListener('click',()=>{if(flashDueTimer)clearInterval(flashDueTimer);$('flFlashOverlay').classList.remove('show')});
+$('flOpenQuiz')?.addEventListener('click',()=>openQuiz());$('flOpenFlashcards')?.addEventListener('click',openFlashcards);$('flAddCard')?.addEventListener('click',()=>{const a=$('flCardFront'),b=$('flCardBack');if(!a.value.trim()||!b.value.trim()){showToast('Isi depan dan belakang flashcard dulu.','error');return}if(makeFlashcard(a.value,b.value,'manual')){a.value='';b.value='';showToast('✓ Flashcard ditambahkan.','success')}else showToast('Kartu yang sama sudah ada.','error')});$('flGenerateCards')?.addEventListener('click',()=>generateFlashcardsFromNotes());$('flGoalSelect')?.addEventListener('change',()=>{const p=ensureUpgradeData();if(p){p.dailyGoal=Math.max(1,Number($('flGoalSelect').value)||30);persist();renderLearningDashboard()}});
+function openRecall(context){recallContext=currentStudyContext(context);const ov=$('flRecallOverlay');if(!ov)return;$('flRecallAnswer').value='';$('flRecallFeedback').textContent='';$('flRecallFeedback').className='recall-feedback';ov.classList.add('show');}
+$('flRecallSkip')?.addEventListener('click',()=>{$('flRecallOverlay').classList.remove('show');if(recognitionQuizReady(recallContext))openQuiz(recallContext,true)});
+function recognitionQuizReady(ctx){return quizQuestionsFromNotes(ctx).length>0}
+$('flRecallSubmit')?.addEventListener('click',async()=>{const answer=normalizeStudyText($('flRecallAnswer').value);if(answer.length<10){showToast('Tulis minimal beberapa kata yang kamu ingat dulu.','error');return}$('flRecallFeedback').innerHTML='🧠 Recall Complete!<br>+30 XP • +15 🪙';$('flRecallFeedback').className='recall-feedback show';try{await addXP(30);await addCoins(15,'Active Recall')}catch(e){}setTimeout(()=>{$('flRecallOverlay').classList.remove('show');if(recognitionQuizReady(recallContext))openQuiz(recallContext,true);},500)});
+
+syncFocusFromCookie();renderFocus();renderLearningDashboard();renderStudyLabStats();
+setTimeout(()=>{ensureUpgradeData();renderLearningDashboard();renderFocus();},500);
+window.funlearnLearningUpgrade={openRecall,openQuiz,openFlashcards,renderLearningDashboard,addLearningMinutes,generateFlashcardsFromNotes};(function(){function placeLearningSections(){const notes=document.querySelector('.notes'),grid=document.getElementById('funlearnLearningUpgrade'),lab=document.getElementById('funlearnStudyLab');if(notes&&grid&&lab&&notes.parentNode){notes.insertAdjacentElement('afterend',grid);grid.insertAdjacentElement('afterend',lab)}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',placeLearningSections);else placeLearningSections();setInterval(()=>{try{renderLearningDashboard();renderFocus()}catch(e){}},1000)})();
 // Saat tab kembali aktif, hitung ulang dari endAt agar preview tidak pernah tertinggal.
 document.addEventListener('visibilitychange',()=>{
   if(!focusRunning)return;
@@ -7730,6 +7673,93 @@ window.funlearnAchievementEmojiHTML=function(icon){const map={
 };
 </script>
 
+<style id="funlearn-ai-css">
+  /* =========================================================
+     FUNLEARN AI ASSISTANT — compact floating chat
+     ========================================================= */
+  #fl-ai-fab{position:fixed;left:22px;bottom:22px;z-index:9997;width:62px;height:62px;border:1px solid rgba(255,255,255,.18);border-radius:21px;background:linear-gradient(135deg,#6d5dfc,#27c7ff);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 18px 48px rgba(48,63,180,.35);transition:transform .2s,box-shadow .2s}
+  #fl-ai-fab:hover{transform:translateY(-4px) scale(1.04);box-shadow:0 24px 58px rgba(48,63,180,.48)}
+  #fl-ai-fab:focus-visible{outline:3px solid rgba(39,199,255,.45);outline-offset:3px}
+  .fl-ai-fab-icon{font-size:28px;line-height:1}
+  .fl-ai-fab-label{position:absolute;left:72px;white-space:nowrap;padding:8px 11px;border-radius:10px;background:#11182b;color:#fff;font-size:11px;font-weight:850;opacity:0;transform:translateX(-6px);pointer-events:none;transition:.18s}
+  .fl-ai-wrap:hover .fl-ai-fab-label{opacity:1;transform:none}
+  .fl-ai-panel{position:fixed;left:22px;bottom:96px;z-index:9999;width:min(390px,calc(100vw - 28px));height:min(570px,calc(100vh - 125px));display:none;flex-direction:column;overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:24px;background:rgba(13,18,34,.96);box-shadow:0 30px 90px rgba(0,0,0,.48);backdrop-filter:blur(22px);animation:flAiIn .22s ease both}
+  .fl-ai-panel.show{display:flex}
+  @keyframes flAiIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+  .fl-ai-head{display:flex;align-items:center;gap:11px;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,.1);background:linear-gradient(135deg,rgba(109,93,252,.18),rgba(39,199,255,.08))}
+  .fl-ai-avatar{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#6d5dfc,#27c7ff);font-size:21px;box-shadow:0 8px 24px rgba(83,92,220,.25)}
+  .fl-ai-head-copy{min-width:0;flex:1}.fl-ai-head-copy strong{display:block;color:#fff;font-size:14px}.fl-ai-head-copy small{display:block;color:#aeb8d3;font-size:10px;margin-top:3px}
+  .fl-ai-status{margin-left:auto;font-size:9px;font-weight:900;color:#8de7bd;background:rgba(82,211,151,.1);border:1px solid rgba(82,211,151,.2);padding:5px 7px;border-radius:999px}
+  .fl-ai-close{border:0;background:rgba(255,255,255,.06);color:#cdd5ea;width:32px;height:32px;border-radius:10px;font-size:19px;cursor:pointer}.fl-ai-close:hover{background:rgba(255,255,255,.11)}
+  .fl-ai-chat{flex:1;overflow:auto;padding:15px;display:flex;flex-direction:column;gap:9px;scroll-behavior:smooth}
+  .fl-ai-msg{max-width:88%;padding:10px 12px;border-radius:15px;font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;animation:flAiMsg .18s ease both}.fl-ai-msg.user{align-self:flex-end;color:#fff;background:linear-gradient(135deg,#6355e8,#397fef);border-bottom-right-radius:5px}.fl-ai-msg.ai{align-self:flex-start;color:#eaf0ff;background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.08);border-bottom-left-radius:5px}.fl-ai-msg.error{align-self:flex-start;color:#ffd5d5;background:rgba(255,75,92,.09);border:1px solid rgba(255,75,92,.18)}
+  @keyframes flAiMsg{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+  .fl-ai-typing{display:inline-flex;gap:4px;align-items:center}.fl-ai-typing i{width:5px;height:5px;border-radius:50%;background:#aab8dc;animation:flAiDot 1s infinite}.fl-ai-typing i:nth-child(2){animation-delay:.15s}.fl-ai-typing i:nth-child(3){animation-delay:.3s}@keyframes flAiDot{0%,70%,100%{opacity:.3;transform:translateY(0)}35%{opacity:1;transform:translateY(-3px)}}
+  .fl-ai-suggestions{display:flex;gap:6px;overflow:auto;padding:0 14px 9px;scrollbar-width:none}.fl-ai-suggestions::-webkit-scrollbar{display:none}.fl-ai-suggestions button{white-space:nowrap;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.055);color:#dce4fa;border-radius:999px;padding:7px 9px;font-size:10px;font-weight:750;cursor:pointer}.fl-ai-suggestions button:hover{background:rgba(109,93,252,.18);border-color:rgba(109,93,252,.4)}
+  .fl-ai-input-row{display:flex;gap:7px;padding:11px;border-top:1px solid rgba(255,255,255,.1);background:rgba(7,10,20,.35)}
+  .fl-ai-input{flex:1;min-width:0;max-height:90px;resize:none;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(255,255,255,.055);color:#fff;padding:10px 11px;font:inherit;font-size:12px;outline:none}.fl-ai-input:focus{border-color:rgba(39,199,255,.45);box-shadow:0 0 0 3px rgba(39,199,255,.08)}
+  .fl-ai-send{width:43px;height:43px;flex:0 0 43px;border:0;border-radius:13px;background:linear-gradient(135deg,#6d5dfc,#27c7ff);color:#fff;font-size:17px;font-weight:900;cursor:pointer}.fl-ai-send:disabled{opacity:.5;cursor:wait}
+  body.light-mode .fl-ai-panel{background:rgba(248,250,255,.97);border-color:rgba(20,30,60,.12);box-shadow:0 30px 90px rgba(25,35,70,.2)}
+  body.light-mode .fl-ai-head{border-color:rgba(20,30,60,.09)}body.light-mode .fl-ai-head-copy strong{color:#18203a}body.light-mode .fl-ai-head-copy small{color:#6c7690}body.light-mode .fl-ai-status{color:#18734d}
+  body.light-mode .fl-ai-msg.ai{color:#26304b;background:rgba(20,35,70,.055);border-color:rgba(20,35,70,.08)}body.light-mode .fl-ai-suggestions button{color:#38445f;background:rgba(20,35,70,.045);border-color:rgba(20,35,70,.1)}body.light-mode .fl-ai-input-row{background:rgba(235,239,248,.75);border-color:rgba(20,30,60,.09)}body.light-mode .fl-ai-input{color:#17203a;background:#fff;border-color:rgba(20,30,60,.13)}
+  .fl-ai-quiz-busy{display:inline-flex;align-items:center;gap:8px}.fl-ai-mini-spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:flAiSpin .7s linear infinite}@keyframes flAiSpin{to{transform:rotate(360deg)}}
+  @media(max-width:700px){#fl-ai-fab{left:14px;bottom:14px;width:55px;height:55px;border-radius:18px}.fl-ai-fab-label{display:none}.fl-ai-panel{left:10px;bottom:78px;width:calc(100vw - 20px);height:min(570px,calc(100vh - 100px));border-radius:21px}}
+</style>
+
+<!-- ============================================================
+     FUNLEARN AI ASSISTANT
+     ============================================================ -->
+<div class="fl-ai-wrap">
+  <button id="fl-ai-fab" type="button" aria-label="Buka AI Assistant" aria-expanded="false"><span class="fl-ai-fab-icon">✦</span><span class="fl-ai-fab-label">AI Assistant</span></button>
+</div>
+<div class="fl-ai-panel" id="flAiPanel" role="dialog" aria-modal="false" aria-labelledby="flAiTitle">
+  <div class="fl-ai-head">
+    <div class="fl-ai-avatar">✦</div>
+    <div class="fl-ai-head-copy"><strong id="flAiTitle">FunLearn AI</strong><small>Teman belajar • siap membantu</small></div>
+    <div class="fl-ai-status" id="flAiStatus">Siap</div>
+    <button class="fl-ai-close" id="flAiClose" type="button" aria-label="Tutup AI">×</button>
+  </div>
+  <div class="fl-ai-chat" id="flAiChat" aria-live="polite"><div class="fl-ai-msg ai">Halo! 👋 Aku FunLearn AI. Tanya apa saja tentang materi belajar, atau minta aku menjelaskan Notes-mu.</div></div>
+  <div class="fl-ai-suggestions" id="flAiSuggestions"><button type="button">Jelaskan materi ini</button><button type="button">Buat rangkuman Notes</button><button type="button">Kasih contoh soal</button></div>
+  <div class="fl-ai-input-row"><textarea id="flAiInput" class="fl-ai-input" rows="1" maxlength="4000" placeholder="Tulis pertanyaanmu…"></textarea><button id="flAiSend" class="fl-ai-send" type="button" aria-label="Kirim">➤</button></div>
+</div>
+
+<script id="funlearn-ai-js">
+(function(){
+  const ENDPOINTS=[
+    {name:'Prexzy',method:'GET',buildURL:message=>'https://prexzyapis.com/ai/ch?q='+encodeURIComponent(message)}
+  ];
+  const TIMEOUT=8000;let preferred=0;
+  const $=id=>document.getElementById(id);
+  function extract(data){
+    if(data==null)return null;if(typeof data==='string')return data.trim()||null;
+    for(const k of ['result','response','answer','message','text','content','output','reply'])if(typeof data?.[k]==='string'&&data[k].trim())return data[k].trim();
+    if(Array.isArray(data?.choices)&&data.choices[0]){const c=data.choices[0];if(c.message?.content)return String(c.message.content);if(c.text)return String(c.text)}
+    return null;
+  }
+  async function fetchTimeout(url,opts={}){const c=new AbortController(),t=setTimeout(()=>c.abort(),TIMEOUT);try{return await fetch(url,{...opts,signal:c.signal})}finally{clearTimeout(t)}}
+  async function tryEndpoint(ep,message){const r=await fetchTimeout(ep.buildURL(message),{method:ep.method||'GET',headers:ep.method==='POST'?{'Content-Type':'application/json'}:undefined,body:ep.method==='POST'?JSON.stringify({message,prompt:message}):undefined});if(!r.ok)throw Error('HTTP '+r.status);const ct=r.headers.get('content-type')||'',data=ct.includes('application/json')?await r.json():await r.text(),answer=extract(data);if(!answer)throw Error('Response AI kosong / format tidak dikenal');return answer}
+  async function ask(message){if(!ENDPOINTS.length)throw Error('Tidak ada endpoint AI.');for(let off=0;off<ENDPOINTS.length;off++){const i=(preferred+off)%ENDPOINTS.length,ep=ENDPOINTS[i];const st=$('flAiStatus');if(st)st.textContent='Menghubungkan…';try{const a=await tryEndpoint(ep,message);preferred=i;if(st)st.textContent='Online';return a}catch(e){console.warn('FunLearn AI:',ep.name,e.message)}}if($('flAiStatus'))$('flAiStatus').textContent='Offline';throw Error('Semua endpoint AI tidak tersedia.');}
+  function parseJsonLoose(text){let s=String(text||'').trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();try{return JSON.parse(s)}catch(e){}const a=s.indexOf('['),b=s.lastIndexOf(']');if(a>=0&&b>a){try{return JSON.parse(s.slice(a,b+1))}catch(e){}}const c=s.indexOf('{'),d=s.lastIndexOf('}');if(c>=0&&d>c){try{return JSON.parse(s.slice(c,d+1))}catch(e){}}return null}
+  function normalizeQuiz(raw){const arr=Array.isArray(raw)?raw:(Array.isArray(raw?.questions)?raw.questions:Array.isArray(raw?.quiz)?raw.quiz:[]);return arr.map((x,i)=>{const type=String(x.type||'mcq').toLowerCase();let options=Array.isArray(x.options)?x.options.map(v=>String(v).trim()).filter(Boolean):[];let answer=x.answer??x.correctAnswer??x.correct;let q=x.question??x.q??x.prompt;if(!q||answer==null)return null;if(type==='mcq'){if(options.length<2)return null;answer=String(answer).trim();if(!options.includes(answer)&&Number.isInteger(Number(answer)))answer=options[Number(answer)];if(!options.includes(answer))return null;return {type:'mcq',q:String(q).trim(),options:[...new Set(options)].slice(0,5),answer}}answer=String(answer).trim();return answer?{type:'text',q:String(q).trim(),answer}:null}).filter(Boolean).slice(0,8)}
+  async function generateQuiz(notes,title){const prompt=`Kamu adalah AI pembuat kuis untuk platform belajar FunLearn. Susun kuis yang benar-benar berdasarkan CATATAN di bawah, jangan mengarang fakta di luar catatan. Materi: ${title||'Materi FunLearn'}\n\nCATATAN:\n${notes}\n\nKeluarkan HANYA JSON array valid tanpa markdown. Buat 5-8 soal beragam. Utamakan pilihan ganda (mcq), boleh 1-2 soal text. Untuk mcq gunakan format {"type":"mcq","question":"...","options":["A","B","C","D"],"answer":"jawaban yang persis sama dengan salah satu options"}. Untuk text gunakan {"type":"text","question":"...","answer":"..."}. Setiap jawaban harus dapat dibuktikan dari catatan.`;const raw=await ask(prompt),parsed=parseJsonLoose(raw),items=normalizeQuiz(parsed);if(!items.length)throw Error('AI menghasilkan format kuis yang tidak valid.');return items}
+  window.funlearnAI={ask,generateQuiz,extract};
+  const panel=$('flAiPanel'),fab=$('fl-ai-fab'),close=$('flAiClose'),chat=$('flAiChat'),input=$('flAiInput'),send=$('flAiSend'),status=$('flAiStatus');
+  if(!panel||!fab||!chat||!input||!send)return;
+  const history=[];
+  function add(text,type='ai'){const d=document.createElement('div');d.className='fl-ai-msg '+type;d.textContent=text;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;return d}
+  function typing(){const d=document.createElement('div');d.className='fl-ai-msg ai';d.innerHTML='<span class="fl-ai-typing"><i></i><i></i><i></i></span>';chat.appendChild(d);chat.scrollTop=chat.scrollHeight;return d}
+  function currentNotes(){try{if(typeof currentStudyContext==='function')return currentStudyContext().notes||''}catch(e){}return ''}
+  function contextualize(msg){const notes=currentNotes();const recent=history.slice(-8).map(x=>(x.role==='user'?'User':'AI')+': '+x.text).join('\n');let prompt='Kamu adalah FunLearn AI, asisten belajar yang ramah, jelas, dan membantu. Jawab dalam Bahasa Indonesia kecuali user meminta bahasa lain. Pertahankan konteks percakapan sebelumnya jika relevan.';if(notes)prompt+='\n\nNOTES AKTIF (gunakan hanya jika relevan):\n'+notes;if(recent)prompt+='\n\nRIWAYAT PERCAKAPAN TERAKHIR:\n'+recent;return prompt+'\n\nPESAN USER TERBARU:\n'+msg}
+  async function sendMsg(){const msg=input.value.trim();if(!msg||send.disabled)return;add(msg,'user');history.push({role:'user',text:msg});input.value='';input.style.height='auto';send.disabled=true;status.textContent='Berpikir…';const load=typing();try{const answer=await ask(contextualize(msg));history.push({role:'ai',text:answer});load.remove();add(answer,'ai');status.textContent='Online'}catch(e){load.remove();add('❌ '+e.message,'error');status.textContent='Offline'}finally{send.disabled=false;input.focus()}}
+  function open(){panel.classList.add('show');fab.setAttribute('aria-expanded','true');setTimeout(()=>input.focus(),50)}function shut(){panel.classList.remove('show');fab.setAttribute('aria-expanded','false')}
+  fab.addEventListener('click',()=>panel.classList.contains('show')?shut():open());close?.addEventListener('click',shut);
+  $('flAiSuggestions')?.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;input.value=b.textContent;input.dispatchEvent(new Event('input'));sendMsg()});
+  send.addEventListener('click',sendMsg);input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg()}});input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,90)+'px'});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&panel.classList.contains('show'))shut()});
+})();
+</script>
+
 <!-- ============================================================
      FUNLEARN COMMENTS — PREMIUM RESPONSIVE SECTION
      API: /api/comments  |  Auth check: /api/me
@@ -7749,6 +7779,7 @@ window.funlearnAchievementEmojiHTML=function(icon){const map={
   #fl-comments-fab{position:fixed;right:22px;bottom:22px;z-index:9998;width:60px;height:60px;border-radius:20px;border:1px solid rgba(255,255,255,.18);background:linear-gradient(135deg,#7c5cff,#4f8cff);color:#fff;display:grid;place-items:center;box-shadow:0 18px 45px rgba(49,57,180,.35);cursor:pointer;transition:.22s;isolation:isolate}#fl-comments-fab:hover{transform:translateY(-4px) scale(1.04);box-shadow:0 24px 55px rgba(49,57,180,.45)}#fl-comments-fab:after{content:"";position:absolute;inset:-6px;border-radius:25px;border:1px solid rgba(124,92,255,.28);animation:flcPulse 2.2s infinite;z-index:-1}@keyframes flcPulse{50%{transform:scale(1.12);opacity:.2}100%{transform:scale(1);opacity:.8}}.flc-fab-emoji{font-size:27px;line-height:1}.flc-fab-label{position:absolute;right:70px;white-space:nowrap;padding:8px 11px;border-radius:10px;background:#11182b;color:#fff;font-size:11px;font-weight:800;opacity:0;transform:translateX(6px);pointer-events:none;transition:.18s}.fl-fab-wrap:hover .flc-fab-label{opacity:1;transform:none}
   .flc-comment-actions{display:flex;align-items:center;gap:10px;margin-top:11px}.flc-reply-btn{border:0;background:transparent;color:var(--flc-accent2);font-weight:800;cursor:pointer;padding:3px 0}.flc-replies{margin:12px 0 0 46px;padding-left:14px;border-left:2px solid rgba(124,92,255,.16);display:flex;flex-direction:column;gap:9px}.flc-reply{position:relative;display:flex;gap:9px;padding:11px 12px;border-radius:14px;background:rgba(124,92,255,.045);border:1px solid rgba(124,92,255,.1)}.flc-reply-avatar{width:29px;height:29px;flex:0 0 29px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(135deg,#273452,#415987);font-size:10px;font-weight:900}.flc-reply-main{min-width:0;flex:1}.flc-reply-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.flc-reply-head strong{font-size:12px}.flc-reply-head>span{font-size:10px;color:var(--flc-muted)}.flc-reply-text{font-size:12px;line-height:1.6;margin-top:3px;white-space:pre-wrap;overflow-wrap:anywhere}.flc-reply-delete{border:0;background:none;color:var(--flc-muted);cursor:pointer;align-self:flex-start}.flc-reply-delete:hover{color:#ff687d}.flc-replies-more{border:0;background:none;color:var(--flc-accent2);font-weight:800;cursor:pointer;margin:8px 0 0 60px}.flc-reply-compose{margin:11px 0 0 46px}.flc-reply-form{padding:11px;border:1px solid var(--flc-border);border-radius:14px;background:rgba(255,255,255,.025)}.flc-reply-form textarea{width:100%;min-height:75px;resize:vertical;border:1px solid var(--flc-border);border-radius:11px;background:rgba(0,0,0,.08);color:var(--flc-text);padding:10px;font:inherit;outline:none}.flc-reply-form>div{display:flex;justify-content:flex-end;gap:7px;margin-top:8px}.flc-reply-form .flc-btn{padding:8px 12px;font-size:12px}
   @media(max-width:700px){#funlearn-comments-section{width:min(100% - 18px,1180px);margin-top:55px;margin-bottom:95px}.flc-shell{border-radius:23px;padding:17px}.flc-head{align-items:flex-start;flex-direction:column}.flc-title{font-size:29px}.flc-count{align-self:flex-start}.flc-compose-row{align-items:stretch}.flc-avatar{display:none}.flc-actions{justify-content:stretch}.flc-actions .flc-btn{flex:1}.flc-list{max-height:540px}.flc-item{padding:15px}.flc-dev{font-size:9px}#fl-comments-fab{right:14px;bottom:14px;width:55px;height:55px;border-radius:18px}.flc-fab-label{display:none}}
+.goal-controls{display:flex;align-items:center;gap:7px}.goal-custom-btn{width:38px;height:38px;border:1px solid var(--border);background:var(--card2);color:var(--text);border-radius:11px;font-size:21px;font-weight:950;cursor:pointer}.flash-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.flash-actions button{border:1px solid var(--border);background:var(--card2);color:var(--text);border-radius:10px;padding:10px;font-weight:900;cursor:pointer}.flash-due-timer{margin:8px 0;padding:9px;border-radius:10px;border:1px solid rgba(255,190,70,.35);background:rgba(255,190,70,.08);font-size:11px;font-weight:900;text-align:center}.flash-help{margin-top:10px;padding:10px;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:10px;line-height:1.55}.flash-manage{margin-top:12px;border-top:1px solid var(--border);padding-top:12px}.flash-manage-title{font-size:12px;font-weight:950;margin-bottom:8px}.flash-manage-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:9px;border:1px solid var(--border);border-radius:10px;background:var(--card2);margin-bottom:7px}.flash-manage-item b,.flash-manage-item small{display:block;overflow:hidden;text-overflow:ellipsis}.flash-manage-item b{font-size:11px}.flash-manage-item small{color:var(--muted);font-size:9px;margin-top:3px}.flash-manage-item button{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:8px;padding:6px 8px;font-size:9px;font-weight:900;cursor:pointer;margin-left:4px}.flash-manage-item button[data-delete-card]{color:#ff8b8b}.fl-focus-complete-fire{display:inline-flex;align-items:center;justify-content:center}.fl-focus-complete-fire img{width:1.35em;height:1.35em;object-fit:contain;animation:flFocusFire .8s ease-in-out infinite alternate;filter:drop-shadow(0 0 7px rgba(255,120,0,.65))}@keyframes flFocusFire{from{transform:scale(1) translateY(0) rotate(-3deg)}to{transform:scale(1.16) translateY(-2px) rotate(3deg)}}@media(max-width:600px){.goal-controls{width:100%}.goal-select{flex:1;min-width:0}.flash-actions{grid-template-columns:1fr}.flash-manage-item{grid-template-columns:1fr}.flash-manage-item>div:last-child{display:flex}.flash-manage-item button{flex:1}}
 </style>
 
 <section id="funlearn-comments-section" aria-label="Komentar FunLearn">
