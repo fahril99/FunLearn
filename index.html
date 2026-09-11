@@ -1893,6 +1893,23 @@ main,.main,.app-main,.content,.page-content,.container{box-sizing:border-box}
 .achievement-icon .fl-earned-emoji{width:1.8em;height:1.8em;object-fit:contain;display:inline-block;vertical-align:middle;line-height:1;}
 .reward-reveal-emoji .fl-reveal-emoji{width:96px;height:96px;object-fit:contain;display:block;}
 </style>
+
+<style id="funlearn-final-polish">
+html[data-theme="light"] .focus-btn,html[data-theme="light"] .focus-actions button.secondary,html[data-theme="light"] .goal-select{background:#ffffff;color:#20342a;border-color:#cbd9d0;box-shadow:0 2px 8px rgba(30,65,45,.06)}
+html[data-theme="light"] .focus-btn.active{background:#e8f7e8;color:#287d25;border-color:#72bf68}
+html[data-theme="light"] .analytics-stat{background:#f7fbf8;border-color:#d6e3db}
+html[data-theme="light"] .week-bar{background:#4caf50}
+html[data-theme="light"] .goal-bar{background:#dce8e1}
+html[data-theme="light"] .cookie-badge{background:#f8fbf9;border-color:#ccdcd3;color:#557064}
+html[data-theme="light"] .focus-status,html[data-theme="light"] .goal-sub,html[data-theme="light"] .online-current-meta{color:#64776e}
+html[data-theme="light"] .achievement-reward{color:#3f5f50!important}
+html[data-theme="light"] .theme-toggle{box-shadow:0 2px 10px rgba(30,65,45,.08);border-color:#c8d8cf}
+html[data-theme="light"] .account-area{gap:9px}
+.focus-actions{display:grid;grid-template-columns:1fr 1fr 1fr}
+.focus-actions button:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+@media(max-width:700px){.focus-actions{grid-template-columns:1fr 1fr}.focus-actions #flFocusReset{grid-column:1/-1}.account-area{width:100%;max-width:100%;overflow:hidden}.account-area>*{min-width:0}}
+@media(min-width:701px) and (max-width:1100px){.account-area{display:grid;grid-template-columns:auto minmax(150px,1fr) minmax(120px,1fr);align-items:center}.account-area .sync-pill{min-width:0;overflow:hidden;text-overflow:ellipsis}}
+</style>
 </head>
 
 
@@ -2125,7 +2142,7 @@ main,.main,.app-main,.content,.page-content,.container{box-sizing:border-box}
   </section>
   <section class="learning-card">
     <h3>⏱️ Focus Session</h3><div class="focus-row"><button class="focus-btn" data-focus="15">15m</button><button class="focus-btn active" data-focus="25">25m</button><button class="focus-btn" data-focus="45">45m</button><button class="focus-btn" data-focus="60">60m</button><button class="focus-btn focus-custom-btn" id="flFocusCustom" type="button" aria-label="Atur durasi fokus sendiri">+</button></div>
-    <div class="focus-timer" id="flFocusTimer">25:00</div><div class="focus-status" id="flFocusStatus">Pilih durasi lalu mulai sesi fokus.</div><div class="focus-actions"><button id="flFocusStart">Mulai</button><button id="flFocusReset" class="secondary">Reset</button></div>
+    <div class="focus-timer" id="flFocusTimer">25:00</div><div class="focus-status" id="flFocusStatus">Pilih durasi lalu mulai sesi fokus.</div><div class="focus-actions"><button id="flFocusStart">Mulai</button><button id="flFocusPause" class="secondary" disabled>Pause</button><button id="flFocusReset" class="secondary">Reset</button></div>
   </section>
 </div>
 <section class="learning-card" id="funlearnAnalyticsCard" style="margin-bottom:16px">
@@ -2574,8 +2591,8 @@ const ACHIEVEMENTS = [
   {id:"hundredDay",icon:"🏆",name:"100 Day Streak",description:"Belajar 100 hari berturut-turut",type:"streak",target:100,reward:2500},
 
   // NOTE COUNT
-  {id:"note1",icon:"📝",name:"First Note",description:"Tulis notes pada 1 video",type:"notes",target:1,reward:10},
-  {id:"note5",icon:"📓",name:"Note Maker",description:"Tulis notes pada 5 video",type:"notes",target:5,reward:40},
+  {id:"note1",icon:"✏️",name:"First Note",description:"Tulis notes pada 1 video",type:"notes",target:1,reward:10},
+  {id:"note5",icon:"📚",name:"Note Maker",description:"Tulis notes pada 5 video",type:"notes",target:5,reward:40},
   {id:"note10",icon:"🧠",name:"Deep Thinker",description:"Tulis notes pada 10 video",type:"notes",target:10,reward:80},
   {id:"note25",icon:"📚",name:"Knowledge Keeper",description:"Tulis notes pada 25 video",type:"notes",target:25,reward:150},
   {id:"note50",icon:"✍️",name:"Scholar",description:"Tulis notes pada 50 video",type:"notes",target:50,reward:300},
@@ -5469,6 +5486,27 @@ function countWords(text){
   }
 }
 
+function getStudyMinutesCookie(){
+  try{
+    const m=document.cookie.match(/(?:^|; )funlearn_study_minutes_v1=([^;]*)/);
+    if(!m)return {total:0,days:{}};
+    const data=JSON.parse(decodeURIComponent(m[1]));
+    return {total:Math.max(0,Number(data.total)||0),days:data.days&&typeof data.days==='object'?data.days:{}};
+  }catch(e){return {total:0,days:{}}}
+}
+function setStudyMinutesCookie(data){
+  try{document.cookie='funlearn_study_minutes_v1='+encodeURIComponent(JSON.stringify(data))+'; max-age=31536000; path=/; SameSite=Lax'}catch(e){}
+}
+function recordStudyMinutesCookie(minutes){
+  const n=Math.max(0,Number(minutes)||0);
+  if(!n)return;
+  const d=getStudyMinutesCookie();
+  const today=new Date().toISOString().slice(0,10);
+  d.total=Number(d.total)||0; d.days=d.days||{};
+  d.total+=n; d.days[today]=(Number(d.days[today])||0)+n;
+  setStudyMinutesCookie(d);
+}
+
 function getAchievementStats(){
   const entries = Object.entries(appDatabase.videos || {});
   const localEntries = entries.filter(([path]) => !String(path).startsWith("ONLINE::"));
@@ -5505,6 +5543,7 @@ function getAchievementStats(){
   const todayCompleted = localCompleted.filter(([,v]) => v.completedDate === today).length + onlineCompleted.filter(m => getOnlineProgress(m.id).completedDate === today).length;
   const profile = getProfile();
   const level = getLevel(profile.xp);
+  const studyMinutes = getStudyMinutesCookie().total;
   const totalVideos = localEntries.length + onlineItems.length;
 
   return {
@@ -5522,7 +5561,8 @@ function getAchievementStats(){
     nightLearner: profile.nightLearner === true,
     dailyCompleted: todayCompleted,
     comeback: profile.comeback === true,
-    perfectVideos: Number(profile.perfectVideos) || 0
+    perfectVideos: Number(profile.perfectVideos) || 0,
+    studyMinutes
   };
 }
 
@@ -5530,6 +5570,7 @@ function achievementProgress(achievement, stats){
   let current = 0, max = achievement.target || 1;
   switch(achievement.type){
     case "completed": current=stats.completedVideos; break;
+    case "studyMinutes": current=stats.studyMinutes; break;
     case "streak": current=stats.streak; break;
     case "notes": current=stats.noteCount; break;
     case "words": current=stats.totalWords; break;
@@ -5579,7 +5620,7 @@ async function checkAchievements(){
 ========================================================= */
 
 const FUNLEARN_ANIMATED_EMOJI_CODES = {
-  "🌱":"1f331","🎯":"1f3af","🔥":"1f525","⚡":"26a1","🧠":"1f9e0","👑":"1f451","💯":"1f4af","🐉":"1f409","🏆":"1f3c6","📝":"1f4dd","📓":"1f4d3","📚":"1f4da","✍️":"270d_fe0f","✏️":"270f_fe0f","📖":"1f4d6","🎓":"1f393","🔎":"1f50e","🧪":"1f9ea","⭐":"2b50","🚀":"1f680","💎":"1f48e","🎁":"1f381","🍦":"1f366","🎮":"1f3ae","🎬":"1f3ac","🍔":"1f354","☕":"2615","🌳":"1f333","🏝️":"1f3dd_fe0f","🍕":"1f355","🍰":"1f370","🧋":"1f9cb","🎧":"1f3a7","🎨":"1f3a8","⚽":"26bd","💻":"1f4bb","📱":"1f4f1","🌈":"1f308","🛍️":"1f6cd_fe0f","✈️":"2708_fe0f","🏖️":"1f3d6_fe0f","🪙":"1fa99","❤️":"2764_fe0f","📁":"1f4c1","🌐":"1f310","🗑️":"1f5d1_fe0f","✨":"2728","🌅":"1f305","🌙":"1f319","💪":"1f4aa","⏱️":"23f1_fe0f","📈":"1f4c8","🧩":"1f9e9","💡":"1f4a1","🔒":"1f512","📤":"1f4e4","📥":"1f4e5","💾":"1f4be","🎉":"1f389","❌":"274c","✔️":"2714_fe0f","➕":"2795"
+  "🌱":"1f331","🎯":"1f3af","🔥":"1f525","⚡":"26a1","🧠":"1f9e0","👑":"1f451","💯":"1f4af","🐉":"1f409","🏆":"1f3c6","📝":"1f4dd","📓":"1f4d3","📚":"1f4da","✍️":"270d_fe0f","✏️":"270f_fe0f","📖":"1f4d6","🎓":"1f393","🔎":"1f50e","🧪":"1f9ea","⭐":"2b50","🚀":"1f680","💎":"1f48e","🎁":"1f381","🍦":"1f366","🎮":"1f3ae","🎬":"1f3ac","🍔":"1f354","☕":"2615","🌳":"1f333","🏝️":"1f3dd_fe0f","🍕":"1f355","🍰":"1f370","🧋":"1f9cb","🎧":"1f3a7","🎨":"1f3a8","⚽":"26bd","💻":"1f4bb","📱":"1f4f1","🌈":"1f308","🛍️":"1f6cd_fe0f","✈️":"2708_fe0f","🏖️":"1f3d6_fe0f","🪙":"1fa99","❤️":"2764_fe0f","📁":"1f4c1","🌐":"1f310","🗑️":"1f5d1_fe0f","✨":"2728","🌅":"1f305","🌙":"1f319","💪":"1f4aa","⏱️":"23f1_fe0f","📈":"1f4c8","🧩":"1f9e9","💡":"1f4a1","🔒":"1f512","📤":"1f4e4","📥":"1f4e5","💾":"1f4be","🎉":"1f389","❌":"274c","✔️":"2714_fe0f","➕":"2795","⏰":"23f0","⏳":"23f3","⌛":"231b","📟":"1f4df","🔔":"1f514"
 };
 function animatedEmojiImgHTML(emoji, cls){
   const code=FUNLEARN_ANIMATED_EMOJI_CODES[String(emoji||"")];
@@ -7435,121 +7476,47 @@ setupOnlineEvents();
 'use strict';
 const $=id=>document.getElementById(id);
 const DAY_MS=86400000;
-let recallContext=null, focusMinutes=25, focusRemaining=1500, focusTimer=null, focusRunning=false;
-const FOCUS_COOKIE='funlearn_focus_session_v1';
-function focusCookieSet(data){
-  try{
-    document.cookie=FOCUS_COOKIE+'='+encodeURIComponent(JSON.stringify(data))+'; max-age=31536000; path=/; SameSite=Lax';
-  }catch(e){}
-}
-function focusCookieGet(){
-  try{
-    const m=document.cookie.match(new RegExp('(?:^|; )'+FOCUS_COOKIE.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'=([^;]*)'));
-    return m?JSON.parse(decodeURIComponent(m[1])):null;
-  }catch(e){return null}
-}
-function focusCookieClear(){
-  try{document.cookie=FOCUS_COOKIE+'=; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; path=/; SameSite=Lax';}catch(e){}
-}
-function playFocusTimeout(){
-  try{
-    const audio=new Audio('https://www.myinstants.com/media/sounds/subway-surfers-open-box.mp3');
-    audio.volume=.45;
-    audio.currentTime=0;
-    audio.play().then(()=>setTimeout(()=>{try{audio.pause();audio.currentTime=0}catch(e){}},1400)).catch(()=>{});
-  }catch(e){}
-}
-function renderFocus(){
-  if(!$('flFocusTimer'))return;
-  focusRemaining=Math.max(0,Math.ceil((Number(focusRunning)?(focusEndAt-Date.now()):focusRemaining)/1000));
-  const m=Math.floor(focusRemaining/60),sec=focusRemaining%60;
-  $('flFocusTimer').textContent=String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
-  $('flFocusStatus').textContent=focusRunning?'Fokus berjalan — waktu tersimpan di cookie dan tetap berjalan saat halaman dibuka ulang.':'Pilih durasi lalu mulai sesi fokus.';
-  document.querySelectorAll('.focus-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.focus)===focusMinutes));
-}
+const STUDY_COOKIE='funlearn_study_minutes_v1';
+function getStudyMinutesCookie(){try{const m=document.cookie.match(/(?:^|; )funlearn_study_minutes_v1=([^;]*)/);if(!m)return {total:0,days:{}};const d=JSON.parse(decodeURIComponent(m[1]));return {total:Math.max(0,Number(d.total)||0),days:d.days&&typeof d.days==='object'?d.days:{}}}catch(e){return {total:0,days:{}}}}
+function setStudyMinutesCookie(d){try{document.cookie=STUDY_COOKIE+'='+encodeURIComponent(JSON.stringify(d))+'; max-age=31536000; path=/; SameSite=Lax'}catch(e){}}
+function recordStudyMinutesCookie(minutes){const n=Math.max(0,Number(minutes)||0);if(!n)return;const d=getStudyMinutesCookie(),day=localDate();d.total=(Number(d.total)||0)+n;d.days[day]=(Number(d.days[day])||0)+n;setStudyMinutesCookie(d)}
+let recallContext=null, focusMinutes=25, focusRemaining=1500, focusTimer=null, focusRunning=false, focusPaused=false, focusPauseAt=0;
+const FOCUS_COOKIE='funlearn_focus_session_v2';
+function focusCookieSet(data){try{document.cookie=FOCUS_COOKIE+'='+encodeURIComponent(JSON.stringify(data))+'; max-age=31536000; path=/; SameSite=Lax'}catch(e){}}
+function focusCookieGet(){try{const m=document.cookie.match(new RegExp('(?:^|; )'+FOCUS_COOKIE.replace(/[.*+?^${}()|[\\]\\]/g,'\\$&')+'=([^;]*)'));return m?JSON.parse(decodeURIComponent(m[1])):null}catch(e){return null}}
+function focusCookieClear(){try{document.cookie=FOCUS_COOKIE+'=; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; path=/; SameSite=Lax'}catch(e){}}
+function playFocusTimeout(){try{const audio=new Audio('https://www.myinstants.com/media/sounds/subway-surfers-open-box.mp3');audio.volume=.45;audio.currentTime=0;audio.play().catch(()=>{});}catch(e){}}
+function renderFocus(){if(!$('flFocusTimer'))return;if(focusRunning)focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));const r=Math.max(0,focusRemaining),m=Math.floor(r/60),sec=r%60;$('flFocusTimer').textContent=String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');const st=$('flFocusStatus');if(st)st.textContent=focusRunning?'Fokus berjalan — tersimpan di cookie.':focusPaused?'Fokus dijeda — pause lebih dari 1 jam akan mereset sesi.':'Pilih durasi lalu mulai sesi fokus.';document.querySelectorAll('.focus-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.focus)===focusMinutes));const pause=$('flFocusPause');if(pause){pause.disabled=!focusRunning&&!focusPaused;pause.textContent=focusPaused?'Lanjut':'Pause'}const start=$('flFocusStart');if(start)start.textContent=focusPaused?'Lanjut':'Mulai'}
 let focusEndAt=0;
-function restoreFocusSession(){
-  const saved=focusCookieGet();
-  if(!saved||!saved.running||!Number(saved.endAt)){
-    focusRunning=false;focusRemaining=focusMinutes*60;renderFocus();return;
-  }
-  focusMinutes=Math.max(1,Number(saved.minutes)||25);
-  focusEndAt=Number(saved.endAt);
-  focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));
-  if(focusRemaining<=0){finishFocusSession(false);return}
-  focusRunning=true;renderFocus();
-}
-function finishFocusSession(playSound=true){
-  if(focusTimer){clearInterval(focusTimer);focusTimer=null}
-  focusRunning=false;
-  focusRemaining=0;
-  focusCookieClear();
-  const completedMinutes=focusMinutes;
-  (async()=>{
-    try{
-      const p=ensureUpgradeData();
-      p.focusHistory.push({date:localDate(),minutes:completedMinutes});
-      await addLearningMinutes(completedMinutes,'Focus Session');
-      if(typeof registerStudyDay==='function')await registerStudyDay();
-      await persist();
-    }catch(e){console.warn('Focus Session save failed',e)}
-    if(playSound)playFocusTimeout();
-    showToast(`🎯 Focus Session selesai • +${completedMinutes} menit belajar`,'success');
-    focusRemaining=completedMinutes*60;
-    renderFocus();
-  })();
-}
-function tickFocus(){
-  if(!focusRunning)return;
-  focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));
-  if(focusRemaining<=0){finishFocusSession(true);return}
-  renderFocus();
-}
-document.querySelectorAll('.focus-btn').forEach(b=>b.addEventListener('click',()=>{
-  if(focusRunning)return;
-  focusMinutes=Math.max(1,Number(b.dataset.focus)||25);
-  focusRemaining=focusMinutes*60;
-  renderFocus();
-}));
-$('flFocusCustom')?.addEventListener('click',()=>{
-  if(focusRunning)return;
-  const raw=prompt('Masukkan durasi Focus Session dalam menit (contoh: 90):','90');
-  if(raw===null)return;
-  const n=Math.floor(Number(raw));
-  if(!Number.isFinite(n)||n<1||n>1440){showToast('Durasi harus 1–1440 menit.','error');return}
-  focusMinutes=n;focusRemaining=n*60;renderFocus();
-});
-$('flFocusStart')?.addEventListener('click',()=>{
-  if(focusRunning)return;
-  focusEndAt=Date.now()+focusRemaining*1000;
-  focusRunning=true;
-  focusCookieSet({running:true,minutes:focusMinutes,endAt:focusEndAt});
-  renderFocus();
-  if(focusTimer)clearInterval(focusTimer);
-  focusTimer=setInterval(tickFocus,250);
-});
-$('flFocusReset')?.addEventListener('click',()=>{
-  if(focusTimer)clearInterval(focusTimer);
-  focusTimer=null;focusRunning=false;focusEndAt=0;focusRemaining=focusMinutes*60;focusCookieClear();renderFocus();
-});
+function restoreFocusSession(){const saved=focusCookieGet();if(!saved){focusRemaining=focusMinutes*60;renderFocus();return}focusMinutes=Math.max(1,Number(saved.minutes)||25);if(saved.paused){focusPaused=true;focusRunning=false;focusPauseAt=Number(saved.pauseAt)||Date.now();focusRemaining=Math.max(0,Number(saved.remaining)||0);if(Date.now()-focusPauseAt>3600000){focusCookieClear();focusPaused=false;focusRunning=false;focusRemaining=0;showToast('⏱️ Focus Session di-reset karena pause lebih dari 1 jam.','error')}renderFocus();return}focusEndAt=Number(saved.endAt)||0;focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));if(!focusEndAt||focusRemaining<=0){finishFocusSession(false);return}focusRunning=true;renderFocus()}
+function finishFocusSession(playSound=true){if(focusTimer){clearInterval(focusTimer);focusTimer=null}focusRunning=false;focusPaused=false;focusPauseAt=0;focusRemaining=0;focusCookieClear();const completedMinutes=focusMinutes;(async()=>{try{const p=ensureUpgradeData();p.focusHistory.push({date:localDate(),minutes:completedMinutes});await addLearningMinutes(completedMinutes,'Focus Session');if(typeof registerStudyDay==='function')await registerStudyDay();await persist();if(typeof checkAchievements==='function')await checkAchievements()}catch(e){console.warn('Focus Session save failed',e)}if(playSound)playFocusTimeout();showToast(`🎯 Focus Session selesai • +${completedMinutes} menit belajar`,'success');focusRemaining=completedMinutes*60;renderFocus()})()}
+function tickFocus(){if(!focusRunning)return;focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));if(focusRemaining<=0){finishFocusSession(true);return}renderFocus()}
+function startOrResumeFocus(){if(focusRunning)return;if(focusPaused){focusEndAt=Date.now()+focusRemaining*1000;focusPaused=false;focusRunning=true;focusCookieSet({running:true,paused:false,minutes:focusMinutes,remaining:focusRemaining,endAt:focusEndAt});renderFocus();if(focusTimer)clearInterval(focusTimer);focusTimer=setInterval(tickFocus,250);return}if(focusRemaining<=0)focusRemaining=focusMinutes*60;focusEndAt=Date.now()+focusRemaining*1000;focusRunning=true;focusCookieSet({running:true,paused:false,minutes:focusMinutes,remaining:focusRemaining,endAt:focusEndAt});renderFocus();if(focusTimer)clearInterval(focusTimer);focusTimer=setInterval(tickFocus,250)}
+function pauseFocus(){if(!focusRunning)return;focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));focusRunning=false;focusPaused=true;focusPauseAt=Date.now();if(focusTimer){clearInterval(focusTimer);focusTimer=null}focusCookieSet({running:false,paused:true,minutes:focusMinutes,remaining:focusRemaining,pauseAt:focusPauseAt});renderFocus()}
+document.querySelectorAll('.focus-btn').forEach(b=>b.addEventListener('click',()=>{if(focusRunning||focusPaused)return;focusMinutes=Math.max(1,Number(b.dataset.focus)||25);focusRemaining=focusMinutes*60;renderFocus()}));
+$('flFocusCustom')?.addEventListener('click',()=>{if(focusRunning||focusPaused)return;const raw=prompt('Masukkan durasi Focus Session dalam menit (contoh: 90):','90');if(raw===null)return;const n=Math.floor(Number(raw));if(!Number.isFinite(n)||n<1||n>1440){showToast('Durasi harus 1–1440 menit.','error');return}focusMinutes=n;focusRemaining=n*60;renderFocus()});
+$('flFocusStart')?.addEventListener('click',startOrResumeFocus);$('flFocusPause')?.addEventListener('click',()=>focusPaused?startOrResumeFocus():pauseFocus());$('flFocusReset')?.addEventListener('click',()=>{if(focusTimer)clearInterval(focusTimer);focusTimer=null;focusRunning=false;focusPaused=false;focusEndAt=0;focusPauseAt=0;focusRemaining=focusMinutes*60;focusCookieClear();renderFocus()});
 restoreFocusSession();
-function countVideoLearning(){const v=$('videoPlayer');if(!v||v.paused||v.ended||document.hidden)return;const now=v.currentTime;if(now>lastLocalVideoTime){const delta=Math.min(2,now-lastLocalVideoTime);if(delta>.15)addLearningMinutes(delta/60,'Local Video')}lastLocalVideoTime=now}
-setInterval(countVideoLearning,1000);$('videoPlayer')?.addEventListener('play',()=>{lastLocalVideoTime=$('videoPlayer').currentTime||0});$('videoPlayer')?.addEventListener('pause',()=>{lastLocalVideoTime=$('videoPlayer').currentTime||0});
+function countVideoLearning(){const v=$('videoPlayer');if(!v||v.paused||v.ended||document.hidden)return;const now=v.currentTime;if(now>lastLocalVideoTime){const delta=Math.min(2,now-lastLocalVideoTime);if(delta>.15)addLearningMinutes(delta/60,'Local Video')}lastLocalVideoTime=now}setInterval(countVideoLearning,1000);$('videoPlayer')?.addEventListener('play',()=>{lastLocalVideoTime=$('videoPlayer').currentTime||0});$('videoPlayer')?.addEventListener('pause',()=>{lastLocalVideoTime=$('videoPlayer').currentTime||0});
 let onlineLast={};setInterval(()=>{if(document.hidden||typeof onlineProgress==='undefined')return;for(const [id,p] of Object.entries(onlineProgress||{})){const cur=Number(p.currentTime)||0,old=Number(onlineLast[id]);if(Number.isFinite(old)&&cur>old){const delta=Math.min(6,cur-old);if(delta>.15)addLearningMinutes(delta/60,'Online Video')}onlineLast[id]=cur}},5000);
-// Track YouTube playback time without replacing the existing player implementation.
 const oldYT=window.funlearnTrackYouTube;if(typeof oldYT==='function'){window.funlearnTrackYouTube=function(iframe,module){onlineLast[module.id]=Number((typeof getOnlineProgress==='function'?getOnlineProgress(module.id):{}).currentTime)||0;return oldYT.apply(this,arguments)}}
-// Recall hooks preserve the existing completion logic and only add the new layer after a NEW completion.
 const oldLocal=window.completeCurrentVideo;if(typeof oldLocal==='function'){window.completeCurrentVideo=async function(){const id=typeof currentPathValue!=='undefined'?currentPathValue:null;const was=id&&appDatabase.videos[id]?.completed===true;const r=await oldLocal.apply(this,arguments);if(id&&!was&&appDatabase.videos[id]?.completed===true)setTimeout(()=>openRecall({id,type:'local'}),220);return r}}
 const oldOnline=window.completeOnlineModule;if(typeof oldOnline==='function'){window.completeOnlineModule=async function(module){const id=module?.id;const was=id&&typeof getOnlineProgress==='function'&&getOnlineProgress(id).completed===true;const r=await oldOnline.apply(this,arguments);if(id&&!was&&typeof getOnlineProgress==='function'&&getOnlineProgress(id).completed===true)setTimeout(()=>openRecall({id,type:'online',module}),220);return r}}
-// Streak freeze is additive: protect exactly one missed calendar day before existing streak logic runs.
 const oldStudy=window.registerStudyDay;if(typeof oldStudy==='function'){window.registerStudyDay=async function(){await maybeFreezeStreak();const r=await oldStudy.apply(this,arguments);const p=ensureUpgradeData();if(p)p.bestStreak=Math.max(Number(p.bestStreak)||0,Number(p.streak)||0);await persist();renderLearningDashboard();return r}}
-// Initialize safe defaults after the original database has loaded.
-setTimeout(async()=>{ensureUpgradeData();await maybeFreezeStreak();renderLearningDashboard();renderFocus();},700);
+setTimeout(async()=>{ensureUpgradeData();await maybeFreezeStreak();renderLearningDashboard();renderFocus();if(typeof checkAchievements==='function')await checkAchievements()},700);
 window.funlearnLearningUpgrade={openRecall,renderLearningDashboard,addLearningMinutes};
 })();
 </script>
 
 
 
+
+<script id="funlearn-universal-video-completion">
+(function(){
+  function watch(v){if(!v||v.dataset.funlearnUniversalWatch)return;v.dataset.funlearnUniversalWatch='1';v.addEventListener('ended',()=>{try{if(typeof checkAchievements==='function')checkAchievements()}catch(e){}})}
+  document.querySelectorAll('video').forEach(watch);
+  new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1){if(n.matches&&n.matches('video'))watch(n);n.querySelectorAll?.('video').forEach(watch)}}))).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>
