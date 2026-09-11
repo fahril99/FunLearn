@@ -1660,7 +1660,7 @@ textarea:focus{
 .account-button,.auth-button{border:1px solid var(--border);border-radius:11px;background:var(--card);color:var(--text);padding:10px 13px;font-weight:800;cursor:pointer;transition:.2s}
 .account-button:hover,.auth-button:hover{border-color:var(--green);transform:translateY(-1px)}
 .auth-button{background:var(--green);color:#071000;border-color:transparent}
-.account-menu{position:absolute;right:0;top:calc(100% + 8px);min-width:190px;padding:7px;background:var(--card2);border:1px solid var(--border);border-radius:13px;box-shadow:0 18px 50px #0008;display:none;animation:accountIn .18s ease}
+.account-menu{position:absolute;right:0;top:calc(100% + 8px);min-width:190px;padding:7px;background:var(--card2);border:1px solid var(--border);border-radius:13px;box-shadow:0 18px 50px #0008;display:none;animation:accountIn .18s ease;z-index:10060}
 .account-menu.open{display:block}.account-menu button{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--text);padding:10px;border-radius:8px;cursor:pointer}.account-menu button:hover{background:#2a323d}.account-menu .danger{color:#ff8585}
 .sync-pill{font-size:11px;color:var(--muted);white-space:nowrap}.sync-pill.ok{color:var(--green)}.sync-pill.warn{color:var(--gold)}.sync-pill.error{color:var(--red)}
 .auth-overlay{position:fixed;inset:0;background:#0009;display:none;place-items:center;z-index:100}.auth-overlay.open{display:grid}.auth-card{width:min(420px,calc(100vw - 28px));background:var(--card);border:1px solid var(--border);border-radius:18px;padding:23px;box-shadow:0 24px 70px #0009;animation:accountIn .2s ease}.auth-card h2{margin:0 0 7px}.auth-card p{color:var(--muted);font-size:12px;line-height:1.5}.auth-card label{display:block;font-size:12px;color:var(--muted);margin:14px 0 6px}.auth-card input{width:100%;border:1px solid var(--border);background:#10141a;color:#fff;border-radius:9px;padding:12px}.auth-actions{display:flex;gap:8px;margin-top:18px}.auth-actions button{flex:1}.auth-error{min-height:18px;color:var(--red);font-size:12px;margin-top:10px}.auth-switch{border:0;background:transparent!important;color:var(--green)!important;font-weight:700;cursor:pointer}.account-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:16px}.account-stat{background:var(--card2);border-radius:10px;padding:11px}.account-stat small{display:block;color:var(--muted);font-size:10px}.account-stat strong{display:block;margin-top:4px;font-size:18px}@keyframes accountIn{from{opacity:0;transform:translateY(-5px) scale(.98)}to{opacity:1;transform:none}}
@@ -1810,6 +1810,8 @@ html[data-theme="light"] .account-menu button{color:var(--text)}
 .learning-card{background:linear-gradient(145deg,rgba(24,31,38,.94),rgba(17,23,29,.94));border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 12px 35px rgba(0,0,0,.12)}
 .learning-card h3{margin:0 0 12px;font-size:15px}.goal-row{display:flex;align-items:center;justify-content:space-between;gap:12px}.goal-value{font-weight:950;font-size:20px}.goal-sub{color:var(--muted);font-size:11px;margin-top:4px}.goal-select{border:1px solid var(--border);background:var(--card2);color:#fff;border-radius:9px;padding:8px;font-weight:800}.goal-bar{height:9px;background:#2a3039;border-radius:999px;overflow:hidden;margin-top:12px}.goal-fill{height:100%;width:0;background:linear-gradient(90deg,var(--green-dark),var(--green));transition:width .4s ease}.goal-complete{margin-top:9px;color:var(--green);font-size:12px;font-weight:900}.analytics-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.analytics-stat{background:rgba(0,0,0,.12);border:1px solid var(--border);border-radius:11px;padding:10px}.analytics-stat small{display:block;color:var(--muted);font-size:10px}.analytics-stat strong{display:block;margin-top:4px;font-size:16px}.week-bars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:92px;margin-top:12px}.week-bar-col{height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:4px}.week-bar{width:100%;min-height:3px;background:var(--green);border-radius:5px 5px 2px 2px;transition:height .35s}.week-day{font-size:9px;color:var(--muted)}
 .focus-row{display:flex;gap:7px;flex-wrap:wrap}.focus-btn{border:1px solid var(--border);background:var(--card2);color:#fff;padding:8px 10px;border-radius:9px;font-weight:800;cursor:pointer}.focus-btn.active{background:rgba(92,213,33,.12);border-color:var(--green-dark);color:var(--green)}.focus-timer{font-size:27px;font-weight:950;letter-spacing:1px;margin:9px 0}.focus-status{font-size:11px;color:var(--muted)}.focus-actions{display:flex;gap:8px;margin-top:10px}.focus-actions button{flex:1;border:0;border-radius:9px;padding:9px;font-weight:900;cursor:pointer;background:var(--green);color:#071000}.focus-actions button.secondary{background:var(--card2);color:#fff;border:1px solid var(--border)}
+.fl-focus-custom-overlay{position:fixed;inset:0;z-index:1300;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.62);backdrop-filter:blur(7px);animation:flFocusFade .18s ease both}.fl-focus-custom-card{position:relative;width:min(430px,100%);box-sizing:border-box;padding:25px;border:1px solid rgba(255,255,255,.13);border-radius:24px;background:linear-gradient(145deg,rgba(27,35,43,.98),rgba(15,21,27,.98));box-shadow:0 30px 100px rgba(0,0,0,.55);animation:flFocusPop .22s cubic-bezier(.2,.8,.2,1) both}.fl-focus-custom-close{position:absolute;right:13px;top:11px;width:36px;height:36px;border:0;border-radius:11px;background:rgba(255,255,255,.07);color:#fff;font-size:25px;cursor:pointer}.fl-focus-custom-icon{font-size:38px;margin-bottom:5px}.fl-focus-custom-kicker{font-size:10px;letter-spacing:.16em;font-weight:900;color:var(--green);margin-top:2px}.fl-focus-custom-card h3{font-size:23px;margin:6px 0}.fl-focus-custom-card p{color:var(--muted);font-size:12px;line-height:1.55;margin:0 0 18px}.fl-focus-custom-label{display:block;font-size:11px;font-weight:900;color:var(--muted);margin-bottom:7px}.fl-focus-custom-input-wrap{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:14px;background:rgba(0,0,0,.16);padding:4px 13px}.fl-focus-custom-input-wrap input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:var(--text);font-size:25px;font-weight:950;padding:10px 2px}.fl-focus-custom-input-wrap span{color:var(--muted);font-size:12px;font-weight:800}.fl-focus-custom-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}.fl-focus-custom-presets button{border:1px solid var(--border);background:var(--card2);color:var(--text);border-radius:10px;padding:9px 5px;font-weight:800;cursor:pointer}.fl-focus-custom-presets button:hover{border-color:var(--green)}.fl-focus-custom-error{min-height:18px;margin-top:8px;color:#ff8585;font-size:11px;font-weight:800}.fl-focus-custom-save{width:100%;border:0;border-radius:13px;padding:12px;background:var(--green);color:#071000;font-weight:950;cursor:pointer}.fl-focus-custom-save:hover{filter:brightness(1.05);transform:translateY(-1px)}@keyframes flFocusFade{from{opacity:0}to{opacity:1}}@keyframes flFocusPop{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}}html[data-theme="light"] .fl-focus-custom-card{background:linear-gradient(145deg,#fff,#f0f6f2);color:#17231e}html[data-theme="light"] .fl-focus-custom-input-wrap{background:#f5f9f6}html[data-theme="light"] .fl-focus-custom-close{color:#17231e;background:#eef4f1}@media(max-width:480px){.fl-focus-custom-overlay{padding:10px}.fl-focus-custom-card{padding:20px;border-radius:19px}.fl-focus-custom-presets{grid-template-columns:repeat(2,1fr)}}
+
 .recall-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);z-index:1200}.recall-overlay.show{display:flex}.recall-card{width:min(520px,100%);max-height:90vh;overflow:auto;background:var(--bg);border:1px solid var(--border);border-radius:18px;padding:20px;box-shadow:0 28px 90px rgba(0,0,0,.55);animation:funRecallIn .28s ease both}.recall-icon{font-size:38px}.recall-card h2{margin:5px 0 6px}.recall-card p{color:var(--muted);line-height:1.55;font-size:13px}.recall-question{font-weight:900;margin:16px 0 8px}.recall-card textarea{width:100%;box-sizing:border-box;min-height:145px;resize:vertical;background:var(--card2);border:1px solid var(--border);color:#fff;border-radius:11px;padding:12px;outline:none}.recall-card textarea:focus{border-color:var(--green)}.recall-actions{display:grid;grid-template-columns:1fr 1.5fr;gap:8px;margin-top:10px}.recall-actions button{border:1px solid var(--border);background:var(--card2);color:#fff;border-radius:10px;padding:11px;font-weight:900;cursor:pointer}.recall-actions .primary{background:var(--green);color:#071000;border-color:var(--green)}.recall-feedback{text-align:center;font-weight:950;color:var(--green);padding:12px 0 2px;display:none}.recall-feedback.show{display:block;animation:funRecallPop .35s ease both}@keyframes funRecallIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}@keyframes funRecallPop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
 html[data-theme="light"] .learning-card{background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(241,247,243,.96))}html[data-theme="light"] .recall-card{background:var(--bg)}
 @media(min-width:901px){#funlearnArrowHint{display:none!important}}
@@ -1907,7 +1909,7 @@ html[data-theme="light"] .theme-toggle{box-shadow:0 2px 10px rgba(30,65,45,.08);
 html[data-theme="light"] .account-area{gap:9px}
 .focus-actions{display:grid;grid-template-columns:1fr 1fr 1fr}
 .focus-actions button:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
-@media(max-width:700px){.focus-actions{grid-template-columns:1fr 1fr}.focus-actions #flFocusReset{grid-column:1/-1}.account-area{width:100%;max-width:100%;overflow:hidden}.account-area>*{min-width:0}}
+@media(max-width:700px){.focus-actions{grid-template-columns:1fr 1fr}.focus-actions #flFocusReset{grid-column:auto}.account-area{width:100%;max-width:100%;overflow:visible;position:relative;z-index:10050}.account-area>*{min-width:0}.account-menu{z-index:10060;max-width:min(240px,calc(100vw - 28px))}}
 @media(min-width:701px) and (max-width:1100px){.account-area{display:grid;grid-template-columns:auto minmax(150px,1fr) minmax(120px,1fr);align-items:center}.account-area .sync-pill{min-width:0;overflow:hidden;text-overflow:ellipsis}}
 </style>
 </head>
@@ -2142,7 +2144,7 @@ html[data-theme="light"] .account-area{gap:9px}
   </section>
   <section class="learning-card">
     <h3>⏱️ Focus Session</h3><div class="focus-row"><button class="focus-btn" data-focus="15">15m</button><button class="focus-btn active" data-focus="25">25m</button><button class="focus-btn" data-focus="45">45m</button><button class="focus-btn" data-focus="60">60m</button><button class="focus-btn focus-custom-btn" id="flFocusCustom" type="button" aria-label="Atur durasi fokus sendiri">+</button></div>
-    <div class="focus-timer" id="flFocusTimer">25:00</div><div class="focus-status" id="flFocusStatus">Pilih durasi lalu mulai sesi fokus.</div><div class="focus-actions"><button id="flFocusStart">Mulai</button><button id="flFocusPause" class="secondary" disabled>Pause</button><button id="flFocusReset" class="secondary">Reset</button></div>
+    <div class="focus-timer" id="flFocusTimer">25:00</div><div class="focus-status" id="flFocusStatus">Pilih durasi lalu mulai sesi fokus.</div><div class="focus-actions"><button id="flFocusStart">Mulai</button><button id="flFocusReset" class="secondary">Reset</button></div>
   </section>
 </div>
 <section class="learning-card" id="funlearnAnalyticsCard" style="margin-bottom:16px">
@@ -7416,12 +7418,12 @@ setupOnlineEvents();
     try{await api('/delete-account',{method:'POST',body:JSON.stringify({confirm:'hapus'})});cloudUser=null;clearTimeout(syncTimer);clearTimeout(progressTimer);Object.keys(localStorage).filter(k=>k.toLowerCase().startsWith('funlearn')).forEach(k=>localStorage.removeItem(k));document.cookie.split(';').map(x=>x.trim().split('=')[0]).filter(Boolean).forEach(k=>{document.cookie=k+'=; Max-Age=0; Path=/; SameSite=Lax'});$('funlearnProfileOverlay')?.remove();$('accountMenu')?.classList.remove('open');renderAccount();setStatus('☁️ Lokal');showToast('✓ Akun dan seluruh datanya berhasil dihapus.','success')}
     catch(e){if(button)button.disabled=false;showToast('❌ Gagal menghapus akun: '+(e.message||'Request gagal'),'error')}
   }
-  async function login(){const mode=$('funlearnAuthOverlay').dataset.mode||'login';const username=$('authUsername').value.trim(),password=$('authPassword').value; if(!username||!password){$('authError').textContent='Username dan password wajib diisi.';return} $('authSubmit').disabled=true;$('authError').textContent='Memuat data...';try{const data=await api(mode==='login'?'/login':'/register',{method:'POST',body:JSON.stringify({username,password})});cloudUser=data.user;renderAccount();closeAuth();setStatus('⏳ Memuat data...','warn');const me=await api('/me');const hasLocal=!!(safeLocalStorageGet(LOCAL_DB_KEY)||safeLocalStorageGet(ONLINE_STORAGE_KEY));if(hasLocal&&mode==='register'&&confirm('Data FunLearn lokal ditemukan. Pilih OK untuk upload data lokal ke akun, atau Batal untuk mulai dengan data akun.'))await syncNow();else await applyCloudState(me.state);setStatus('✓ Data tersinkron','ok');showToast('✓ Login berhasil.','coin')}catch(e){$('authError').textContent=e.message||'Username atau password salah.'}finally{$('authSubmit').disabled=false}}
+  async function login(){const mode=$('funlearnAuthOverlay').dataset.mode||'login';const username=$('authUsername').value.trim(),password=$('authPassword').value; if(!username||!password){$('authError').textContent='Username dan password wajib diisi.';return} $('authSubmit').disabled=true;$('authError').textContent='Memuat data...';try{const data=await api(mode==='login'?'/login':'/register',{method:'POST',body:JSON.stringify({username,password})});cloudUser=data.user;renderAccount();closeAuth();setStatus('⏳ Memuat data...','warn');const me=await api('/me');const hasLocal=!!(safeLocalStorageGet(LOCAL_DB_KEY)||safeLocalStorageGet(ONLINE_STORAGE_KEY));if(hasLocal&&mode==='register'&&confirm('Data FunLearn lokal ditemukan. Pilih OK untuk upload data lokal ke akun, atau Batal untuk mulai dengan data akun.'))await syncNow();else await applyCloudState(me.state);setStatus('✓ Data tersinkron','ok');window.dispatchEvent(new CustomEvent('funlearn:auth-changed',{detail:{user:cloudUser}}));showToast('✓ Login berhasil.','coin')}catch(e){$('authError').textContent=e.message||'Username atau password salah.'}finally{$('authSubmit').disabled=false}}
   async function logout(){
     const button=$('accountLogoutButton');if(button)button.disabled=true;
     let serverOk=false;
     try{await api('/logout',{method:'POST'});serverOk=true}catch(e){console.warn('Server logout gagal, sesi lokal tetap dibersihkan.',e)}
-    cloudUser=null;clearTimeout(syncTimer);clearTimeout(progressTimer);closeAuth();$('accountMenu')?.classList.remove('open');renderAccount();setStatus('☁️ Lokal');
+    cloudUser=null;clearTimeout(syncTimer);clearTimeout(progressTimer);closeAuth();$('accountMenu')?.classList.remove('open');renderAccount();setStatus('☁️ Lokal');window.dispatchEvent(new CustomEvent('funlearn:auth-changed',{detail:{user:null}}));
     if(button)button.disabled=false;
     showToast(serverOk?'✓ Logout berhasil.':'✓ Logout lokal berhasil.','coin');
   }
@@ -7447,7 +7449,7 @@ setupOnlineEvents();
     const oldOD=window.saveOnlineData;if(typeof oldOD==='function')window.saveOnlineData=function(){const r=oldOD.apply(this,arguments);queueSync();return r};
     const oldOP=window.saveOnlineProgress;if(typeof oldOP==='function')window.saveOnlineProgress=function(){const r=oldOP.apply(this,arguments);queueSync();return r};
     window.addEventListener('online',()=>{setStatus('☁️ Menyinkronkan...','warn');syncNow()});window.addEventListener('offline',()=>setStatus('⚠️ Offline','warn'));
-    setTimeout(async()=>{try{const me=await api('/me');cloudUser=me.user;if(cloudUser){renderAccount();await applyCloudState(me.state);setStatus('✓ Data tersinkron','ok')}}catch(e){setStatus(navigator.onLine?'☁️ Lokal':'⚠️ Offline','warn')}},100);
+    setTimeout(async()=>{try{const me=await api('/me');cloudUser=me.user;if(cloudUser){renderAccount();await applyCloudState(me.state);setStatus('✓ Data tersinkron','ok');window.dispatchEvent(new CustomEvent('funlearn:auth-changed',{detail:{user:cloudUser}}))}}catch(e){setStatus(navigator.onLine?'☁️ Lokal':'⚠️ Offline','warn')}},100);
   }
   window.funlearnTrackDirectVideo=function(video,module){
     let last=0;
@@ -7522,45 +7524,178 @@ function focusCookieWrite(o){setCookie("focus_session",JSON.stringify(o),30)}
 function focusClearCookie(){setCookie("focus_session","",-1)}
 function syncFocusFromCookie(){
   const x=focusCookieRead();
-  if(!x){focusRunning=false;focusPaused=false;focusEndAt=0;focusRemaining=focusMinutes*60;return;}
-  focusMinutes=Number(x.minutes)||25; focusRemaining=Math.max(0,Number(x.remaining)||0); focusRunning=x.state==="running"; focusPaused=x.state==="paused";
-  if(focusRunning){
-    const remain=Math.max(0,Math.ceil((Number(x.endAt)||Date.now()-0-Date.now())/1000));
-    if(Number(x.endAt)>Date.now()) focusRemaining=remain; else finishFocusSession();
+  if(!x){
+    focusRunning=false;focusPaused=false;focusEndAt=0;
+    focusRemaining=focusMinutes*60;
+    return;
   }
-  if(focusPaused && Number(x.pausedAt) && Date.now()-Number(x.pausedAt)>3600000){resetFocusSession(true);}
+  focusMinutes=Math.max(1,Number(x.minutes)||25);
+  focusRemaining=Math.max(0,Number(x.remaining)||focusMinutes*60);
+  focusRunning=x.state==='running';
+  focusPaused=x.state==='paused';
+  focusEndAt=Number(x.endAt)||0;
+
+  // Timer yang sedang berjalan tetap berjalan setelah refresh.
+  if(focusRunning){
+    if(focusEndAt>Date.now()){
+      focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));
+      startFocusTicker();
+    }else{
+      finishFocusSession();
+    }
+  }
+
+  // Sesi yang dijeda lebih dari 1 jam otomatis kembali ke 0.
+  if(focusPaused && Number(x.pausedAt) && Date.now()-Number(x.pausedAt)>3600000){
+    resetFocusSession(true,true);
+  }
 }
 let focusEndAt=0;
 function renderFocus(){
   if(!$('flFocusTimer'))return;
-  const r=Math.max(0,Math.ceil(focusRemaining)); const m=Math.floor(r/60),sec=r%60;
+  const r=Math.max(0,Math.ceil(focusRemaining));
+  const m=Math.floor(r/60),sec=r%60;
   $('flFocusTimer').textContent=String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
   $('flFocusStatus').textContent=focusRunning?'Fokus berjalan.':focusPaused?'Sesi dijeda — klik Lanjut untuk meneruskan.':'Pilih durasi lalu mulai sesi fokus.';
   document.querySelectorAll('.focus-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.focus)===focusMinutes));
-  const startBtn=$('flFocusStart'); if(startBtn){startBtn.textContent=focusRunning?'Pause':focusPaused?'Lanjut':'Mulai';}
+  const startBtn=$('flFocusStart');
+  if(startBtn){
+    startBtn.textContent=focusRunning?'Pause':focusPaused?'Lanjut':'Mulai';
+    startBtn.setAttribute('aria-label',focusRunning?'Jeda Focus Session':focusPaused?'Lanjutkan Focus Session':'Mulai Focus Session');
+  }
 }
-function persistFocus(){focusCookieWrite({minutes:focusMinutes,remaining:Math.max(0,focusRemaining),state:focusRunning?'running':focusPaused?'paused':'idle',endAt:focusEndAt,pausedAt:focusPaused?Date.now():0});}
+function persistFocus(){
+  focusCookieWrite({
+    minutes:focusMinutes,
+    remaining:Math.max(0,focusRemaining),
+    state:focusRunning?'running':focusPaused?'paused':'idle',
+    endAt:focusEndAt,
+    pausedAt:focusPaused?focusPauseAt:0
+  });
+}
+function startFocusTicker(){
+  if(focusTimer)clearInterval(focusTimer);
+  focusTimer=setInterval(()=>{
+    if(!focusRunning)return;
+    focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));
+    renderFocus();
+    if(focusRemaining<=0){
+      finishFocusSession();
+    }else{
+      // Simpan timestamp secara berkala agar refresh tetap akurat.
+      persistFocus();
+    }
+  },250);
+}
 function finishFocusSession(){
   if(focusTimer){clearInterval(focusTimer);focusTimer=null;}
-  focusRunning=false;focusPaused=false;focusEndAt=0;focusRemaining=0;focusClearCookie();
-  const p=ensureUpgradeData(); if(p){p.focusHistory.push({date:localDate(),minutes:focusMinutes});}
-  Promise.resolve(addLearningMinutes(focusMinutes,'Focus Session')).then(()=>typeof registerStudyDay==='function'?registerStudyDay():null).catch(()=>{});
-  showToast(`🎯 Focus Session selesai • +${focusMinutes} menit belajar`,'success');
+  if(!focusRunning && focusRemaining<=0)return;
+  focusRunning=false;focusPaused=false;focusEndAt=0;focusPauseAt=0;focusRemaining=0;
+  focusClearCookie();
+  const completedMinutes=Math.max(1,Number(focusMinutes)||25);
+  const p=ensureUpgradeData();
+  if(p){
+    p.focusHistory=p.focusHistory||[];
+    p.focusHistory.push({date:localDate(),minutes:completedMinutes});
+  }
+  Promise.resolve(addLearningMinutes(completedMinutes,'Focus Session'))
+    .then(()=>typeof registerStudyDay==='function'?registerStudyDay():null)
+    .catch(()=>{});
+  showToast(`🎯 Focus Session selesai • +${completedMinutes} menit belajar`,'success');
   try{const a=new Audio('https://www.myinstants.com/media/sounds/subway-surfers-open-box.mp3');a.preload='auto';a.play().catch(()=>{});}catch(e){}
-  focusRemaining=focusMinutes*60; renderFocus();
+  focusRemaining=completedMinutes*60;
+  renderFocus();
 }
-function resetFocusSession(clearCookie=true){if(focusTimer)clearInterval(focusTimer);focusTimer=null;focusRunning=false;focusPaused=false;focusEndAt=0;focusRemaining=focusMinutes*60;if(clearCookie)focusClearCookie();renderFocus();}
-function startOrToggleFocus(){
-  if(focusRunning){focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));focusRunning=false;focusPaused=true;focusEndAt=0;persistFocus();renderFocus();return;}
-  if(focusPaused){focusEndAt=Date.now()+Math.max(0,focusRemaining)*1000;focusRunning=true;focusPaused=false;persistFocus();renderFocus();return;}
-  focusRemaining=focusMinutes*60;focusEndAt=Date.now()+focusRemaining*1000;focusRunning=true;focusPaused=false;persistFocus();renderFocus();
+function resetFocusSession(clearCookie=true,zero=false){
   if(focusTimer)clearInterval(focusTimer);
-  focusTimer=setInterval(()=>{if(!focusRunning)return;focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));renderFocus();persistFocus();if(focusRemaining<=0)finishFocusSession();},250);
+  focusTimer=null;focusRunning=false;focusPaused=false;focusEndAt=0;focusPauseAt=0;
+  focusRemaining=zero?0:focusMinutes*60;
+  if(clearCookie)focusClearCookie();
+  renderFocus();
 }
-document.querySelectorAll('.focus-btn').forEach(b=>b.addEventListener('click',()=>{if(focusRunning)return;focusMinutes=Number(b.dataset.focus)||25;focusRemaining=focusMinutes*60;focusPaused=false;focusClearCookie();renderFocus();}));
+function startOrToggleFocus(){
+  if(focusRunning){
+    focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));
+    focusRunning=false;focusPaused=true;focusPauseAt=Date.now();focusEndAt=0;
+    if(focusTimer){clearInterval(focusTimer);focusTimer=null;}
+    persistFocus();renderFocus();return;
+  }
+  if(focusPaused){
+    if(focusPauseAt && Date.now()-focusPauseAt>3600000){resetFocusSession(true,true);return;}
+    if(focusRemaining<=0){resetFocusSession(true,false);return;}
+    focusEndAt=Date.now()+Math.max(0,focusRemaining)*1000;
+    focusRunning=true;focusPaused=false;focusPauseAt=0;
+    persistFocus();renderFocus();startFocusTicker();return;
+  }
+  focusRemaining=focusMinutes*60;
+  focusEndAt=Date.now()+focusRemaining*1000;
+  focusRunning=true;focusPaused=false;focusPauseAt=0;
+  persistFocus();renderFocus();startFocusTicker();
+}
+
+// Preset duration
+ document.querySelectorAll('.focus-btn').forEach(b=>b.addEventListener('click',()=>{
+  if(focusRunning)return;
+  focusMinutes=Math.max(1,Number(b.dataset.focus)||25);
+  focusRemaining=focusMinutes*60;
+  focusPaused=false;focusPauseAt=0;focusEndAt=0;
+  focusClearCookie();renderFocus();
+}));
+
+// Custom duration popup yang responsive dan tidak bergantung pada prompt browser.
+function openFocusCustomModal(){
+  const old=$('flFocusCustomModal');if(old)old.remove();
+  const overlay=document.createElement('div');
+  overlay.id='flFocusCustomModal';overlay.className='fl-focus-custom-overlay';
+  overlay.innerHTML=`
+    <div class="fl-focus-custom-card" role="dialog" aria-modal="true" aria-labelledby="flFocusCustomTitle">
+      <button class="fl-focus-custom-close" type="button" aria-label="Tutup">×</button>
+      <div class="fl-focus-custom-icon">⏱️</div>
+      <div class="fl-focus-custom-kicker">FOCUS SESSION</div>
+      <h3 id="flFocusCustomTitle">Atur waktu fokus</h3>
+      <p>Tentukan sendiri berapa menit kamu ingin belajar fokus.</p>
+      <label class="fl-focus-custom-label" for="flFocusCustomInput">Durasi</label>
+      <div class="fl-focus-custom-input-wrap"><input id="flFocusCustomInput" type="number" min="1" max="600" step="1" value="${Math.max(1,Number(focusMinutes)||25)}"><span>menit</span></div>
+      <div class="fl-focus-custom-presets">
+        <button type="button" data-custom-min="10">10m</button>
+        <button type="button" data-custom-min="30">30m</button>
+        <button type="button" data-custom-min="90">90m</button>
+        <button type="button" data-custom-min="120">120m</button>
+      </div>
+      <div class="fl-focus-custom-error" id="flFocusCustomError"></div>
+      <button type="button" class="fl-focus-custom-save" id="flFocusCustomSave">Gunakan durasi</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  const input=$('flFocusCustomInput');
+  const close=()=>overlay.remove();
+  overlay.querySelector('.fl-focus-custom-close').onclick=close;
+  overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
+  overlay.querySelectorAll('[data-custom-min]').forEach(btn=>btn.onclick=()=>{input.value=btn.dataset.customMin;input.focus()});
+  $('flFocusCustomSave').onclick=()=>{
+    const n=Math.floor(Number(input.value));
+    const err=$('flFocusCustomError');
+    if(!Number.isFinite(n)||n<1||n>600){err.textContent='Masukkan durasi 1–600 menit.';return;}
+    focusMinutes=n;focusRemaining=n*60;focusRunning=false;focusPaused=false;focusPauseAt=0;focusEndAt=0;focusClearCookie();renderFocus();close();showToast(`⏱️ Durasi fokus diatur ${n} menit.`,'success');
+  };
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')$('flFocusCustomSave').click();if(e.key==='Escape')close()});
+  setTimeout(()=>{input.focus();input.select()},30);
+}
+$('flFocusCustom')?.addEventListener('click',openFocusCustomModal);
 $('flFocusStart')?.addEventListener('click',startOrToggleFocus);
-$('flFocusReset')?.addEventListener('click',()=>resetFocusSession(true));
-syncFocusFromCookie();renderFocus();
+$('flFocusReset')?.addEventListener('click',()=>resetFocusSession(true,false));
+
+// Setelah refresh, render langsung lalu hidupkan ticker bila session masih running.
+syncFocusFromCookie();
+renderFocus();
+
+// Saat tab kembali aktif, hitung ulang dari endAt agar preview tidak pernah tertinggal.
+document.addEventListener('visibilitychange',()=>{
+  if(!focusRunning)return;
+  focusRemaining=Math.max(0,Math.ceil((focusEndAt-Date.now())/1000));
+  if(focusRemaining<=0)finishFocusSession();
+  else renderFocus();
+});
+
 function addLearningMinutes(minutes,source){const n=Math.max(0,Number(minutes)||0);if(!n)return;recordStudyMinutesCookie(n);const p=ensureUpgradeData();if(p)p.learningTime=getStudyMinutesCookie().total;try{if(typeof checkAchievements==='function')Promise.resolve(checkAchievements()).catch(()=>{});}catch(e){}try{if(typeof renderLearningDashboard==='function')renderLearningDashboard();}catch(e){}}
 function countVideoLearning(){const v=$('videoPlayer');if(!v||v.paused||v.ended||document.hidden)return;const now=v.currentTime;if(now>lastLocalVideoTime){const delta=Math.min(2,now-lastLocalVideoTime);if(delta>.15)addLearningMinutes(delta/60,'Local Video')}lastLocalVideoTime=now}setInterval(countVideoLearning,1000);$('videoPlayer')?.addEventListener('play',()=>{lastLocalVideoTime=$('videoPlayer').currentTime||0});$('videoPlayer')?.addEventListener('pause',()=>{lastLocalVideoTime=$('videoPlayer').currentTime||0});
 let onlineLast={};setInterval(()=>{if(document.hidden||typeof onlineProgress==='undefined')return;for(const [id,p] of Object.entries(onlineProgress||{})){const cur=Number(p.currentTime)||0,old=Number(onlineLast[id]);if(Number.isFinite(old)&&cur>old){const delta=Math.min(6,cur-old);if(delta>.15)addLearningMinutes(delta/60,'Online Video')}onlineLast[id]=cur}},5000);
@@ -7685,11 +7820,18 @@ window.funlearnAchievementEmojiHTML=function(icon){const map={
   function showAllReplies(id,btn){
     const c=comments.find(x=>x.id===id);if(!c)return;const box=list.querySelector('[data-replies-for="'+CSS.escape(id)+'"]');if(!box)return;box.innerHTML=(c.replies||[]).map(replyCard).join('');btn.remove();box.querySelectorAll('[data-delete-reply]').forEach(b=>b.onclick=()=>delReply(b.dataset.deleteReply));
   }
-  async function load(){
+  async function loadUserAndRender(){
     try{const mr=await fetch(ME,{credentials:'include',cache:'no-store'});const md=await mr.json().catch(()=>({}));me=md?.user||null}catch(e){me=null}
     renderCompose();
+    render();
+  }
+  async function load(){
+    await loadUserAndRender();
     try{const r=await fetch(API,{credentials:'include',cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Gagal memuat');comments=Array.isArray(d.comments)?d.comments:[];render()}catch(e){list.innerHTML='<div class="flc-empty">Komentar belum dapat dimuat. Coba refresh halaman.</div>';count.textContent='—'}
   }
+  window.addEventListener('funlearn:auth-changed',async()=>{
+    await loadUserAndRender();
+  });
   async function send(){const input=document.getElementById('flCommentInput');const comment=input?.value.trim();if(!comment)return;const btn=document.getElementById('flCommentSend');btn.disabled=true;btn.textContent='Mengirim…';try{const r=await fetch(API,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({comment})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Gagal mengirim komentar');input.value='';comments.unshift({...d.comment,replies:[]});render();list.scrollTo({top:0,behavior:'smooth'})}catch(e){alert(e.message)}finally{btn.disabled=false;btn.textContent='Kirim komentar'}}
   async function sendReply(commentId,ta,box){const reply=ta.value.trim();if(!reply)return;const btn=box.querySelector('.flc-reply-send');btn.disabled=true;btn.textContent='Mengirim…';try{const r=await fetch(API+'/'+encodeURIComponent(commentId)+'/replies',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({reply})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Gagal mengirim balasan');const c=comments.find(x=>x.id===commentId);if(c){c.replies=c.replies||[];c.replies.push(d.reply)}box.innerHTML='';render()}catch(e){alert(e.message)}finally{btn.disabled=false;btn.textContent='Balas'}}
   async function del(id){if(!confirm('Hapus komentar ini?'))return;try{const r=await fetch(API+'/'+encodeURIComponent(id),{method:'DELETE',credentials:'include'});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Gagal menghapus');comments=comments.filter(x=>x.id!==id);render()}catch(e){alert(e.message)}}
