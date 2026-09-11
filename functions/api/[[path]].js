@@ -48,10 +48,7 @@ async function digest(bytes) {
   );
 }
 
-// ============================================================
-// PASSWORD
-// ============================================================
-
+// Cloudflare Workers WebCrypto supports PBKDF2 up to 100,000 iterations.
 async function passwordHash(
   password,
   salt = randomBytes(16),
@@ -85,8 +82,6 @@ async function verifyPassword(password, stored) {
   try {
     const raw = stored.split("$");
 
-    if (raw.length !== 4) return false;
-
     const actual = await passwordHash(
       password,
       unb64(raw[2]),
@@ -114,10 +109,6 @@ function timingSafeEqual(a, b) {
   return x === 0;
 }
 
-// ============================================================
-// COOKIE / SESSION
-// ============================================================
-
 async function hashToken(token) {
   return b64(
     await digest(
@@ -138,13 +129,16 @@ function parseCookies(request) {
   const out = {};
 
   for (
-    const part of (request.headers.get("cookie") || "").split(";")
+    const part of
+    (request.headers.get("cookie") || "").split(";")
   ) {
     const i = part.indexOf("=");
 
     if (i > 0) {
       out[part.slice(0, i).trim()] =
-        decodeURIComponent(part.slice(i + 1).trim());
+        decodeURIComponent(
+          part.slice(i + 1).trim()
+        );
     }
   }
 
@@ -163,10 +157,6 @@ function normalizeUsername(v) {
   return String(v || "").trim();
 }
 
-// ============================================================
-// DEFAULT USER STATE
-// ============================================================
-
 function defaultState() {
   return {
     appDatabase: null,
@@ -178,101 +168,126 @@ function defaultState() {
   };
 }
 
-// ============================================================
-// AUTH
-// ============================================================
+
+/* =========================================================
+   AUTH
+========================================================= */
 
 async function getUser(request, env) {
-  const token = parseCookies(request).funlearn_session;
+  const token =
+    parseCookies(request).funlearn_session;
 
   if (!token) return null;
 
-  const sid = await hashToken(token);
+  const sid =
+    await hashToken(token);
 
-  const row = await env.DB.prepare(`
-    SELECT
-      u.id,
-      u.username
-    FROM sessions s
-    JOIN users u
-      ON u.id = s.user_id
-    WHERE s.id_hash = ?
-      AND s.expires_at > datetime('now')
-  `)
-    .bind(sid)
-    .first();
+  const row =
+    await env.DB.prepare(`
+      SELECT
+        u.id,
+        u.username
+      FROM sessions s
+      JOIN users u
+        ON u.id = s.user_id
+      WHERE
+        s.id_hash=?
+        AND s.expires_at>datetime('now')
+    `)
+      .bind(sid)
+      .first();
 
   return row || null;
 }
 
 async function requireUser(request, env) {
-  const user = await getUser(request, env);
+  const user =
+    await getUser(request, env);
+
   return user ? user : null;
 }
 
-// ============================================================
-// USER DATA
-// ============================================================
+
+/* =========================================================
+   USER STATE
+========================================================= */
 
 async function readState(env, userId) {
-  const row = await env.DB.prepare(`
-    SELECT
-      schema_version,
-      app_database_json,
-      online_data_json,
-      rewards_json
-    FROM user_data
-    WHERE user_id = ?
-  `)
-    .bind(userId)
-    .first();
+  const row =
+    await env.DB.prepare(`
+      SELECT
+        schema_version,
+        app_database_json,
+        online_data_json,
+        rewards_json
+      FROM user_data
+      WHERE user_id=?
+    `)
+      .bind(userId)
+      .first();
 
   const state = row
     ? {
-        appDatabase: safeJson(
-          row.app_database_json,
-          null
-        ),
-        onlineData: safeJson(
-          row.online_data_json,
-          null
-        ),
+        appDatabase:
+          safeJson(
+            row.app_database_json,
+            null
+          ),
+
+        onlineData:
+          safeJson(
+            row.online_data_json,
+            null
+          ),
+
         onlineProgress: {},
-        rewards: safeJson(
-          row.rewards_json,
-          []
-        ),
+
+        rewards:
+          safeJson(
+            row.rewards_json,
+            []
+          ),
+
         onlineNotes: {},
+
         schemaVersion:
           row.schema_version || 1
       }
     : defaultState();
 
-  const progress = await env.DB.prepare(`
-    SELECT
-      module_id,
-      video_url,
-      current_time,
-      duration,
-      progress_percentage,
-      completed,
-      last_watched_at
-    FROM video_progress
-    WHERE user_id = ?
-  `)
-    .bind(userId)
-    .all();
+  const progress =
+    await env.DB.prepare(`
+      SELECT
+        module_id,
+        video_url,
+        current_time,
+        duration,
+        progress_percentage,
+        completed,
+        last_watched_at
+      FROM video_progress
+      WHERE user_id=?
+    `)
+      .bind(userId)
+      .all();
 
-  for (const p of progress.results || []) {
+  for (
+    const p of
+    progress.results || []
+  ) {
     state.onlineProgress[p.module_id] = {
       currentTime: p.current_time,
       duration: p.duration,
       percent: p.progress_percentage,
       completed: !!p.completed,
-      completedDate: p.completed
-        ? (p.last_watched_at || "").slice(0, 10)
-        : null,
-      lastWatchedAt: p.last_watched_at
+
+      completedDate:
+        p.completed
+          ? (p.last_watched_at || "").slice(0, 10)
+          : null,
+
+      lastWatchedAt:
+        p.last_watched_at
     };
   }
 
@@ -282,25 +297,28 @@ async function readState(env, userId) {
 async function writeState(env, userId, body) {
   const state = body || {};
 
-  const app = JSON.stringify(
-    state.appDatabase &&
-    typeof state.appDatabase === "object"
-      ? state.appDatabase
-      : {}
-  );
+  const app =
+    JSON.stringify(
+      state.appDatabase &&
+      typeof state.appDatabase === "object"
+        ? state.appDatabase
+        : {}
+    );
 
-  const online = JSON.stringify(
-    state.onlineData &&
-    typeof state.onlineData === "object"
-      ? state.onlineData
-      : {}
-  );
+  const online =
+    JSON.stringify(
+      state.onlineData &&
+      typeof state.onlineData === "object"
+        ? state.onlineData
+        : {}
+    );
 
-  const rewards = JSON.stringify(
-    Array.isArray(state.rewards)
-      ? state.rewards
-      : []
-  );
+  const rewards =
+    JSON.stringify(
+      Array.isArray(state.rewards)
+        ? state.rewards
+        : []
+    );
 
   const ts = now();
 
@@ -314,13 +332,14 @@ async function writeState(env, userId, body) {
       updated_at
     )
     VALUES(?,?,?,?,?,?)
+
     ON CONFLICT(user_id)
     DO UPDATE SET
-      schema_version = excluded.schema_version,
-      app_database_json = excluded.app_database_json,
-      online_data_json = excluded.online_data_json,
-      rewards_json = excluded.rewards_json,
-      updated_at = excluded.updated_at
+      schema_version=excluded.schema_version,
+      app_database_json=excluded.app_database_json,
+      online_data_json=excluded.online_data_json,
+      rewards_json=excluded.rewards_json,
+      updated_at=excluded.updated_at
   `)
     .bind(
       userId,
@@ -341,22 +360,34 @@ async function writeState(env, userId, body) {
   const stmts = [];
 
   for (
-    const [moduleId, p] of Object.entries(modules).slice(0, 5000)
+    const [moduleId, p]
+    of Object.entries(modules).slice(0, 5000)
   ) {
     const current =
-      Math.max(0, Number(p.currentTime) || 0);
+      Math.max(
+        0,
+        Number(p.currentTime) || 0
+      );
 
     const duration =
-      Math.max(0, Number(p.duration) || 0);
+      Math.max(
+        0,
+        Number(p.duration) || 0
+      );
 
     const percent =
       Math.min(
         100,
-        Math.max(0, Number(p.percent) || 0)
+        Math.max(
+          0,
+          Number(p.percent) || 0
+        )
       );
 
     const completed =
-      p.completed === true ? 1 : 0;
+      p.completed === true
+        ? 1
+        : 0;
 
     stmts.push(
       env.DB.prepare(`
@@ -371,29 +402,31 @@ async function writeState(env, userId, body) {
           last_watched_at
         )
         VALUES(?,?,?,?,?,?,?,?)
+
         ON CONFLICT(user_id,module_id)
         DO UPDATE SET
-          video_url = excluded.video_url,
-          current_time = excluded.current_time,
-          duration = excluded.duration,
-          progress_percentage = excluded.progress_percentage,
-          completed =
-            MAX(
-              video_progress.completed,
-              excluded.completed
-            ),
-          last_watched_at =
-            excluded.last_watched_at
-      `).bind(
-        userId,
-        String(moduleId).slice(0, 200),
-        String(p.videoUrl || "").slice(0, 2000),
-        current,
-        duration,
-        percent,
-        completed,
-        p.lastWatchedAt || ts
-      )
+          video_url=excluded.video_url,
+          current_time=excluded.current_time,
+          duration=excluded.duration,
+          progress_percentage=excluded.progress_percentage,
+          completed=MAX(
+            video_progress.completed,
+            excluded.completed
+          ),
+          last_watched_at=excluded.last_watched_at
+      `)
+        .bind(
+          userId,
+          String(moduleId).slice(0, 200),
+          String(
+            p.videoUrl || ""
+          ).slice(0, 2000),
+          current,
+          duration,
+          percent,
+          completed,
+          p.lastWatchedAt || ts
+        )
     );
   }
 
@@ -402,9 +435,10 @@ async function writeState(env, userId, body) {
   }
 }
 
-// ============================================================
-// GLOBAL COMMENT REPLIES SCHEMA
-// ============================================================
+
+/* =========================================================
+   GLOBAL COMMENTS SCHEMA
+========================================================= */
 
 async function ensureReplySchema(env) {
   await env.DB.prepare(`
@@ -422,15 +456,48 @@ async function ensureReplySchema(env) {
   await env.DB.prepare(`
     CREATE INDEX IF NOT EXISTS
     idx_comment_replies_comment
-    ON comment_replies(comment_id, created_at)
+    ON comment_replies(
+      comment_id,
+      created_at
+    )
   `).run();
 }
 
-// ============================================================
-// PUBLIC VIDEO SCHEMA
-// ============================================================
+
+/* =========================================================
+   PUBLIC VIDEO SCHEMA
+========================================================= */
+
+async function ensureColumn(
+  env,
+  table,
+  column,
+  definition
+) {
+  const info =
+    await env.DB
+      .prepare(
+        `PRAGMA table_info(${table})`
+      )
+      .all();
+
+  const exists =
+    (info.results || [])
+      .some(
+        c => c.name === column
+      );
+
+  if (!exists) {
+    await env.DB
+      .prepare(
+        `ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`
+      )
+      .run();
+  }
+}
 
 async function ensurePublicVideoSchema(env) {
+
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS public_videos (
       id TEXT PRIMARY KEY,
@@ -444,11 +511,61 @@ async function ensurePublicVideoSchema(env) {
     )
   `).run();
 
+  await ensureColumn(
+    env,
+    "public_videos",
+    "user_id",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_videos",
+    "username",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_videos",
+    "title",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_videos",
+    "module_title",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_videos",
+    "description",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_videos",
+    "video_url",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_videos",
+    "created_at",
+    "TEXT"
+  );
+
   await env.DB.prepare(`
     CREATE INDEX IF NOT EXISTS
     idx_public_videos_created
     ON public_videos(created_at DESC)
   `).run();
+
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS public_video_comments (
@@ -462,11 +579,57 @@ async function ensurePublicVideoSchema(env) {
     )
   `).run();
 
+  await ensureColumn(
+    env,
+    "public_video_comments",
+    "video_id",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_video_comments",
+    "user_id",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_video_comments",
+    "username",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_video_comments",
+    "comment",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_video_comments",
+    "created_at",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_video_comments",
+    "updated_at",
+    "TEXT"
+  );
+
   await env.DB.prepare(`
     CREATE INDEX IF NOT EXISTS
     idx_public_video_comments_video
-    ON public_video_comments(video_id, created_at)
+    ON public_video_comments(
+      video_id,
+      created_at
+    )
   `).run();
+
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS public_video_replies (
@@ -481,18 +644,72 @@ async function ensurePublicVideoSchema(env) {
     )
   `).run();
 
+  await ensureColumn(
+    env,
+    "public_video_replies",
+    "comment_id",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_video_replies",
+    "video_id",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_video_replies",
+    "user_id",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_video_replies",
+    "username",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_video_replies",
+    "reply",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_video_replies",
+    "created_at",
+    "TEXT"
+  );
+
+  await ensureColumn(
+    env,
+    "public_video_replies",
+    "updated_at",
+    "TEXT"
+  );
+
   await env.DB.prepare(`
     CREATE INDEX IF NOT EXISTS
     idx_public_video_replies_comment
-    ON public_video_replies(comment_id, created_at)
+    ON public_video_replies(
+      comment_id,
+      created_at
+    )
   `).run();
 }
 
-// ============================================================
-// MAIN WORKER
-// ============================================================
+
+/* =========================================================
+   MAIN REQUEST HANDLER
+========================================================= */
 
 export async function onRequest(context) {
+
   const {
     request,
     env,
@@ -503,31 +720,41 @@ export async function onRequest(context) {
     return json(
       {
         error:
-          "D1 binding DB belum dikonfigurasi."
+          "D1 binding DB belum terpasang."
       },
       500
     );
   }
 
-  const route =
-    "/" +
-    (params.path || []).join("/");
-
   const method =
     request.method.toUpperCase();
 
-  // ==========================================================
-  // BODY
-  // ==========================================================
+  const pathValue =
+    params?.path;
+
+  const route =
+    "/" +
+    (
+      Array.isArray(pathValue)
+        ? pathValue.join("/")
+        : String(pathValue || "")
+    ).replace(/^\/+/, "");
 
   let body = {};
 
   if (
-    method !== "GET" &&
-    method !== "HEAD"
+    method === "POST" ||
+    method === "PUT" ||
+    method === "PATCH"
   ) {
     try {
-      body = await request.json();
+      const text =
+        await request.text();
+
+      if (text.trim()) {
+        body =
+          JSON.parse(text);
+      }
     } catch {
       return json(
         {
@@ -539,87 +766,87 @@ export async function onRequest(context) {
     }
   }
 
-  // ==========================================================
-  // REGISTER
-  // ==========================================================
+  /* =====================================================
+     AUTH
+  ===================================================== */
 
   if (
     route === "/register" &&
     method === "POST"
   ) {
+
     const username =
-      normalizeUsername(body.username);
+      normalizeUsername(
+        body.username
+      );
 
     const password =
-      String(body.password || "");
+      String(
+        body.password || ""
+      );
 
     if (
-      !USERNAME_RE.test(username) ||
-      password.length < MIN_PASSWORD_LENGTH
+      !USERNAME_RE.test(username)
     ) {
       return json(
         {
           error:
-            "Username atau password tidak memenuhi aturan."
+            "Username tidak valid. Gunakan 3-32 karakter huruf, angka, _, titik, atau -."
         },
         400
       );
     }
 
-    const ts = now();
-
-    const userId = id("usr");
-
-    const hash =
-      await passwordHash(password);
-
-    try {
-      await env.DB.prepare(`
-        INSERT INTO users(
-          id,
-          username,
-          password_hash,
-          created_at,
-          updated_at
-        )
-        VALUES(?,?,?,?,?)
-      `)
-        .bind(
-          userId,
-          username,
-          hash,
-          ts,
-          ts
-        )
-        .run();
-    } catch {
+    if (
+      password.length <
+      MIN_PASSWORD_LENGTH
+    ) {
       return json(
         {
           error:
-            "Username atau password tidak dapat digunakan."
+            `Password minimal ${MIN_PASSWORD_LENGTH} karakter.`
         },
         400
       );
     }
 
-    await env.DB.prepare(`
-      INSERT INTO user_data(
-        user_id,
-        schema_version,
-        app_database_json,
-        online_data_json,
-        rewards_json,
-        updated_at
+    const existing =
+      await env.DB.prepare(
+        "SELECT id FROM users WHERE username=?"
       )
-      VALUES(?,?,?,?,?,?)
+        .bind(username)
+        .first();
+
+    if (existing) {
+      return json(
+        {
+          error:
+            "Username sudah digunakan."
+        },
+        409
+      );
+    }
+
+    const userId =
+      id("user");
+
+    const passwordHashValue =
+      await passwordHash(password);
+
+    await env.DB.prepare(`
+      INSERT INTO users(
+        id,
+        username,
+        password_hash,
+        created_at
+      )
+      VALUES(?,?,?,?)
     `)
       .bind(
         userId,
-        1,
-        "{}",
-        "{}",
-        "[]",
-        ts
+        username,
+        passwordHashValue,
+        now()
       )
       .run();
 
@@ -630,31 +857,33 @@ export async function onRequest(context) {
     );
   }
 
-  // ==========================================================
-  // LOGIN
-  // ==========================================================
 
   if (
     route === "/login" &&
     method === "POST"
   ) {
+
     const username =
-      normalizeUsername(body.username);
+      normalizeUsername(
+        body.username
+      );
 
     const password =
-      String(body.password || "");
+      String(
+        body.password || ""
+      );
 
-    const row = await env.DB.prepare(`
-      SELECT
-        id,
-        username,
-        password_hash
-      FROM users
-      WHERE username = ?
-      COLLATE NOCASE
-    `)
-      .bind(username)
-      .first();
+    const row =
+      await env.DB.prepare(`
+        SELECT
+          id,
+          username,
+          password_hash
+        FROM users
+        WHERE username=?
+      `)
+        .bind(username)
+        .first();
 
     if (
       !row ||
@@ -679,23 +908,21 @@ export async function onRequest(context) {
     );
   }
 
-  // ==========================================================
-  // LOGOUT
-  // ==========================================================
 
   if (
     route === "/logout" &&
     method === "POST"
   ) {
+
     const token =
-      parseCookies(request)
-        .funlearn_session;
+      parseCookies(
+        request
+      ).funlearn_session;
 
     if (token) {
-      await env.DB.prepare(`
-        DELETE FROM sessions
-        WHERE id_hash = ?
-      `)
+      await env.DB.prepare(
+        "DELETE FROM sessions WHERE id_hash=?"
+      )
         .bind(
           await hashToken(token)
         )
@@ -714,23 +941,26 @@ export async function onRequest(context) {
     );
   }
 
+
   const user =
     await requireUser(
       request,
       env
     );
 
-  // ============================================================
-  // PUBLIC VIDEO API
-  // ============================================================
 
-  // GET /api/public-videos
+  /* =====================================================
+     PUBLIC VIDEO
+  ===================================================== */
 
   if (
     route === "/public-videos" &&
     method === "GET"
   ) {
-    await ensurePublicVideoSchema(env);
+
+    await ensurePublicVideoSchema(
+      env
+    );
 
     const result =
       await env.DB.prepare(`
@@ -745,7 +975,6 @@ export async function onRequest(context) {
           created_at AS createdAt
         FROM public_videos
         ORDER BY created_at DESC
-        LIMIT 500
       `).all();
 
     return json({
@@ -755,12 +984,12 @@ export async function onRequest(context) {
     });
   }
 
-  // POST /api/public-videos
 
   if (
     route === "/public-videos" &&
     method === "POST"
   ) {
+
     if (!user) {
       return json(
         {
@@ -771,7 +1000,9 @@ export async function onRequest(context) {
       );
     }
 
-    await ensurePublicVideoSchema(env);
+    await ensurePublicVideoSchema(
+      env
+    );
 
     const title =
       String(
@@ -823,7 +1054,9 @@ export async function onRequest(context) {
     }
 
     if (
-      !/^https:\/\//i.test(videoUrl)
+      !/^https:\/\//i.test(
+        videoUrl
+      )
     ) {
       return json(
         {
@@ -837,36 +1070,62 @@ export async function onRequest(context) {
     const videoId =
       id("pvideo");
 
-    const ts = now();
+    const ts =
+      now();
 
-    await env.DB.prepare(`
-      INSERT INTO public_videos(
-        id,
-        user_id,
-        username,
-        title,
-        module_title,
-        description,
-        video_url,
-        created_at
-      )
-      VALUES(?,?,?,?,?,?,?,?)
-    `)
-      .bind(
-        videoId,
-        user.id,
-        user.username,
-        title,
-        moduleTitle,
-        description,
-        videoUrl,
-        ts
-      )
-      .run();
+    try {
+
+      await env.DB.prepare(`
+        INSERT INTO public_videos(
+          id,
+          user_id,
+          username,
+          title,
+          module_title,
+          description,
+          video_url,
+          created_at
+        )
+        VALUES(?,?,?,?,?,?,?,?)
+      `)
+        .bind(
+          videoId,
+          user.id,
+          user.username,
+          title,
+          moduleTitle,
+          description,
+          videoUrl,
+          ts
+        )
+        .run();
+
+    } catch (err) {
+
+      console.error(
+        "PUBLIC_VIDEO_INSERT_ERROR",
+        err
+      );
+
+      return json(
+        {
+          ok: false,
+          error:
+            "Gagal menyimpan metadata Public Video ke D1.",
+          detail:
+            String(
+              err?.message ||
+              err
+            ).slice(0, 500)
+        },
+        500
+      );
+    }
 
     return json(
       {
         ok: true,
+
         video: {
           id: videoId,
           userId: user.id,
@@ -882,10 +1141,6 @@ export async function onRequest(context) {
     );
   }
 
-  // ==========================================================
-  // DELETE PUBLIC VIDEO
-  // uploader OR fazmen
-  // ==========================================================
 
   const publicVideoMatch =
     route.match(
@@ -896,6 +1151,7 @@ export async function onRequest(context) {
     publicVideoMatch &&
     method === "DELETE"
   ) {
+
     if (!user) {
       return json(
         {
@@ -906,7 +1162,9 @@ export async function onRequest(context) {
       );
     }
 
-    await ensurePublicVideoSchema(env);
+    await ensurePublicVideoSchema(
+      env
+    );
 
     const videoId =
       publicVideoMatch[1];
@@ -917,7 +1175,7 @@ export async function onRequest(context) {
           id,
           user_id
         FROM public_videos
-        WHERE id = ?
+        WHERE id=?
       `)
         .bind(videoId)
         .first();
@@ -935,8 +1193,9 @@ export async function onRequest(context) {
     const allowed =
       String(v.user_id) ===
         String(user.id) ||
-      String(user.username || "")
-        .toLowerCase() ===
+      String(
+        user.username || ""
+      ).toLowerCase() ===
         "fazmen";
 
     if (!allowed) {
@@ -952,18 +1211,21 @@ export async function onRequest(context) {
     await env.DB.batch([
       env.DB.prepare(`
         DELETE FROM public_video_replies
-        WHERE video_id = ?
-      `).bind(videoId),
+        WHERE video_id=?
+      `)
+        .bind(videoId),
 
       env.DB.prepare(`
         DELETE FROM public_video_comments
-        WHERE video_id = ?
-      `).bind(videoId),
+        WHERE video_id=?
+      `)
+        .bind(videoId),
 
       env.DB.prepare(`
         DELETE FROM public_videos
-        WHERE id = ?
-      `).bind(videoId)
+        WHERE id=?
+      `)
+        .bind(videoId)
     ]);
 
     return json({
@@ -973,22 +1235,24 @@ export async function onRequest(context) {
     });
   }
 
-  // ==========================================================
-  // PUBLIC VIDEO COMMENTS
-  // ==========================================================
+
+  /* =====================================================
+     PUBLIC VIDEO COMMENTS
+  ===================================================== */
 
   const pvc =
     route.match(
       /^\/public-videos\/([^/]+)\/comments$/
     );
 
-  // GET comments
-
   if (
     pvc &&
     method === "GET"
   ) {
-    await ensurePublicVideoSchema(env);
+
+    await ensurePublicVideoSchema(
+      env
+    );
 
     const videoId =
       pvc[1];
@@ -997,7 +1261,7 @@ export async function onRequest(context) {
       await env.DB.prepare(`
         SELECT id
         FROM public_videos
-        WHERE id = ?
+        WHERE id=?
       `)
         .bind(videoId)
         .first();
@@ -1022,7 +1286,7 @@ export async function onRequest(context) {
           created_at AS createdAt,
           updated_at AS updatedAt
         FROM public_video_comments
-        WHERE video_id = ?
+        WHERE video_id=?
         ORDER BY created_at ASC
       `)
         .bind(videoId)
@@ -1040,7 +1304,7 @@ export async function onRequest(context) {
           created_at AS createdAt,
           updated_at AS updatedAt
         FROM public_video_replies
-        WHERE video_id = ?
+        WHERE video_id=?
         ORDER BY created_at ASC
       `)
         .bind(videoId)
@@ -1056,7 +1320,9 @@ export async function onRequest(context) {
           replies:
             replies.filter(
               r =>
-                String(r.commentId) ===
+                String(
+                  r.commentId
+                ) ===
                 String(c.id)
             )
         }));
@@ -1067,12 +1333,12 @@ export async function onRequest(context) {
     });
   }
 
-  // POST comment
 
   if (
     pvc &&
     method === "POST"
   ) {
+
     if (!user) {
       return json(
         {
@@ -1083,7 +1349,9 @@ export async function onRequest(context) {
       );
     }
 
-    await ensurePublicVideoSchema(env);
+    await ensurePublicVideoSchema(
+      env
+    );
 
     const videoId =
       pvc[1];
@@ -1092,7 +1360,7 @@ export async function onRequest(context) {
       await env.DB.prepare(`
         SELECT id
         FROM public_videos
-        WHERE id = ?
+        WHERE id=?
       `)
         .bind(videoId)
         .first();
@@ -1124,7 +1392,9 @@ export async function onRequest(context) {
       );
     }
 
-    if (comment.length > 2000) {
+    if (
+      comment.length > 2000
+    ) {
       return json(
         {
           error:
@@ -1137,7 +1407,8 @@ export async function onRequest(context) {
     const commentId =
       id("pvcomment");
 
-    const ts = now();
+    const ts =
+      now();
 
     await env.DB.prepare(`
       INSERT INTO public_video_comments(
@@ -1165,6 +1436,7 @@ export async function onRequest(context) {
     return json(
       {
         ok: true,
+
         comment: {
           id: commentId,
           videoId,
@@ -1180,9 +1452,10 @@ export async function onRequest(context) {
     );
   }
 
-  // ==========================================================
-  // PUBLIC VIDEO REPLIES
-  // ==========================================================
+
+  /* =====================================================
+     PUBLIC VIDEO REPLIES
+  ===================================================== */
 
   const pvr =
     route.match(
@@ -1193,6 +1466,7 @@ export async function onRequest(context) {
     pvr &&
     method === "POST"
   ) {
+
     if (!user) {
       return json(
         {
@@ -1203,7 +1477,9 @@ export async function onRequest(context) {
       );
     }
 
-    await ensurePublicVideoSchema(env);
+    await ensurePublicVideoSchema(
+      env
+    );
 
     const videoId =
       pvr[1];
@@ -1215,8 +1491,8 @@ export async function onRequest(context) {
       await env.DB.prepare(`
         SELECT id
         FROM public_video_comments
-        WHERE id = ?
-          AND video_id = ?
+        WHERE id=?
+          AND video_id=?
       `)
         .bind(
           commentId,
@@ -1236,27 +1512,26 @@ export async function onRequest(context) {
 
     const reply =
       String(
-        body.reply ||
-        body.comment ||
-        body.text ||
-        ""
+        body.reply || ""
       ).trim();
 
     if (!reply) {
       return json(
         {
           error:
-            "Reply tidak boleh kosong."
+            "Balasan tidak boleh kosong."
         },
         400
       );
     }
 
-    if (reply.length > 2000) {
+    if (
+      reply.length > 2000
+    ) {
       return json(
         {
           error:
-            "Reply maksimal 2000 karakter."
+            "Balasan maksimal 2000 karakter."
         },
         400
       );
@@ -1265,7 +1540,8 @@ export async function onRequest(context) {
     const replyId =
       id("pvreply");
 
-    const ts = now();
+    const ts =
+      now();
 
     await env.DB.prepare(`
       INSERT INTO public_video_replies(
@@ -1295,6 +1571,7 @@ export async function onRequest(context) {
     return json(
       {
         ok: true,
+
         reply: {
           id: replyId,
           commentId,
@@ -1310,9 +1587,10 @@ export async function onRequest(context) {
     );
   }
 
-  // ==========================================================
-  // DELETE PUBLIC VIDEO COMMENT
-  // ==========================================================
+
+  /* =====================================================
+     DELETE PUBLIC VIDEO COMMENT
+  ===================================================== */
 
   const pvcd =
     route.match(
@@ -1323,6 +1601,7 @@ export async function onRequest(context) {
     pvcd &&
     method === "DELETE"
   ) {
+
     if (!user) {
       return json(
         {
@@ -1333,7 +1612,9 @@ export async function onRequest(context) {
       );
     }
 
-    await ensurePublicVideoSchema(env);
+    await ensurePublicVideoSchema(
+      env
+    );
 
     const videoId =
       pvcd[1];
@@ -1347,8 +1628,8 @@ export async function onRequest(context) {
           id,
           user_id
         FROM public_video_comments
-        WHERE id = ?
-          AND video_id = ?
+        WHERE id=?
+          AND video_id=?
       `)
         .bind(
           commentId,
@@ -1369,8 +1650,9 @@ export async function onRequest(context) {
     const allowed =
       String(c.user_id) ===
         String(user.id) ||
-      String(user.username || "")
-        .toLowerCase() ===
+      String(
+        user.username || ""
+      ).toLowerCase() ===
         "fazmen";
 
     if (!allowed) {
@@ -1386,13 +1668,15 @@ export async function onRequest(context) {
     await env.DB.batch([
       env.DB.prepare(`
         DELETE FROM public_video_replies
-        WHERE comment_id = ?
-      `).bind(commentId),
+        WHERE comment_id=?
+      `)
+        .bind(commentId),
 
       env.DB.prepare(`
         DELETE FROM public_video_comments
-        WHERE id = ?
-      `).bind(commentId)
+        WHERE id=?
+      `)
+        .bind(commentId)
     ]);
 
     return json({
@@ -1402,9 +1686,10 @@ export async function onRequest(context) {
     });
   }
 
-  // ==========================================================
-  // DELETE PUBLIC VIDEO REPLY
-  // ==========================================================
+
+  /* =====================================================
+     DELETE PUBLIC VIDEO REPLY
+  ===================================================== */
 
   const pvrd =
     route.match(
@@ -1415,6 +1700,7 @@ export async function onRequest(context) {
     pvrd &&
     method === "DELETE"
   ) {
+
     if (!user) {
       return json(
         {
@@ -1425,7 +1711,9 @@ export async function onRequest(context) {
       );
     }
 
-    await ensurePublicVideoSchema(env);
+    await ensurePublicVideoSchema(
+      env
+    );
 
     const videoId =
       pvrd[1];
@@ -1439,8 +1727,8 @@ export async function onRequest(context) {
           id,
           user_id
         FROM public_video_replies
-        WHERE id = ?
-          AND video_id = ?
+        WHERE id=?
+          AND video_id=?
       `)
         .bind(
           replyId,
@@ -1461,8 +1749,9 @@ export async function onRequest(context) {
     const allowed =
       String(r.user_id) ===
         String(user.id) ||
-      String(user.username || "")
-        .toLowerCase() ===
+      String(
+        user.username || ""
+      ).toLowerCase() ===
         "fazmen";
 
     if (!allowed) {
@@ -1477,7 +1766,7 @@ export async function onRequest(context) {
 
     await env.DB.prepare(`
       DELETE FROM public_video_replies
-      WHERE id = ?
+      WHERE id=?
     `)
       .bind(replyId)
       .run();
@@ -1489,14 +1778,16 @@ export async function onRequest(context) {
     });
   }
 
-  // ==========================================================
-  // DELETE ACCOUNT
-  // ==========================================================
+
+  /* =====================================================
+     DELETE ACCOUNT
+  ===================================================== */
 
   if (
     route === "/delete-account" &&
     method === "POST"
   ) {
+
     if (!user) {
       return json(
         {
@@ -1514,9 +1805,12 @@ export async function onRequest(context) {
     }
 
     if (
-      String(body.confirm || "")
+      String(
+        body.confirm || ""
+      )
         .trim()
-        .toLowerCase() !== "hapus"
+        .toLowerCase() !==
+      "hapus"
     ) {
       return json(
         {
@@ -1527,61 +1821,73 @@ export async function onRequest(context) {
       );
     }
 
-    await ensurePublicVideoSchema(env);
+    await ensurePublicVideoSchema(
+      env
+    );
 
     await env.DB.batch([
+
       env.DB.prepare(`
         DELETE FROM video_progress
-        WHERE user_id = ?
-      `).bind(user.id),
+        WHERE user_id=?
+      `)
+        .bind(user.id),
 
       env.DB.prepare(`
         DELETE FROM user_data
-        WHERE user_id = ?
-      `).bind(user.id),
+        WHERE user_id=?
+      `)
+        .bind(user.id),
 
       env.DB.prepare(`
         DELETE FROM public_video_replies
-        WHERE user_id = ?
-      `).bind(user.id),
+        WHERE user_id=?
+      `)
+        .bind(user.id),
 
       env.DB.prepare(`
         DELETE FROM public_video_comments
-        WHERE user_id = ?
-      `).bind(user.id),
+        WHERE user_id=?
+      `)
+        .bind(user.id),
 
       env.DB.prepare(`
         DELETE FROM public_video_replies
         WHERE video_id IN (
           SELECT id
           FROM public_videos
-          WHERE user_id = ?
+          WHERE user_id=?
         )
-      `).bind(user.id),
+      `)
+        .bind(user.id),
 
       env.DB.prepare(`
         DELETE FROM public_video_comments
         WHERE video_id IN (
           SELECT id
           FROM public_videos
-          WHERE user_id = ?
+          WHERE user_id=?
         )
-      `).bind(user.id),
+      `)
+        .bind(user.id),
 
       env.DB.prepare(`
         DELETE FROM public_videos
-        WHERE user_id = ?
-      `).bind(user.id),
+        WHERE user_id=?
+      `)
+        .bind(user.id),
 
       env.DB.prepare(`
         DELETE FROM sessions
-        WHERE user_id = ?
-      `).bind(user.id),
+        WHERE user_id=?
+      `)
+        .bind(user.id),
 
       env.DB.prepare(`
         DELETE FROM users
-        WHERE id = ?
-      `).bind(user.id)
+        WHERE id=?
+      `)
+        .bind(user.id)
     ]);
 
     return json(
@@ -1599,17 +1905,19 @@ export async function onRequest(context) {
     );
   }
 
-  // ==========================================================
-  // GLOBAL COMMENTS API
-  // ==========================================================
 
-  // GET /api/comments
+  /* =====================================================
+     GLOBAL COMMENTS API
+  ===================================================== */
 
   if (
     route === "/comments" &&
     method === "GET"
   ) {
-    await ensureReplySchema(env);
+
+    await ensureReplySchema(
+      env
+    );
 
     const result =
       await env.DB.prepare(`
@@ -1643,10 +1951,13 @@ export async function onRequest(context) {
 
     for (
       const r of
-        repliesResult.results || []
+      repliesResult.results || []
     ) {
+
       if (
-        !replyMap.has(r.commentId)
+        !replyMap.has(
+          r.commentId
+        )
       ) {
         replyMap.set(
           r.commentId,
@@ -1660,13 +1971,13 @@ export async function onRequest(context) {
     }
 
     const comments =
-      (result.results || [])
-        .map(c => ({
-          ...c,
-          replies:
-            replyMap.get(c.id) ||
-            []
-        }));
+      (
+        result.results || []
+      ).map(c => ({
+        ...c,
+        replies:
+          replyMap.get(c.id) || []
+      }));
 
     return json({
       ok: true,
@@ -1674,12 +1985,12 @@ export async function onRequest(context) {
     });
   }
 
-  // POST /api/comments
 
   if (
     route === "/comments" &&
     method === "POST"
   ) {
+
     if (!user) {
       return json(
         {
@@ -1705,7 +2016,9 @@ export async function onRequest(context) {
       );
     }
 
-    if (comment.length > 2000) {
+    if (
+      comment.length > 2000
+    ) {
       return json(
         {
           error:
@@ -1745,20 +2058,25 @@ export async function onRequest(context) {
     return json(
       {
         ok: true,
+
         comment: {
           id: commentId,
           userId: user.id,
           username: user.username,
           comment,
           createdAt: timestamp,
-          updatedAt: timestamp
+          updatedAt: timestamp,
+          replies: []
         }
       },
       201
     );
   }
 
-  // POST /api/comments/:id/replies
+
+  /* =====================================================
+     GLOBAL COMMENT REPLIES
+  ===================================================== */
 
   if (
     route.match(
@@ -1766,6 +2084,7 @@ export async function onRequest(context) {
     ) &&
     method === "POST"
   ) {
+
     if (!user) {
       return json(
         {
@@ -1776,7 +2095,9 @@ export async function onRequest(context) {
       );
     }
 
-    await ensureReplySchema(env);
+    await ensureReplySchema(
+      env
+    );
 
     const commentId =
       route.split("/")[2];
@@ -1795,7 +2116,7 @@ export async function onRequest(context) {
       await env.DB.prepare(`
         SELECT id
         FROM comments
-        WHERE id = ?
+        WHERE id=?
       `)
         .bind(commentId)
         .first();
@@ -1825,7 +2146,9 @@ export async function onRequest(context) {
       );
     }
 
-    if (reply.length > 2000) {
+    if (
+      reply.length > 2000
+    ) {
       return json(
         {
           error:
@@ -1867,6 +2190,7 @@ export async function onRequest(context) {
     return json(
       {
         ok: true,
+
         reply: {
           id: replyId,
           commentId,
@@ -1881,7 +2205,10 @@ export async function onRequest(context) {
     );
   }
 
-  // DELETE /api/comments/reply/:id
+
+  /* =====================================================
+     DELETE GLOBAL COMMENT REPLY
+  ===================================================== */
 
   if (
     route.startsWith(
@@ -1889,6 +2216,7 @@ export async function onRequest(context) {
     ) &&
     method === "DELETE"
   ) {
+
     if (!user) {
       return json(
         {
@@ -1899,7 +2227,9 @@ export async function onRequest(context) {
       );
     }
 
-    await ensureReplySchema(env);
+    await ensureReplySchema(
+      env
+    );
 
     const replyId =
       route.split("/")[3];
@@ -1921,7 +2251,7 @@ export async function onRequest(context) {
           user_id,
           username
         FROM comment_replies
-        WHERE id = ?
+        WHERE id=?
       `)
         .bind(replyId)
         .first();
@@ -1937,11 +2267,13 @@ export async function onRequest(context) {
     }
 
     const isOwner =
-      row.user_id === user.id;
+      row.user_id ===
+      user.id;
 
     const isDeveloper =
-      String(user.username)
-        .toLowerCase() ===
+      String(
+        user.username
+      ).toLowerCase() ===
       "fazmen";
 
     if (
@@ -1959,7 +2291,7 @@ export async function onRequest(context) {
 
     await env.DB.prepare(`
       DELETE FROM comment_replies
-      WHERE id = ?
+      WHERE id=?
     `)
       .bind(replyId)
       .run();
@@ -1971,7 +2303,10 @@ export async function onRequest(context) {
     });
   }
 
-  // DELETE /api/comments/:id
+
+  /* =====================================================
+     DELETE GLOBAL COMMENT
+  ===================================================== */
 
   if (
     route.startsWith(
@@ -1979,6 +2314,7 @@ export async function onRequest(context) {
     ) &&
     method === "DELETE"
   ) {
+
     if (!user) {
       return json(
         {
@@ -2009,7 +2345,7 @@ export async function onRequest(context) {
           user_id,
           username
         FROM comments
-        WHERE id = ?
+        WHERE id=?
       `)
         .bind(commentId)
         .first();
@@ -2029,8 +2365,9 @@ export async function onRequest(context) {
       user.id;
 
     const isDeveloper =
-      String(user.username)
-        .toLowerCase() ===
+      String(
+        user.username
+      ).toLowerCase() ===
       "fazmen";
 
     if (
@@ -2048,7 +2385,7 @@ export async function onRequest(context) {
 
     await env.DB.prepare(`
       DELETE FROM comments
-      WHERE id = ?
+      WHERE id=?
     `)
       .bind(commentId)
       .run();
@@ -2060,14 +2397,16 @@ export async function onRequest(context) {
     });
   }
 
-  // ==========================================================
-  // CURRENT USER
-  // ==========================================================
+
+  /* =====================================================
+     ME
+  ===================================================== */
 
   if (
     route === "/me" &&
     method === "GET"
   ) {
+
     return user
       ? json({
           user,
@@ -2085,14 +2424,16 @@ export async function onRequest(context) {
         );
   }
 
-  // ==========================================================
-  // SYNC
-  // ==========================================================
+
+  /* =====================================================
+     SYNC
+  ===================================================== */
 
   if (
     route === "/sync" &&
     method === "POST"
   ) {
+
     if (!user) {
       return json(
         {
@@ -2115,14 +2456,16 @@ export async function onRequest(context) {
     });
   }
 
-  // ==========================================================
-  // VIDEO PROGRESS
-  // ==========================================================
+
+  /* =====================================================
+     ONLINE PROGRESS
+  ===================================================== */
 
   if (
     route === "/progress" &&
     method === "POST"
   ) {
+
     if (!user) {
       return json(
         {
@@ -2133,26 +2476,21 @@ export async function onRequest(context) {
       );
     }
 
-    const state =
-      await readState(
-        env,
-        user.id
-      );
-
-    const moduleId =
-      String(
-        body.moduleId || ""
-      );
-
-    state.onlineProgress = {
-      ...(state.onlineProgress || {}),
-      [moduleId]: body
-    };
-
     await writeState(
       env,
       user.id,
-      state
+      {
+        ...(await readState(
+          env,
+          user.id
+        )),
+
+        onlineProgress: {
+          [String(
+            body.moduleId
+          )]: body
+        }
+      }
     );
 
     return json({
@@ -2160,9 +2498,6 @@ export async function onRequest(context) {
     });
   }
 
-  // ==========================================================
-  // NOT FOUND
-  // ==========================================================
 
   return json(
     {
@@ -2173,15 +2508,17 @@ export async function onRequest(context) {
   );
 }
 
-// ============================================================
-// CREATE SESSION
-// ============================================================
+
+/* =========================================================
+   CREATE SESSION
+========================================================= */
 
 async function createSession(
   env,
   userId,
   username
 ) {
+
   const raw =
     b64(
       randomBytes(32)
@@ -2194,7 +2531,7 @@ async function createSession(
     new Date(
       Date.now() +
       SESSION_DAYS *
-        86400000
+      86400000
     ).toISOString();
 
   await env.DB.prepare(`
@@ -2217,6 +2554,7 @@ async function createSession(
   return json(
     {
       ok: true,
+
       user: {
         id: userId,
         username
