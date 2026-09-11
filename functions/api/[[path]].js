@@ -1,15 +1,6 @@
-// ============================================================
-// FUNLEARN API WORKER
-// Cloudflare Pages Functions + D1
-// ============================================================
-
 const SESSION_DAYS = 30;
-const MIN_PASSWORD_LENGTH = 10;
 const USERNAME_RE = /^[A-Za-z0-9_][A-Za-z0-9_.-]{2,31}$/;
-
-// ============================================================
-// RESPONSE HELPERS
-// ============================================================
+const MIN_PASSWORD_LENGTH = 10;
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -30,14 +21,6 @@ function id(prefix) {
   return `${prefix}_${crypto.randomUUID()}`;
 }
 
-function errorDetail(err) {
-  return String(err?.message || err || "Unknown error").slice(0, 1500);
-}
-
-// ============================================================
-// CRYPTO
-// ============================================================
-
 function randomBytes(n) {
   const a = new Uint8Array(n);
   crypto.getRandomValues(a);
@@ -53,10 +36,8 @@ function b64(a) {
 
 function unb64(s) {
   const p =
-    String(s || "")
-      .replace(/-/g, "+")
-      .replace(/_/g, "/") +
-    "===".slice((String(s || "").length + 3) % 4);
+    s.replace(/-/g, "+").replace(/_/g, "/") +
+    "===".slice((s.length + 3) % 4);
 
   return Uint8Array.from(atob(p), c => c.charCodeAt(0));
 }
@@ -66,6 +47,10 @@ async function digest(bytes) {
     await crypto.subtle.digest("SHA-256", bytes)
   );
 }
+
+// ============================================================
+// PASSWORD
+// ============================================================
 
 async function passwordHash(
   password,
@@ -98,25 +83,25 @@ async function passwordHash(
 
 async function verifyPassword(password, stored) {
   try {
-    const parts = String(stored || "").split("$");
+    const raw = String(stored || "").split("$");
 
-    if (parts.length !== 4) {
+    if (raw.length !== 4) {
       return false;
     }
 
-    if (parts[0] !== "pbkdf2_sha256") {
+    if (raw[0] !== "pbkdf2_sha256") {
       return false;
     }
 
-    const iterations = Number(parts[1]);
+    const iterations = Number(raw[1]);
 
-    if (!Number.isFinite(iterations) || iterations < 1) {
+    if (!Number.isFinite(iterations) || iterations <= 0) {
       return false;
     }
 
     const actual = await passwordHash(
       password,
-      unb64(parts[2]),
+      unb64(raw[2]),
       iterations
     );
 
@@ -143,6 +128,10 @@ function timingSafeEqual(a, b) {
   return x === 0;
 }
 
+// ============================================================
+// SESSION / COOKIE
+// ============================================================
+
 async function hashToken(token) {
   return b64(
     await digest(
@@ -151,53 +140,34 @@ async function hashToken(token) {
   );
 }
 
-// ============================================================
-// COOKIE
-// ============================================================
-
 function cookie(name, value, maxAge) {
-  return [
-    `${name}=${encodeURIComponent(value)}`,
-    `Max-Age=${maxAge}`,
-    "Path=/",
-    "HttpOnly",
-    "Secure",
-    "SameSite=Lax"
-  ].join("; ");
+  return `${name}=${value}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Lax`;
 }
 
 function clearCookie(name) {
-  return [
-    `${name}=`,
-    "Max-Age=0",
-    "Path=/",
-    "HttpOnly",
-    "Secure",
-    "SameSite=Lax"
-  ].join("; ");
+  return `${name}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax`;
 }
 
 function parseCookies(request) {
   const out = {};
 
-  const raw = request.headers.get("cookie") || "";
+  const header = request.headers.get("cookie") || "";
 
-  for (const part of raw.split(";")) {
+  for (const part of header.split(";")) {
     const i = part.indexOf("=");
 
-    if (i <= 0) {
-      continue;
-    }
+    if (i > 0) {
+      const name = part
+        .slice(0, i)
+        .trim();
 
-    const key = part.slice(0, i).trim();
-    const value = part
-      .slice(i + 1)
-      .trim();
+      const value = decodeURIComponent(
+        part
+          .slice(i + 1)
+          .trim()
+      );
 
-    try {
-      out[key] = decodeURIComponent(value);
-    } catch {
-      out[key] = value;
+      out[name] = value;
     }
   }
 
@@ -205,7 +175,7 @@ function parseCookies(request) {
 }
 
 // ============================================================
-// BASIC HELPERS
+// HELPERS
 // ============================================================
 
 function safeJson(value, fallback) {
@@ -216,8 +186,8 @@ function safeJson(value, fallback) {
   }
 }
 
-function normalizeUsername(value) {
-  return String(value || "").trim();
+function normalizeUsername(v) {
+  return String(v || "").trim();
 }
 
 function defaultState() {
@@ -231,353 +201,21 @@ function defaultState() {
   };
 }
 
-// ============================================================
-// DATABASE CORE SCHEMA
-// ============================================================
-
-async function ensureCoreSchema(env) {
-  const db = env.DB;
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
-      username TEXT NOT NULL UNIQUE,
-      password_hash TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )
-  `).run();
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS sessions (
-      id_hash TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      expires_at TEXT NOT NULL,
-      created_at TEXT NOT NULL
-    )
-  `).run();
-
-  await db.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_sessions_user
-    ON sessions(user_id)
-  `).run();
-
-  await db.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_sessions_expiry
-    ON sessions(expires_at)
-  `).run();
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS user_data (
-      user_id TEXT PRIMARY KEY,
-      schema_version INTEGER NOT NULL DEFAULT 1,
-      app_database_json TEXT NOT NULL DEFAULT '{}',
-      online_data_json TEXT NOT NULL DEFAULT '{}',
-      rewards_json TEXT NOT NULL DEFAULT '[]',
-      updated_at TEXT NOT NULL
-    )
-  `).run();
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS video_progress (
-      user_id TEXT NOT NULL,
-      module_id TEXT NOT NULL,
-      video_url TEXT NOT NULL DEFAULT '',
-      current_time REAL NOT NULL DEFAULT 0,
-      duration REAL NOT NULL DEFAULT 0,
-      progress_percentage REAL NOT NULL DEFAULT 0,
-      completed INTEGER NOT NULL DEFAULT 0,
-      last_watched_at TEXT,
-      PRIMARY KEY(user_id, module_id)
-    )
-  `).run();
-
-  await db.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_video_progress_user
-    ON video_progress(user_id)
-  `).run();
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS comments (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      username TEXT NOT NULL,
-      comment TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )
-  `).run();
-
-  await db.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_comments_created
-    ON comments(created_at DESC)
-  `).run();
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS comment_replies (
-      id TEXT PRIMARY KEY,
-      comment_id TEXT NOT NULL,
-      user_id TEXT NOT NULL,
-      username TEXT NOT NULL,
-      reply TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )
-  `).run();
-
-  await db.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_comment_replies_comment
-    ON comment_replies(comment_id, created_at)
-  `).run();
+function errorDetail(err) {
+  return String(
+    err?.message ||
+    err ||
+    "Unknown error"
+  ).slice(0, 1000);
 }
 
 // ============================================================
-// PUBLIC VIDEO SCHEMA
-// ============================================================
-
-async function ensureColumn(
-  env,
-  table,
-  column,
-  definition
-) {
-  const result = await env.DB
-    .prepare(`PRAGMA table_info(${table})`)
-    .all();
-
-  const columns = result.results || [];
-
-  if (!columns.some(c => c.name === column)) {
-    await env.DB
-      .prepare(
-        `ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`
-      )
-      .run();
-  }
-}
-
-async function ensurePublicVideoSchema(env) {
-  const db = env.DB;
-
-  // ----------------------------------------------------------
-  // PUBLIC VIDEOS
-  // ----------------------------------------------------------
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS public_videos (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      username TEXT NOT NULL,
-      title TEXT NOT NULL,
-      module_title TEXT NOT NULL,
-      description TEXT,
-      video_url TEXT NOT NULL,
-      created_at TEXT NOT NULL
-    )
-  `).run();
-
-  await ensureColumn(
-    env,
-    "public_videos",
-    "user_id",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_videos",
-    "username",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_videos",
-    "title",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_videos",
-    "module_title",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_videos",
-    "description",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_videos",
-    "video_url",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_videos",
-    "created_at",
-    "TEXT"
-  );
-
-  await db.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_public_videos_created
-    ON public_videos(created_at DESC)
-  `).run();
-
-  // ----------------------------------------------------------
-  // PUBLIC VIDEO COMMENTS
-  // ----------------------------------------------------------
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS public_video_comments (
-      id TEXT PRIMARY KEY,
-      video_id TEXT NOT NULL,
-      user_id TEXT NOT NULL,
-      username TEXT NOT NULL,
-      comment TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )
-  `).run();
-
-  await ensureColumn(
-    env,
-    "public_video_comments",
-    "video_id",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_video_comments",
-    "user_id",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_video_comments",
-    "username",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_video_comments",
-    "comment",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_video_comments",
-    "created_at",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_video_comments",
-    "updated_at",
-    "TEXT"
-  );
-
-  await db.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_public_video_comments_video
-    ON public_video_comments(video_id, created_at)
-  `).run();
-
-  // ----------------------------------------------------------
-  // PUBLIC VIDEO REPLIES
-  // ----------------------------------------------------------
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS public_video_replies (
-      id TEXT PRIMARY KEY,
-      comment_id TEXT NOT NULL,
-      video_id TEXT NOT NULL,
-      user_id TEXT NOT NULL,
-      username TEXT NOT NULL,
-      reply TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )
-  `).run();
-
-  await ensureColumn(
-    env,
-    "public_video_replies",
-    "comment_id",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_video_replies",
-    "video_id",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_video_replies",
-    "user_id",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_video_replies",
-    "username",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_video_replies",
-    "reply",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_video_replies",
-    "created_at",
-    "TEXT"
-  );
-
-  await ensureColumn(
-    env,
-    "public_video_replies",
-    "updated_at",
-    "TEXT"
-  );
-
-  await db.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_public_video_replies_comment
-    ON public_video_replies(comment_id, created_at)
-  `).run();
-
-  await db.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_public_video_replies_video
-    ON public_video_replies(video_id, created_at)
-  `).run();
-}
-
-// ============================================================
-// AUTH
+// USER AUTH
 // ============================================================
 
 async function getUser(request, env) {
-  const cookies = parseCookies(request);
-
-  const token = cookies.funlearn_session;
+  const token =
+    parseCookies(request).funlearn_session;
 
   if (!token) {
     return null;
@@ -585,73 +223,27 @@ async function getUser(request, env) {
 
   const sid = await hashToken(token);
 
-  const row = await env.DB
-    .prepare(`
-      SELECT
-        u.id,
-        u.username
-      FROM sessions s
-      INNER JOIN users u
-        ON u.id = s.user_id
-      WHERE s.id_hash = ?
-        AND s.expires_at > datetime('now')
-      LIMIT 1
-    `)
+  const row = await env.DB.prepare(`
+    SELECT
+      u.id,
+      u.username
+    FROM sessions s
+    JOIN users u
+      ON u.id = s.user_id
+    WHERE
+      s.id_hash = ?
+      AND s.expires_at > datetime('now')
+  `)
     .bind(sid)
     .first();
 
   return row || null;
 }
 
-async function createSession(
-  env,
-  userId,
-  username
-) {
-  const raw = b64(randomBytes(32));
+async function requireUser(request, env) {
+  const user = await getUser(request, env);
 
-  const sessionId = await hashToken(raw);
-
-  const expires = new Date(
-    Date.now() +
-    SESSION_DAYS * 86400000
-  ).toISOString();
-
-  await env.DB
-    .prepare(`
-      INSERT INTO sessions(
-        id_hash,
-        user_id,
-        expires_at,
-        created_at
-      )
-      VALUES(?,?,?,?)
-    `)
-    .bind(
-      sessionId,
-      userId,
-      expires,
-      now()
-    )
-    .run();
-
-  return json(
-    {
-      ok: true,
-      user: {
-        id: userId,
-        username
-      }
-    },
-    200,
-    {
-      "set-cookie": cookie(
-        "funlearn_session",
-        raw,
-        SESSION_DAYS * 86400
-      )
-    }
-  );
+  return user || null;
 }
 
 // ============================================================
@@ -659,17 +251,15 @@ async function createSession(
 // ============================================================
 
 async function readState(env, userId) {
-  const row = await env.DB
-    .prepare(`
-      SELECT
-        schema_version,
-        app_database_json,
-        online_data_json,
-        rewards_json
-      FROM user_data
-      WHERE user_id = ?
-      LIMIT 1
-    `)
+  const row = await env.DB.prepare(`
+    SELECT
+      schema_version,
+      app_database_json,
+      online_data_json,
+      rewards_json
+    FROM user_data
+    WHERE user_id = ?
+  `)
     .bind(userId)
     .first();
 
@@ -699,8 +289,8 @@ async function readState(env, userId) {
       }
     : defaultState();
 
-  const progress = await env.DB
-    .prepare(`
+  const progress =
+    await env.DB.prepare(`
       SELECT
         module_id,
         video_url,
@@ -712,58 +302,40 @@ async function readState(env, userId) {
       FROM video_progress
       WHERE user_id = ?
     `)
-    .bind(userId)
-    .all();
+      .bind(userId)
+      .all();
 
   for (const p of progress.results || []) {
     state.onlineProgress[p.module_id] = {
-      currentTime:
-        Number(p.current_time) || 0,
-
-      duration:
-        Number(p.duration) || 0,
-
-      percent:
-        Number(p.progress_percentage) || 0,
-
-      completed:
-        !!p.completed,
-
+      currentTime: p.current_time,
+      duration: p.duration,
+      percent: p.progress_percentage,
+      completed: !!p.completed,
       completedDate:
         p.completed
-          ? String(
-              p.last_watched_at || ""
-            ).slice(0, 10)
+          ? (p.last_watched_at || "").slice(0, 10)
           : null,
-
-      lastWatchedAt:
-        p.last_watched_at || null,
-
-      videoUrl:
-        p.video_url || ""
+      lastWatchedAt: p.last_watched_at,
+      videoUrl: p.video_url
     };
   }
 
   return state;
 }
 
-async function writeState(
-  env,
-  userId,
-  body
-) {
+async function writeState(env, userId, body) {
   const state = body || {};
 
   const app = JSON.stringify(
     state.appDatabase &&
-      typeof state.appDatabase === "object"
+    typeof state.appDatabase === "object"
       ? state.appDatabase
       : {}
   );
 
   const online = JSON.stringify(
     state.onlineData &&
-      typeof state.onlineData === "object"
+    typeof state.onlineData === "object"
       ? state.onlineData
       : {}
   );
@@ -776,35 +348,25 @@ async function writeState(
 
   const ts = now();
 
-  await env.DB
-    .prepare(`
-      INSERT INTO user_data(
-        user_id,
-        schema_version,
-        app_database_json,
-        online_data_json,
-        rewards_json,
-        updated_at
-      )
-      VALUES(?,?,?,?,?,?)
+  await env.DB.prepare(`
+    INSERT INTO user_data(
+      user_id,
+      schema_version,
+      app_database_json,
+      online_data_json,
+      rewards_json,
+      updated_at
+    )
+    VALUES(?,?,?,?,?,?)
 
-      ON CONFLICT(user_id)
-      DO UPDATE SET
-        schema_version =
-          excluded.schema_version,
-
-        app_database_json =
-          excluded.app_database_json,
-
-        online_data_json =
-          excluded.online_data_json,
-
-        rewards_json =
-          excluded.rewards_json,
-
-        updated_at =
-          excluded.updated_at
-    `)
+    ON CONFLICT(user_id)
+    DO UPDATE SET
+      schema_version = excluded.schema_version,
+      app_database_json = excluded.app_database_json,
+      online_data_json = excluded.online_data_json,
+      rewards_json = excluded.rewards_json,
+      updated_at = excluded.updated_at
+  `)
     .bind(
       userId,
       1,
@@ -821,22 +383,22 @@ async function writeState(
       ? state.onlineProgress
       : {};
 
-  const statements = [];
+  const stmts = [];
 
   for (
-    const [moduleId, p] of Object.entries(modules)
-      .slice(0, 5000)
+    const [moduleId, p]
+    of Object.entries(modules).slice(0, 5000)
   ) {
     const current =
       Math.max(
         0,
-        Number(p?.currentTime) || 0
+        Number(p.currentTime) || 0
       );
 
     const duration =
       Math.max(
         0,
-        Number(p?.duration) || 0
+        Number(p.duration) || 0
       );
 
     const percent =
@@ -844,89 +406,309 @@ async function writeState(
         100,
         Math.max(
           0,
-          Number(p?.percent) || 0
+          Number(p.percent) || 0
         )
       );
 
     const completed =
-      p?.completed === true
+      p.completed === true
         ? 1
         : 0;
 
-    statements.push(
-      env.DB
-        .prepare(`
-          INSERT INTO video_progress(
-            user_id,
-            module_id,
-            video_url,
-            current_time,
-            duration,
-            progress_percentage,
-            completed,
-            last_watched_at
-          )
-          VALUES(?,?,?,?,?,?,?,?)
+    stmts.push(
+      env.DB.prepare(`
+        INSERT INTO video_progress(
+          user_id,
+          module_id,
+          video_url,
+          current_time,
+          duration,
+          progress_percentage,
+          completed,
+          last_watched_at
+        )
+        VALUES(?,?,?,?,?,?,?,?)
 
-          ON CONFLICT(user_id,module_id)
-          DO UPDATE SET
-            video_url =
-              excluded.video_url,
-
-            current_time =
-              excluded.current_time,
-
-            duration =
-              excluded.duration,
-
-            progress_percentage =
-              excluded.progress_percentage,
-
-            completed =
-              MAX(
-                video_progress.completed,
-                excluded.completed
-              ),
-
-            last_watched_at =
-              excluded.last_watched_at
-        `)
+        ON CONFLICT(user_id,module_id)
+        DO UPDATE SET
+          video_url = excluded.video_url,
+          current_time = excluded.current_time,
+          duration = excluded.duration,
+          progress_percentage = excluded.progress_percentage,
+          completed =
+            MAX(
+              video_progress.completed,
+              excluded.completed
+            ),
+          last_watched_at =
+            excluded.last_watched_at
+      `)
         .bind(
           userId,
-
-          String(moduleId)
-            .slice(0, 200),
-
-          String(p?.videoUrl || "")
-            .slice(0, 2000),
-
+          String(moduleId).slice(0, 200),
+          String(p.videoUrl || "").slice(0, 2000),
           current,
           duration,
           percent,
           completed,
-
-          p?.lastWatchedAt || ts
+          p.lastWatchedAt || ts
         )
     );
   }
 
-  if (statements.length) {
-    await env.DB.batch(statements);
+  if (stmts.length) {
+    await env.DB.batch(stmts);
   }
 }
 
 // ============================================================
-// MAIN HANDLER
+// GLOBAL COMMENTS SCHEMA
+// ============================================================
+
+async function ensureReplySchema(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS comment_replies (
+      id TEXT PRIMARY KEY,
+      comment_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      username TEXT NOT NULL,
+      reply TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE INDEX IF NOT EXISTS
+    idx_comment_replies_comment
+    ON comment_replies(
+      comment_id,
+      created_at
+    )
+  `).run();
+}
+
+// ============================================================
+// GENERIC COLUMN CHECK
+// ============================================================
+
+async function ensureColumn(
+  env,
+  table,
+  column,
+  definition
+) {
+  const result =
+    await env.DB
+      .prepare(
+        `PRAGMA table_info(${table})`
+      )
+      .all();
+
+  const columns =
+    result.results || [];
+
+  if (
+    !columns.some(
+      c => c.name === column
+    )
+  ) {
+    await env.DB.prepare(
+      `ALTER TABLE ${table}
+       ADD COLUMN ${column}
+       ${definition}`
+    ).run();
+  }
+}
+
+// ============================================================
+// PUBLIC VIDEO SCHEMA
+//
+// IMPORTANT:
+// This function is compatible with your
+// existing D1 tables.
+//
+// Existing public_videos:
+//
+// id
+// owner_id
+// title
+// description
+// object_key
+// created_at
+// user_id
+// username
+// module_title
+// video_url
+//
+// Existing public_video_comments:
+//
+// id
+// video_id
+// user_id
+// content
+// created_at
+// username
+// comment
+// updated_at
+//
+// We DO NOT drop/recreate existing tables.
+// ============================================================
+
+async function ensurePublicVideoSchema(env) {
+
+  // ----------------------------------------------------------
+  // PUBLIC VIDEOS
+  // ----------------------------------------------------------
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS public_videos (
+      id TEXT PRIMARY KEY,
+      owner_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      object_key TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    )
+  `).run();
+
+  const videoColumns = [
+    ["owner_id", "TEXT"],
+    ["title", "TEXT"],
+    ["description", "TEXT DEFAULT ''"],
+    ["object_key", "TEXT"],
+    ["created_at", "TEXT"],
+    ["user_id", "TEXT"],
+    ["username", "TEXT"],
+    ["module_title", "TEXT"],
+    ["video_url", "TEXT"]
+  ];
+
+  for (
+    const [column, definition]
+    of videoColumns
+  ) {
+    await ensureColumn(
+      env,
+      "public_videos",
+      column,
+      definition
+    );
+  }
+
+  await env.DB.prepare(`
+    CREATE INDEX IF NOT EXISTS
+    idx_public_videos_created
+    ON public_videos(created_at DESC)
+  `).run();
+
+  // ----------------------------------------------------------
+  // PUBLIC VIDEO COMMENTS
+  // ----------------------------------------------------------
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS public_video_comments (
+      id TEXT PRIMARY KEY,
+      video_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      content TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    )
+  `).run();
+
+  const commentColumns = [
+    ["video_id", "TEXT"],
+    ["user_id", "TEXT"],
+    ["content", "TEXT"],
+    ["created_at", "TEXT"],
+    ["username", "TEXT"],
+    ["comment", "TEXT"],
+    ["updated_at", "TEXT"]
+  ];
+
+  for (
+    const [column, definition]
+    of commentColumns
+  ) {
+    await ensureColumn(
+      env,
+      "public_video_comments",
+      column,
+      definition
+    );
+  }
+
+  await env.DB.prepare(`
+    CREATE INDEX IF NOT EXISTS
+    idx_public_video_comments_video
+    ON public_video_comments(
+      video_id,
+      created_at
+    )
+  `).run();
+
+  // ----------------------------------------------------------
+  // PUBLIC VIDEO REPLIES
+  // ----------------------------------------------------------
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS public_video_replies (
+      id TEXT PRIMARY KEY,
+      comment_id TEXT NOT NULL,
+      video_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      username TEXT NOT NULL,
+      reply TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `).run();
+
+  const replyColumns = [
+    ["comment_id", "TEXT"],
+    ["video_id", "TEXT"],
+    ["user_id", "TEXT"],
+    ["username", "TEXT"],
+    ["reply", "TEXT"],
+    ["created_at", "TEXT"],
+    ["updated_at", "TEXT"]
+  ];
+
+  for (
+    const [column, definition]
+    of replyColumns
+  ) {
+    await ensureColumn(
+      env,
+      "public_video_replies",
+      column,
+      definition
+    );
+  }
+
+  await env.DB.prepare(`
+    CREATE INDEX IF NOT EXISTS
+    idx_public_video_replies_comment
+    ON public_video_replies(
+      comment_id,
+      created_at
+    )
+  `).run();
+}
+
+// ============================================================
+// MAIN REQUEST HANDLER
 // ============================================================
 
 export async function onRequest(context) {
+
   const {
     request,
     env,
     params
   } = context;
 
-  if (!env?.DB) {
+  if (!env.DB) {
     return json(
       {
         ok: false,
@@ -938,24 +720,19 @@ export async function onRequest(context) {
   }
 
   try {
-    // --------------------------------------------------------
-    // Ensure required database tables exist.
-    // --------------------------------------------------------
-
-    await ensureCoreSchema(env);
 
     const route =
       "/" +
-      (params?.path || [])
-        .map(String)
-        .join("/");
+      (params.path || []).join("/");
 
     const method =
       request.method.toUpperCase();
 
     // --------------------------------------------------------
-    // Parse JSON ONLY when a request actually contains JSON.
-    // GET/HEAD/DELETE kosong tidak akan dianggap JSON error.
+    // BODY
+    //
+    // Hanya request JSON yang diparse sebagai JSON.
+    // GET/DELETE kosong tidak akan dianggap JSON.
     // --------------------------------------------------------
 
     let body = {};
@@ -964,6 +741,7 @@ export async function onRequest(context) {
       method !== "GET" &&
       method !== "HEAD"
     ) {
+
       const contentType =
         (
           request.headers.get(
@@ -976,8 +754,10 @@ export async function onRequest(context) {
           "application/json"
         )
       ) {
+
         try {
-          body = await request.json();
+          body =
+            await request.json();
         } catch {
           return json(
             {
@@ -988,57 +768,46 @@ export async function onRequest(context) {
             400
           );
         }
-      } else {
-        body = {};
       }
     }
 
     // ========================================================
     // REGISTER
-    // POST /api/register
     // ========================================================
 
     if (
       route === "/register" &&
       method === "POST"
     ) {
+
       const username =
         normalizeUsername(
           body.username
         );
 
       const password =
-        String(body.password || "");
-
-      if (
-        !USERNAME_RE.test(username)
-      ) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Username tidak valid. Gunakan 3-32 karakter: huruf, angka, _, titik, atau -."
-          },
-          400
+        String(
+          body.password || ""
         );
-      }
 
       if (
+        !USERNAME_RE.test(username) ||
         password.length <
-        MIN_PASSWORD_LENGTH
+          MIN_PASSWORD_LENGTH
       ) {
         return json(
           {
-            ok: false,
             error:
-              `Password minimal ${MIN_PASSWORD_LENGTH} karakter.`
+              "Username atau password tidak memenuhi aturan."
           },
           400
         );
       }
 
-      const userId = id("usr");
       const ts = now();
+
+      const userId =
+        id("usr");
 
       const hash =
         await passwordHash(
@@ -1046,17 +815,17 @@ export async function onRequest(context) {
         );
 
       try {
-        await env.DB
-          .prepare(`
-            INSERT INTO users(
-              id,
-              username,
-              password_hash,
-              created_at,
-              updated_at
-            )
-            VALUES(?,?,?,?,?)
-          `)
+
+        await env.DB.prepare(`
+          INSERT INTO users(
+            id,
+            username,
+            password_hash,
+            created_at,
+            updated_at
+          )
+          VALUES(?,?,?,?,?)
+        `)
           .bind(
             userId,
             username,
@@ -1065,63 +834,38 @@ export async function onRequest(context) {
             ts
           )
           .run();
-      } catch (err) {
-        console.error(
-          "REGISTER_ERROR",
-          err
-        );
+
+      } catch {
 
         return json(
           {
-            ok: false,
             error:
-              "Username sudah digunakan atau gagal membuat akun.",
-            detail:
-              errorDetail(err)
+              "Username atau password tidak dapat digunakan."
           },
           400
         );
       }
 
-      try {
-        await env.DB
-          .prepare(`
-            INSERT INTO user_data(
-              user_id,
-              schema_version,
-              app_database_json,
-              online_data_json,
-              rewards_json,
-              updated_at
-            )
-            VALUES(?,?,?,?,?,?)
-          `)
-          .bind(
-            userId,
-            1,
-            "{}",
-            "{}",
-            "[]",
-            ts
-          )
-          .run();
-      } catch (err) {
-        console.error(
-          "REGISTER_USER_DATA_ERROR",
-          err
-        );
-
-        return json(
-          {
-            ok: false,
-            error:
-              "Akun berhasil dibuat tetapi data awal gagal dibuat.",
-            detail:
-              errorDetail(err)
-          },
-          500
-        );
-      }
+      await env.DB.prepare(`
+        INSERT INTO user_data(
+          user_id,
+          schema_version,
+          app_database_json,
+          online_data_json,
+          rewards_json,
+          updated_at
+        )
+        VALUES(?,?,?,?,?,?)
+      `)
+        .bind(
+          userId,
+          1,
+          "{}",
+          "{}",
+          "[]",
+          ts
+        )
+        .run();
 
       return await createSession(
         env,
@@ -1138,39 +882,41 @@ export async function onRequest(context) {
       route === "/login" &&
       method === "POST"
     ) {
+
       const username =
         normalizeUsername(
           body.username
         );
 
       const password =
-        String(body.password || "");
+        String(
+          body.password || ""
+        );
 
       const row =
-        await env.DB
-          .prepare(`
-            SELECT
-              id,
-              username,
-              password_hash
-            FROM users
-            WHERE username = ?
-              COLLATE NOCASE
-            LIMIT 1
-          `)
+        await env.DB.prepare(`
+          SELECT
+            id,
+            username,
+            password_hash
+          FROM users
+          WHERE username = ?
+          COLLATE NOCASE
+        `)
           .bind(username)
           .first();
 
       if (
         !row ||
-        !(await verifyPassword(
-          password,
-          row.password_hash
-        ))
+        !(
+          await verifyPassword(
+            password,
+            row.password_hash
+          )
+        )
       ) {
         return json(
           {
-            ok: false,
             error:
               "Username atau password salah."
           },
@@ -1193,22 +939,21 @@ export async function onRequest(context) {
       route === "/logout" &&
       method === "POST"
     ) {
-      const cookies =
-        parseCookies(request);
 
       const token =
-        cookies.funlearn_session;
+        parseCookies(
+          request
+        ).funlearn_session;
 
       if (token) {
-        const sid =
-          await hashToken(token);
 
-        await env.DB
-          .prepare(`
-            DELETE FROM sessions
-            WHERE id_hash = ?
-          `)
-          .bind(sid)
+        await env.DB.prepare(`
+          DELETE FROM sessions
+          WHERE id_hash = ?
+        `)
+          .bind(
+            await hashToken(token)
+          )
           .run();
       }
 
@@ -1226,96 +971,87 @@ export async function onRequest(context) {
       );
     }
 
-    // ========================================================
-    // CURRENT USER
-    // ========================================================
-
     const user =
-      await getUser(
+      await requireUser(
         request,
         env
       );
 
     // ========================================================
     // PUBLIC VIDEO
+    // GET LIST
     // ========================================================
-
-    // --------------------------------------------------------
-    // GET /api/public-videos
-    // --------------------------------------------------------
 
     if (
       route === "/public-videos" &&
       method === "GET"
     ) {
-      try {
-        await ensurePublicVideoSchema(
-          env
-        );
 
-        const result =
-          await env.DB
-            .prepare(`
-              SELECT
-                id,
-                user_id AS userId,
-                username,
-                title,
-                module_title AS moduleTitle,
-                description,
-                video_url AS videoUrl,
-                created_at AS createdAt
-              FROM public_videos
-              ORDER BY created_at DESC
-              LIMIT 500
-            `)
-            .all();
+      await ensurePublicVideoSchema(
+        env
+      );
 
-        return json({
+      const result =
+        await env.DB.prepare(`
+          SELECT
+            id,
+
+            COALESCE(
+              user_id,
+              owner_id
+            ) AS userId,
+
+            COALESCE(
+              username,
+              ''
+            ) AS username,
+
+            title,
+
+            COALESCE(
+              module_title,
+              ''
+            ) AS moduleTitle,
+
+            COALESCE(
+              description,
+              ''
+            ) AS description,
+
+            COALESCE(
+              video_url,
+              object_key
+            ) AS videoUrl,
+
+            created_at AS createdAt
+
+          FROM public_videos
+
+          ORDER BY created_at DESC
+
+          LIMIT 500
+        `)
+          .all();
+
+      return json(
+        {
           ok: true,
           videos:
             result.results || []
-        });
-      } catch (err) {
-        console.error(
-          "PUBLIC_VIDEO_LIST_ERROR",
-          err
-        );
-
-        return json(
-          {
-            ok: false,
-            error:
-              "Gagal mengambil daftar Public Video.",
-            detail:
-              errorDetail(err)
-          },
-          500
-        );
-      }
+        }
+      );
     }
 
-    // --------------------------------------------------------
-    // POST /api/public-videos
-    //
-    // Frontend harus mengirim:
-    //
-    // {
-    //   title,
-    //   moduleTitle,
-    //   description,
-    //   videoUrl
-    // }
-    //
-    // File video TIDAK dikirim ke endpoint ini.
-    // File diupload ke Top4Top oleh frontend.
-    // URL hasil upload kemudian disimpan di D1.
-    // --------------------------------------------------------
+    // ========================================================
+    // PUBLIC VIDEO
+    // POST METADATA
+    // ========================================================
 
     if (
       route === "/public-videos" &&
       method === "POST"
     ) {
+
       if (!user) {
         return json(
           {
@@ -1347,10 +1083,6 @@ export async function onRequest(context) {
           body.videoUrl || ""
         ).trim();
 
-      // ------------------------------------------------------
-      // VALIDATION
-      // ------------------------------------------------------
-
       if (
         !title ||
         !moduleTitle ||
@@ -1366,51 +1098,17 @@ export async function onRequest(context) {
         );
       }
 
-      if (title.length > 160) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Judul video maksimal 160 karakter."
-          },
-          400
-        );
-      }
-
       if (
-        moduleTitle.length > 100
-      ) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Judul modul maksimal 100 karakter."
-          },
-          400
-        );
-      }
-
-      if (
-        description.length > 600
-      ) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Deskripsi maksimal 600 karakter."
-          },
-          400
-        );
-      }
-
-      if (
+        title.length > 160 ||
+        moduleTitle.length > 100 ||
+        description.length > 600 ||
         videoUrl.length > 2000
       ) {
         return json(
           {
             ok: false,
             error:
-              "URL video terlalu panjang."
+              "Data video melebihi batas panjang."
           },
           400
         );
@@ -1431,11 +1129,8 @@ export async function onRequest(context) {
         );
       }
 
-      // ------------------------------------------------------
-      // SAVE TO D1
-      // ------------------------------------------------------
-
       try {
+
         await ensurePublicVideoSchema(
           env
         );
@@ -1443,88 +1138,112 @@ export async function onRequest(context) {
         const videoId =
           id("pvideo");
 
-        const timestamp =
+        const ts =
           now();
 
-        const insert =
-          await env.DB
-            .prepare(`
-              INSERT INTO public_videos (
-                id,
-                user_id,
-                username,
-                title,
-                module_title,
-                description,
-                video_url,
-                created_at
-              )
-              VALUES (
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?
-              )
-            `)
-            .bind(
-              String(videoId),
-              String(user.id),
-              String(user.username),
+        // ----------------------------------------------------
+        // PENTING:
+        //
+        // owner_id WAJIB karena schema D1 kamu:
+        // owner_id TEXT NOT NULL
+        //
+        // object_key WAJIB karena:
+        // object_key TEXT NOT NULL
+        //
+        // Jadi keduanya harus diisi.
+        // ----------------------------------------------------
+
+        const result =
+          await env.DB.prepare(`
+            INSERT INTO public_videos(
+              id,
+              owner_id,
               title,
-              moduleTitle,
               description,
+              object_key,
+              created_at,
+              user_id,
+              username,
+              module_title,
+              video_url
+            )
+            VALUES(
+              ?,
+              ?,
+              ?,
+              ?,
+              ?,
+              ?,
+              ?,
+              ?,
+              ?,
+              ?
+            )
+          `)
+            .bind(
+              videoId,
+
+              // owner_id
+              String(user.id),
+
+              // title
+              title,
+
+              // description
+              description,
+
+              // object_key
               videoUrl,
-              timestamp
+
+              // created_at
+              ts,
+
+              // user_id
+              String(user.id),
+
+              // username
+              String(
+                user.username
+              ),
+
+              // module_title
+              moduleTitle,
+
+              // video_url
+              videoUrl
             )
             .run();
 
         if (
-          insert &&
-          insert.success === false
+          result &&
+          result.success === false
         ) {
           throw new Error(
-            "Cloudflare D1 mengembalikan success=false ketika INSERT public_videos."
-          );
-        }
-
-        // Verify immediately that the row actually exists.
-        const saved =
-          await env.DB
-            .prepare(`
-              SELECT
-                id,
-                user_id AS userId,
-                username,
-                title,
-                module_title AS moduleTitle,
-                description,
-                video_url AS videoUrl,
-                created_at AS createdAt
-              FROM public_videos
-              WHERE id = ?
-              LIMIT 1
-            `)
-            .bind(videoId)
-            .first();
-
-        if (!saved) {
-          throw new Error(
-            "INSERT selesai tetapi metadata Public Video tidak ditemukan saat verifikasi D1."
+            "D1 menolak INSERT public_videos."
           );
         }
 
         return json(
           {
             ok: true,
-            video: saved
+
+            video: {
+              id: videoId,
+              userId: user.id,
+              username:
+                user.username,
+              title,
+              moduleTitle,
+              description,
+              videoUrl,
+              createdAt: ts
+            }
           },
           201
         );
+
       } catch (err) {
+
         console.error(
           "PUBLIC_VIDEO_SAVE_ERROR",
           err
@@ -1543,9 +1262,9 @@ export async function onRequest(context) {
       }
     }
 
-    // --------------------------------------------------------
-    // DELETE /api/public-videos/:videoId
-    // --------------------------------------------------------
+    // ========================================================
+    // DELETE PUBLIC VIDEO
+    // ========================================================
 
     const publicVideoMatch =
       route.match(
@@ -1556,10 +1275,10 @@ export async function onRequest(context) {
       publicVideoMatch &&
       method === "DELETE"
     ) {
+
       if (!user) {
         return json(
           {
-            ok: false,
             error:
               "Kamu harus login terlebih dahulu."
           },
@@ -1567,111 +1286,89 @@ export async function onRequest(context) {
         );
       }
 
-      try {
-        await ensurePublicVideoSchema(
-          env
+      await ensurePublicVideoSchema(
+        env
+      );
+
+      const videoId =
+        publicVideoMatch[1];
+
+      const video =
+        await env.DB.prepare(`
+          SELECT
+            id,
+            COALESCE(
+              user_id,
+              owner_id
+            ) AS user_id
+          FROM public_videos
+          WHERE id = ?
+        `)
+          .bind(videoId)
+          .first();
+
+      if (!video) {
+        return json(
+          {
+            error:
+              "Video tidak ditemukan."
+          },
+          404
         );
+      }
 
-        const videoId =
-          publicVideoMatch[1];
-
-        const video =
-          await env.DB
-            .prepare(`
-              SELECT
-                id,
-                user_id
-              FROM public_videos
-              WHERE id = ?
-              LIMIT 1
-            `)
-            .bind(videoId)
-            .first();
-
-        if (!video) {
-          return json(
-            {
-              ok: false,
-              error:
-                "Video tidak ditemukan."
-            },
-            404
-          );
-        }
-
-        const isOwner =
-          String(video.user_id) ===
-          String(user.id);
-
-        const isDeveloper =
-          String(
-            user.username || ""
-          ).toLowerCase() ===
+      const allowed =
+        String(
+          video.user_id
+        ) ===
+          String(user.id) ||
+        String(
+          user.username || ""
+        ).toLowerCase() ===
           "fazmen";
 
-        if (
-          !isOwner &&
-          !isDeveloper
-        ) {
-          return json(
-            {
-              ok: false,
-              error:
-                "Kamu tidak memiliki izin untuk menghapus video ini."
-            },
-            403
-          );
-        }
+      if (!allowed) {
+        return json(
+          {
+            error:
+              "Kamu tidak memiliki izin untuk menghapus video ini."
+          },
+          403
+        );
+      }
 
-        await env.DB.batch([
-          env.DB
-            .prepare(`
-              DELETE FROM public_video_replies
-              WHERE video_id = ?
-            `)
-            .bind(videoId),
+      await env.DB.batch([
+        env.DB.prepare(`
+          DELETE FROM public_video_replies
+          WHERE video_id = ?
+        `)
+          .bind(videoId),
 
-          env.DB
-            .prepare(`
-              DELETE FROM public_video_comments
-              WHERE video_id = ?
-            `)
-            .bind(videoId),
+        env.DB.prepare(`
+          DELETE FROM public_video_comments
+          WHERE video_id = ?
+        `)
+          .bind(videoId),
 
-          env.DB
-            .prepare(`
-              DELETE FROM public_videos
-              WHERE id = ?
-            `)
-            .bind(videoId)
-        ]);
+        env.DB.prepare(`
+          DELETE FROM public_videos
+          WHERE id = ?
+        `)
+          .bind(videoId)
+      ]);
 
-        return json({
+      return json(
+        {
           ok: true,
           deleted: true,
           videoId
-        });
-      } catch (err) {
-        console.error(
-          "PUBLIC_VIDEO_DELETE_ERROR",
-          err
-        );
-
-        return json(
-          {
-            ok: false,
-            error:
-              "Gagal menghapus Public Video.",
-            detail:
-              errorDetail(err)
-          },
-          500
-        );
-      }
+        }
+      );
     }
 
     // ========================================================
     // PUBLIC VIDEO COMMENTS
+    // GET COMMENTS
     // ========================================================
 
     const publicVideoCommentsMatch =
@@ -1679,134 +1376,123 @@ export async function onRequest(context) {
         /^\/public-videos\/([^/]+)\/comments$/
       );
 
-    // --------------------------------------------------------
-    // GET COMMENTS
-    // --------------------------------------------------------
-
     if (
       publicVideoCommentsMatch &&
       method === "GET"
     ) {
-      try {
-        await ensurePublicVideoSchema(
-          env
-        );
 
-        const videoId =
-          publicVideoCommentsMatch[1];
+      await ensurePublicVideoSchema(
+        env
+      );
 
-        const video =
-          await env.DB
-            .prepare(`
-              SELECT id
-              FROM public_videos
-              WHERE id = ?
-              LIMIT 1
-            `)
-            .bind(videoId)
-            .first();
+      const videoId =
+        publicVideoCommentsMatch[1];
 
-        if (!video) {
-          return json(
-            {
-              ok: false,
-              error:
-                "Video tidak ditemukan."
-            },
-            404
-          );
-        }
+      const video =
+        await env.DB.prepare(`
+          SELECT id
+          FROM public_videos
+          WHERE id = ?
+        `)
+          .bind(videoId)
+          .first();
 
-        const commentsResult =
-          await env.DB
-            .prepare(`
-              SELECT
-                id,
-                user_id AS userId,
-                username,
-                comment,
-                created_at AS createdAt,
-                updated_at AS updatedAt
-              FROM public_video_comments
-              WHERE video_id = ?
-              ORDER BY created_at ASC
-            `)
-            .bind(videoId)
-            .all();
-
-        const repliesResult =
-          await env.DB
-            .prepare(`
-              SELECT
-                id,
-                comment_id AS commentId,
-                video_id AS videoId,
-                user_id AS userId,
-                username,
-                reply,
-                created_at AS createdAt,
-                updated_at AS updatedAt
-              FROM public_video_replies
-              WHERE video_id = ?
-              ORDER BY created_at ASC
-            `)
-            .bind(videoId)
-            .all();
-
-        const replies =
-          repliesResult.results || [];
-
-        const comments =
-          (
-            commentsResult.results ||
-            []
-          ).map(comment => ({
-            ...comment,
-            replies:
-              replies.filter(
-                reply =>
-                  String(
-                    reply.commentId
-                  ) ===
-                  String(comment.id)
-              )
-          }));
-
-        return json({
-          ok: true,
-          comments
-        });
-      } catch (err) {
-        console.error(
-          "PUBLIC_VIDEO_COMMENTS_GET_ERROR",
-          err
-        );
-
+      if (!video) {
         return json(
           {
-            ok: false,
             error:
-              "Gagal mengambil komentar video.",
-            detail:
-              errorDetail(err)
+              "Video tidak ditemukan."
           },
-          500
+          404
         );
       }
+
+      const commentsResult =
+        await env.DB.prepare(`
+          SELECT
+            id,
+            user_id AS userId,
+            username,
+
+            COALESCE(
+              comment,
+              content
+            ) AS comment,
+
+            created_at AS createdAt,
+            updated_at AS updatedAt
+
+          FROM public_video_comments
+
+          WHERE video_id = ?
+
+          ORDER BY created_at ASC
+        `)
+          .bind(videoId)
+          .all();
+
+      const repliesResult =
+        await env.DB.prepare(`
+          SELECT
+            id,
+            comment_id AS commentId,
+            video_id AS videoId,
+            user_id AS userId,
+            username,
+            reply,
+            created_at AS createdAt,
+            updated_at AS updatedAt
+
+          FROM public_video_replies
+
+          WHERE video_id = ?
+
+          ORDER BY created_at ASC
+        `)
+          .bind(videoId)
+          .all();
+
+      const replies =
+        repliesResult.results || [];
+
+      const comments =
+        (
+          commentsResult.results || []
+        ).map(comment => ({
+          ...comment,
+
+          replies:
+            replies.filter(
+              reply =>
+                String(
+                  reply.commentId
+                ) ===
+                String(
+                  comment.id
+                )
+            )
+        }));
+
+      return json(
+        {
+          ok: true,
+          comments
+        }
+      );
     }
 
-    // --------------------------------------------------------
-    // POST COMMENT
-    // --------------------------------------------------------
+    // ========================================================
+    // POST PUBLIC VIDEO COMMENT
+    // ========================================================
 
     if (
       publicVideoCommentsMatch &&
       method === "POST"
     ) {
+
       if (!user) {
         return json(
           {
-            ok: false,
             error:
               "Kamu harus login terlebih dahulu."
           },
@@ -1814,134 +1500,128 @@ export async function onRequest(context) {
         );
       }
 
-      try {
-        await ensurePublicVideoSchema(
-          env
-        );
+      await ensurePublicVideoSchema(
+        env
+      );
 
-        const videoId =
-          publicVideoCommentsMatch[1];
+      const videoId =
+        publicVideoCommentsMatch[1];
 
-        const video =
-          await env.DB
-            .prepare(`
-              SELECT id
-              FROM public_videos
-              WHERE id = ?
-              LIMIT 1
-            `)
-            .bind(videoId)
-            .first();
+      const video =
+        await env.DB.prepare(`
+          SELECT id
+          FROM public_videos
+          WHERE id = ?
+        `)
+          .bind(videoId)
+          .first();
 
-        if (!video) {
-          return json(
-            {
-              ok: false,
-              error:
-                "Video tidak ditemukan."
-            },
-            404
-          );
-        }
-
-        const comment =
-          String(
-            body.comment ||
-            body.text ||
-            ""
-          ).trim();
-
-        if (!comment) {
-          return json(
-            {
-              ok: false,
-              error:
-                "Komentar tidak boleh kosong."
-            },
-            400
-          );
-        }
-
-        if (
-          comment.length > 2000
-        ) {
-          return json(
-            {
-              ok: false,
-              error:
-                "Komentar maksimal 2000 karakter."
-            },
-            400
-          );
-        }
-
-        const commentId =
-          id("pvcomment");
-
-        const timestamp =
-          now();
-
-        await env.DB
-          .prepare(`
-            INSERT INTO public_video_comments (
-              id,
-              video_id,
-              user_id,
-              username,
-              comment,
-              created_at,
-              updated_at
-            )
-            VALUES(?,?,?,?,?,?,?)
-          `)
-          .bind(
-            commentId,
-            videoId,
-            String(user.id),
-            String(user.username),
-            comment,
-            timestamp,
-            timestamp
-          )
-          .run();
-
+      if (!video) {
         return json(
           {
-            ok: true,
-            comment: {
-              id: commentId,
-              videoId,
-              userId: user.id,
-              username: user.username,
-              comment,
-              createdAt: timestamp,
-              updatedAt: timestamp,
-              replies: []
-            }
-          },
-          201
-        );
-      } catch (err) {
-        console.error(
-          "PUBLIC_VIDEO_COMMENT_POST_ERROR",
-          err
-        );
-
-        return json(
-          {
-            ok: false,
             error:
-              "Gagal menyimpan komentar Public Video.",
-            detail:
-              errorDetail(err)
+              "Video tidak ditemukan."
           },
-          500
+          404
         );
       }
+
+      const comment =
+        String(
+          body.comment ||
+          body.text ||
+          ""
+        ).trim();
+
+      if (!comment) {
+        return json(
+          {
+            error:
+              "Komentar tidak boleh kosong."
+          },
+          400
+        );
+      }
+
+      if (
+        comment.length > 2000
+      ) {
+        return json(
+          {
+            error:
+              "Komentar maksimal 2000 karakter."
+          },
+          400
+        );
+      }
+
+      const commentId =
+        id("pvcomment");
+
+      const ts =
+        now();
+
+      // ------------------------------------------------------
+      // content WAJIB pada schema D1 kamu.
+      // comment juga diisi agar kompatibel dengan kode lama.
+      // ------------------------------------------------------
+
+      await env.DB.prepare(`
+        INSERT INTO public_video_comments(
+          id,
+          video_id,
+          user_id,
+          content,
+          created_at,
+          username,
+          comment,
+          updated_at
+        )
+        VALUES(
+          ?,
+          ?,
+          ?,
+          ?,
+          ?,
+          ?,
+          ?,
+          ?
+        )
+      `)
+        .bind(
+          commentId,
+          videoId,
+          user.id,
+          comment,
+          ts,
+          user.username,
+          comment,
+          ts
+        )
+        .run();
+
+      return json(
+        {
+          ok: true,
+
+          comment: {
+            id: commentId,
+            videoId,
+            userId: user.id,
+            username:
+              user.username,
+            comment,
+            createdAt: ts,
+            updatedAt: ts,
+            replies: []
+          }
+        },
+        201
+      );
     }
 
     // ========================================================
-    // PUBLIC VIDEO REPLIES
+    // PUBLIC VIDEO REPLY
     // ========================================================
 
     const publicVideoReplyMatch =
@@ -1949,18 +1629,14 @@ export async function onRequest(context) {
         /^\/public-videos\/([^/]+)\/comments\/([^/]+)\/replies$/
       );
 
-    // --------------------------------------------------------
-    // POST REPLY
-    // --------------------------------------------------------
-
     if (
       publicVideoReplyMatch &&
       method === "POST"
     ) {
+
       if (!user) {
         return json(
           {
-            ok: false,
             error:
               "Kamu harus login terlebih dahulu."
           },
@@ -1968,145 +1644,133 @@ export async function onRequest(context) {
         );
       }
 
-      try {
-        await ensurePublicVideoSchema(
-          env
-        );
+      await ensurePublicVideoSchema(
+        env
+      );
 
-        const videoId =
-          publicVideoReplyMatch[1];
+      const videoId =
+        publicVideoReplyMatch[1];
 
-        const commentId =
-          publicVideoReplyMatch[2];
+      const commentId =
+        publicVideoReplyMatch[2];
 
-        const parent =
-          await env.DB
-            .prepare(`
-              SELECT id
-              FROM public_video_comments
-              WHERE id = ?
-                AND video_id = ?
-              LIMIT 1
-            `)
-            .bind(
-              commentId,
-              videoId
-            )
-            .first();
-
-        if (!parent) {
-          return json(
-            {
-              ok: false,
-              error:
-                "Komentar tidak ditemukan."
-            },
-            404
-          );
-        }
-
-        const reply =
-          String(
-            body.reply ||
-            body.comment ||
-            body.text ||
-            ""
-          ).trim();
-
-        if (!reply) {
-          return json(
-            {
-              ok: false,
-              error:
-                "Reply tidak boleh kosong."
-            },
-            400
-          );
-        }
-
-        if (
-          reply.length > 2000
-        ) {
-          return json(
-            {
-              ok: false,
-              error:
-                "Reply maksimal 2000 karakter."
-            },
-            400
-          );
-        }
-
-        const replyId =
-          id("pvreply");
-
-        const timestamp =
-          now();
-
-        await env.DB
-          .prepare(`
-            INSERT INTO public_video_replies (
-              id,
-              comment_id,
-              video_id,
-              user_id,
-              username,
-              reply,
-              created_at,
-              updated_at
-            )
-            VALUES(?,?,?,?,?,?,?,?)
-          `)
+      const parent =
+        await env.DB.prepare(`
+          SELECT id
+          FROM public_video_comments
+          WHERE
+            id = ?
+            AND video_id = ?
+        `)
           .bind(
-            replyId,
             commentId,
-            videoId,
-            String(user.id),
-            String(user.username),
-            reply,
-            timestamp,
-            timestamp
+            videoId
           )
-          .run();
+          .first();
 
+      if (!parent) {
         return json(
           {
-            ok: true,
-            reply: {
-              id: replyId,
-              commentId,
-              videoId,
-              userId: user.id,
-              username: user.username,
-              reply,
-              createdAt: timestamp,
-              updatedAt: timestamp
-            }
-          },
-          201
-        );
-      } catch (err) {
-        console.error(
-          "PUBLIC_VIDEO_REPLY_POST_ERROR",
-          err
-        );
-
-        return json(
-          {
-            ok: false,
             error:
-              "Gagal menyimpan reply Public Video.",
-            detail:
-              errorDetail(err)
+              "Komentar tidak ditemukan."
           },
-          500
+          404
         );
       }
+
+      const reply =
+        String(
+          body.reply ||
+          body.comment ||
+          body.text ||
+          ""
+        ).trim();
+
+      if (!reply) {
+        return json(
+          {
+            error:
+              "Reply tidak boleh kosong."
+          },
+          400
+        );
+      }
+
+      if (
+        reply.length > 2000
+      ) {
+        return json(
+          {
+            error:
+              "Reply maksimal 2000 karakter."
+          },
+          400
+        );
+      }
+
+      const replyId =
+        id("pvreply");
+
+      const ts =
+        now();
+
+      await env.DB.prepare(`
+        INSERT INTO public_video_replies(
+          id,
+          comment_id,
+          video_id,
+          user_id,
+          username,
+          reply,
+          created_at,
+          updated_at
+        )
+        VALUES(
+          ?,
+          ?,
+          ?,
+          ?,
+          ?,
+          ?,
+          ?,
+          ?
+        )
+      `)
+        .bind(
+          replyId,
+          commentId,
+          videoId,
+          user.id,
+          user.username,
+          reply,
+          ts,
+          ts
+        )
+        .run();
+
+      return json(
+        {
+          ok: true,
+
+          reply: {
+            id: replyId,
+            commentId,
+            videoId,
+            userId: user.id,
+            username:
+              user.username,
+            reply,
+            createdAt: ts,
+            updatedAt: ts
+          }
+        },
+        201
+      );
     }
 
-    // --------------------------------------------------------
+    // ========================================================
     // DELETE PUBLIC VIDEO COMMENT
-    // --------------------------------------------------------
+    // ========================================================
 
     const publicVideoCommentDeleteMatch =
       route.match(
@@ -2117,10 +1781,10 @@ export async function onRequest(context) {
       publicVideoCommentDeleteMatch &&
       method === "DELETE"
     ) {
+
       if (!user) {
         return json(
           {
-            ok: false,
             error:
               "Kamu harus login terlebih dahulu."
           },
@@ -2128,107 +1792,83 @@ export async function onRequest(context) {
         );
       }
 
-      try {
-        await ensurePublicVideoSchema(
-          env
+      await ensurePublicVideoSchema(
+        env
+      );
+
+      const videoId =
+        publicVideoCommentDeleteMatch[1];
+
+      const commentId =
+        publicVideoCommentDeleteMatch[2];
+
+      const comment =
+        await env.DB.prepare(`
+          SELECT
+            id,
+            user_id
+          FROM public_video_comments
+          WHERE
+            id = ?
+            AND video_id = ?
+        `)
+          .bind(
+            commentId,
+            videoId
+          )
+          .first();
+
+      if (!comment) {
+        return json(
+          {
+            error:
+              "Komentar tidak ditemukan."
+          },
+          404
         );
+      }
 
-        const videoId =
-          publicVideoCommentDeleteMatch[1];
-
-        const commentId =
-          publicVideoCommentDeleteMatch[2];
-
-        const comment =
-          await env.DB
-            .prepare(`
-              SELECT
-                id,
-                user_id
-              FROM public_video_comments
-              WHERE id = ?
-                AND video_id = ?
-              LIMIT 1
-            `)
-            .bind(
-              commentId,
-              videoId
-            )
-            .first();
-
-        if (!comment) {
-          return json(
-            {
-              ok: false,
-              error:
-                "Komentar tidak ditemukan."
-            },
-            404
-          );
-        }
-
-        const isOwner =
-          String(comment.user_id) ===
-          String(user.id);
-
-        const isDeveloper =
-          String(
-            user.username || ""
-          ).toLowerCase() ===
+      const allowed =
+        String(
+          comment.user_id
+        ) ===
+          String(user.id) ||
+        String(
+          user.username || ""
+        ).toLowerCase() ===
           "fazmen";
 
-        if (
-          !isOwner &&
-          !isDeveloper
-        ) {
-          return json(
-            {
-              ok: false,
-              error:
-                "Kamu tidak memiliki izin untuk menghapus komentar ini."
-            },
-            403
-          );
-        }
+      if (!allowed) {
+        return json(
+          {
+            error:
+              "Kamu tidak memiliki izin untuk menghapus komentar ini."
+          },
+          403
+        );
+      }
 
-        await env.DB.batch([
-          env.DB
-            .prepare(`
-              DELETE FROM public_video_replies
-              WHERE comment_id = ?
-            `)
-            .bind(commentId),
+      await env.DB.batch([
+        env.DB.prepare(`
+          DELETE FROM public_video_replies
+          WHERE comment_id = ?
+        `)
+          .bind(commentId),
 
-          env.DB
-            .prepare(`
-              DELETE FROM public_video_comments
-              WHERE id = ?
-            `)
-            .bind(commentId)
-        ]);
+        env.DB.prepare(`
+          DELETE FROM public_video_comments
+          WHERE id = ?
+        `)
+          .bind(commentId)
+      ]);
 
-        return json({
+      return json(
+        {
           ok: true,
           deleted: true,
           commentId
-        });
-      } catch (err) {
-        console.error(
-          "PUBLIC_VIDEO_COMMENT_DELETE_ERROR",
-          err
-        );
-
-        return json(
-          {
-            ok: false,
-            error:
-              "Gagal menghapus komentar Public Video.",
-            detail:
-              errorDetail(err)
-          },
-          500
-        );
-      }
+        }
+      );
     }
 
     // ========================================================
@@ -2244,10 +1884,10 @@ export async function onRequest(context) {
       publicVideoReplyDeleteMatch &&
       method === "DELETE"
     ) {
+
       if (!user) {
         return json(
           {
-            ok: false,
             error:
               "Kamu harus login terlebih dahulu."
           },
@@ -2255,642 +1895,76 @@ export async function onRequest(context) {
         );
       }
 
-      try {
-        await ensurePublicVideoSchema(
-          env
-        );
-
-        const videoId =
-          publicVideoReplyDeleteMatch[1];
-
-        const replyId =
-          publicVideoReplyDeleteMatch[2];
-
-        const reply =
-          await env.DB
-            .prepare(`
-              SELECT
-                id,
-                user_id
-              FROM public_video_replies
-              WHERE id = ?
-                AND video_id = ?
-              LIMIT 1
-            `)
-            .bind(
-              replyId,
-              videoId
-            )
-            .first();
-
-        if (!reply) {
-          return json(
-            {
-              ok: false,
-              error:
-                "Reply tidak ditemukan."
-            },
-            404
-          );
-        }
-
-        const isOwner =
-          String(reply.user_id) ===
-          String(user.id);
-
-        const isDeveloper =
-          String(
-            user.username || ""
-          ).toLowerCase() ===
-          "fazmen";
-
-        if (
-          !isOwner &&
-          !isDeveloper
-        ) {
-          return json(
-            {
-              ok: false,
-              error:
-                "Kamu tidak memiliki izin untuk menghapus reply ini."
-            },
-            403
-          );
-        }
-
-        await env.DB
-          .prepare(`
-            DELETE FROM public_video_replies
-            WHERE id = ?
-          `)
-          .bind(replyId)
-          .run();
-
-        return json({
-          ok: true,
-          deleted: true,
-          replyId
-        });
-      } catch (err) {
-        console.error(
-          "PUBLIC_VIDEO_REPLY_DELETE_ERROR",
-          err
-        );
-
-        return json(
-          {
-            ok: false,
-            error:
-              "Gagal menghapus reply Public Video.",
-            detail:
-              errorDetail(err)
-          },
-          500
-        );
-      }
-    }
-
-    // ========================================================
-    // GLOBAL COMMENTS
-    // ========================================================
-
-    // --------------------------------------------------------
-    // GET /api/comments
-    // --------------------------------------------------------
-
-    if (
-      route === "/comments" &&
-      method === "GET"
-    ) {
-      try {
-        const result =
-          await env.DB
-            .prepare(`
-              SELECT
-                id,
-                user_id AS userId,
-                username,
-                comment,
-                created_at AS createdAt,
-                updated_at AS updatedAt
-              FROM comments
-              ORDER BY created_at DESC
-            `)
-            .all();
-
-        const repliesResult =
-          await env.DB
-            .prepare(`
-              SELECT
-                id,
-                comment_id AS commentId,
-                user_id AS userId,
-                username,
-                reply,
-                created_at AS createdAt,
-                updated_at AS updatedAt
-              FROM comment_replies
-              ORDER BY created_at ASC
-            `)
-            .all();
-
-        const replyMap =
-          new Map();
-
-        for (
-          const reply of
-          repliesResult.results || []
-        ) {
-          if (
-            !replyMap.has(
-              reply.commentId
-            )
-          ) {
-            replyMap.set(
-              reply.commentId,
-              []
-            );
-          }
-
-          replyMap
-            .get(reply.commentId)
-            .push(reply);
-        }
-
-        const comments =
-          (
-            result.results || []
-          ).map(comment => ({
-            ...comment,
-            replies:
-              replyMap.get(
-                comment.id
-              ) || []
-          }));
-
-        return json({
-          ok: true,
-          comments
-        });
-      } catch (err) {
-        console.error(
-          "COMMENTS_GET_ERROR",
-          err
-        );
-
-        return json(
-          {
-            ok: false,
-            error:
-              "Gagal mengambil komentar.",
-            detail:
-              errorDetail(err)
-          },
-          500
-        );
-      }
-    }
-
-    // --------------------------------------------------------
-    // POST /api/comments
-    // --------------------------------------------------------
-
-    if (
-      route === "/comments" &&
-      method === "POST"
-    ) {
-      if (!user) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Kamu harus login terlebih dahulu."
-          },
-          401
-        );
-      }
-
-      const comment =
-        String(
-          body.comment || ""
-        ).trim();
-
-      if (!comment) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Komentar tidak boleh kosong."
-          },
-          400
-        );
-      }
-
-      if (
-        comment.length > 2000
-      ) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Komentar maksimal 2000 karakter."
-          },
-          400
-        );
-      }
-
-      try {
-        const commentId =
-          id("comment");
-
-        const timestamp =
-          now();
-
-        await env.DB
-          .prepare(`
-            INSERT INTO comments(
-              id,
-              user_id,
-              username,
-              comment,
-              created_at,
-              updated_at
-            )
-            VALUES(?,?,?,?,?,?)
-          `)
-          .bind(
-            commentId,
-            String(user.id),
-            String(user.username),
-            comment,
-            timestamp,
-            timestamp
-          )
-          .run();
-
-        return json(
-          {
-            ok: true,
-            comment: {
-              id: commentId,
-              userId: user.id,
-              username: user.username,
-              comment,
-              createdAt: timestamp,
-              updatedAt: timestamp,
-              replies: []
-            }
-          },
-          201
-        );
-      } catch (err) {
-        console.error(
-          "COMMENTS_POST_ERROR",
-          err
-        );
-
-        return json(
-          {
-            ok: false,
-            error:
-              "Gagal menyimpan komentar.",
-            detail:
-              errorDetail(err)
-          },
-          500
-        );
-      }
-    }
-
-    // --------------------------------------------------------
-    // POST /api/comments/:id/replies
-    // --------------------------------------------------------
-
-    const globalReplyMatch =
-      route.match(
-        /^\/comments\/([^/]+)\/replies$/
+      await ensurePublicVideoSchema(
+        env
       );
 
-    if (
-      globalReplyMatch &&
-      method === "POST"
-    ) {
-      if (!user) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Kamu harus login terlebih dahulu."
-          },
-          401
-        );
-      }
-
-      const commentId =
-        globalReplyMatch[1];
-
-      const parent =
-        await env.DB
-          .prepare(`
-            SELECT id
-            FROM comments
-            WHERE id = ?
-            LIMIT 1
-          `)
-          .bind(commentId)
-          .first();
-
-      if (!parent) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Komentar tidak ditemukan."
-          },
-          404
-        );
-      }
-
-      const reply =
-        String(
-          body.reply || ""
-        ).trim();
-
-      if (!reply) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Balasan tidak boleh kosong."
-          },
-          400
-        );
-      }
-
-      if (
-        reply.length > 2000
-      ) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Balasan maksimal 2000 karakter."
-          },
-          400
-        );
-      }
-
-      try {
-        const replyId =
-          id("reply");
-
-        const timestamp =
-          now();
-
-        await env.DB
-          .prepare(`
-            INSERT INTO comment_replies(
-              id,
-              comment_id,
-              user_id,
-              username,
-              reply,
-              created_at,
-              updated_at
-            )
-            VALUES(?,?,?,?,?,?,?)
-          `)
-          .bind(
-            replyId,
-            commentId,
-            String(user.id),
-            String(user.username),
-            reply,
-            timestamp,
-            timestamp
-          )
-          .run();
-
-        return json(
-          {
-            ok: true,
-            reply: {
-              id: replyId,
-              commentId,
-              userId: user.id,
-              username: user.username,
-              reply,
-              createdAt: timestamp,
-              updatedAt: timestamp
-            }
-          },
-          201
-        );
-      } catch (err) {
-        console.error(
-          "GLOBAL_REPLY_POST_ERROR",
-          err
-        );
-
-        return json(
-          {
-            ok: false,
-            error:
-              "Gagal menyimpan balasan.",
-            detail:
-              errorDetail(err)
-          },
-          500
-        );
-      }
-    }
-
-    // --------------------------------------------------------
-    // DELETE /api/comments/reply/:id
-    // --------------------------------------------------------
-
-    const globalReplyDeleteMatch =
-      route.match(
-        /^\/comments\/reply\/([^/]+)$/
-      );
-
-    if (
-      globalReplyDeleteMatch &&
-      method === "DELETE"
-    ) {
-      if (!user) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Kamu harus login terlebih dahulu."
-          },
-          401
-        );
-      }
+      const videoId =
+        publicVideoReplyDeleteMatch[1];
 
       const replyId =
-        globalReplyDeleteMatch[1];
+        publicVideoReplyDeleteMatch[2];
 
       const reply =
-        await env.DB
-          .prepare(`
-            SELECT
-              id,
-              user_id
-            FROM comment_replies
-            WHERE id = ?
-            LIMIT 1
-          `)
-          .bind(replyId)
+        await env.DB.prepare(`
+          SELECT
+            id,
+            user_id
+          FROM public_video_replies
+          WHERE
+            id = ?
+            AND video_id = ?
+        `)
+          .bind(
+            replyId,
+            videoId
+          )
           .first();
 
       if (!reply) {
         return json(
           {
-            ok: false,
             error:
-              "Balasan tidak ditemukan."
+              "Reply tidak ditemukan."
           },
           404
         );
       }
 
-      const isOwner =
-        String(reply.user_id) ===
-        String(user.id);
-
-      const isDeveloper =
+      const allowed =
+        String(
+          reply.user_id
+        ) ===
+          String(user.id) ||
         String(
           user.username || ""
         ).toLowerCase() ===
-        "fazmen";
+          "fazmen";
 
-      if (
-        !isOwner &&
-        !isDeveloper
-      ) {
+      if (!allowed) {
         return json(
           {
-            ok: false,
             error:
-              "Kamu tidak memiliki izin untuk menghapus balasan ini."
+              "Kamu tidak memiliki izin untuk menghapus reply ini."
           },
           403
         );
       }
 
-      await env.DB
-        .prepare(`
-          DELETE FROM comment_replies
-          WHERE id = ?
-        `)
+      await env.DB.prepare(`
+        DELETE FROM public_video_replies
+        WHERE id = ?
+      `)
         .bind(replyId)
         .run();
 
-      return json({
-        ok: true,
-        deleted: true,
-        replyId
-      });
-    }
-
-    // --------------------------------------------------------
-    // DELETE /api/comments/:id
-    // --------------------------------------------------------
-
-    const globalCommentDeleteMatch =
-      route.match(
-        /^\/comments\/([^/]+)$/
+      return json(
+        {
+          ok: true,
+          deleted: true,
+          replyId
+        }
       );
-
-    if (
-      globalCommentDeleteMatch &&
-      method === "DELETE"
-    ) {
-      if (!user) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Kamu harus login terlebih dahulu."
-          },
-          401
-        );
-      }
-
-      const commentId =
-        globalCommentDeleteMatch[1];
-
-      const comment =
-        await env.DB
-          .prepare(`
-            SELECT
-              id,
-              user_id
-            FROM comments
-            WHERE id = ?
-            LIMIT 1
-          `)
-          .bind(commentId)
-          .first();
-
-      if (!comment) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Komentar tidak ditemukan."
-          },
-          404
-        );
-      }
-
-      const isOwner =
-        String(comment.user_id) ===
-        String(user.id);
-
-      const isDeveloper =
-        String(
-          user.username || ""
-        ).toLowerCase() ===
-        "fazmen";
-
-      if (
-        !isOwner &&
-        !isDeveloper
-      ) {
-        return json(
-          {
-            ok: false,
-            error:
-              "Kamu tidak memiliki izin untuk menghapus komentar ini."
-          },
-          403
-        );
-      }
-
-      await env.DB.batch([
-        env.DB
-          .prepare(`
-            DELETE FROM comment_replies
-            WHERE comment_id = ?
-          `)
-          .bind(commentId),
-
-        env.DB
-          .prepare(`
-            DELETE FROM comments
-            WHERE id = ?
-          `)
-          .bind(commentId)
-      ]);
-
-      return json({
-        ok: true,
-        deleted: true,
-        commentId
-      });
     }
 
     // ========================================================
@@ -2901,10 +1975,10 @@ export async function onRequest(context) {
       route === "/delete-account" &&
       method === "POST"
     ) {
+
       if (!user) {
         return json(
           {
-            ok: false,
             error:
               "Sesi tidak valid."
           },
@@ -2928,7 +2002,6 @@ export async function onRequest(context) {
       ) {
         return json(
           {
-            ok: false,
             error:
               'Ketik "hapus" untuk mengonfirmasi.'
           },
@@ -2936,224 +2009,660 @@ export async function onRequest(context) {
         );
       }
 
-      try {
-        await ensurePublicVideoSchema(
-          env
-        );
+      await ensurePublicVideoSchema(
+        env
+      );
 
-        // Ambil video milik user terlebih dahulu.
-        const ownedVideos =
-          await env.DB
-            .prepare(`
-              SELECT id
-              FROM public_videos
-              WHERE user_id = ?
-            `)
-            .bind(user.id)
-            .all();
+      await env.DB.batch([
 
-        const videoIds =
-          (
-            ownedVideos.results || []
-          ).map(row => row.id);
+        env.DB.prepare(`
+          DELETE FROM video_progress
+          WHERE user_id = ?
+        `)
+          .bind(user.id),
 
-        const statements = [];
+        env.DB.prepare(`
+          DELETE FROM user_data
+          WHERE user_id = ?
+        `)
+          .bind(user.id),
 
-        // Hapus replies milik user.
-        statements.push(
-          env.DB
-            .prepare(`
-              DELETE FROM comment_replies
-              WHERE user_id = ?
-            `)
-            .bind(user.id)
-        );
+        env.DB.prepare(`
+          DELETE FROM public_video_replies
+          WHERE user_id = ?
+        `)
+          .bind(user.id),
 
-        // Hapus global comments milik user.
-        statements.push(
-          env.DB
-            .prepare(`
-              DELETE FROM comments
-              WHERE user_id = ?
-            `)
-            .bind(user.id)
-        );
+        env.DB.prepare(`
+          DELETE FROM public_video_comments
+          WHERE user_id = ?
+        `)
+          .bind(user.id),
 
-        // Hapus progress.
-        statements.push(
-          env.DB
-            .prepare(`
-              DELETE FROM video_progress
-              WHERE user_id = ?
-            `)
-            .bind(user.id)
-        );
+        env.DB.prepare(`
+          DELETE FROM public_video_replies
+          WHERE video_id IN (
+            SELECT id
+            FROM public_videos
+            WHERE COALESCE(
+              user_id,
+              owner_id
+            ) = ?
+          )
+        `)
+          .bind(user.id),
 
-        // Hapus state.
-        statements.push(
-          env.DB
-            .prepare(`
-              DELETE FROM user_data
-              WHERE user_id = ?
-            `)
-            .bind(user.id)
-        );
+        env.DB.prepare(`
+          DELETE FROM public_video_comments
+          WHERE video_id IN (
+            SELECT id
+            FROM public_videos
+            WHERE COALESCE(
+              user_id,
+              owner_id
+            ) = ?
+          )
+        `)
+          .bind(user.id),
 
-        // Hapus Public Video replies/comments/video.
-        for (
-          const videoId of videoIds
-        ) {
-          statements.push(
-            env.DB
-              .prepare(`
-                DELETE FROM public_video_replies
-                WHERE video_id = ?
-              `)
-              .bind(videoId)
-          );
+        env.DB.prepare(`
+          DELETE FROM public_videos
+          WHERE COALESCE(
+            user_id,
+            owner_id
+          ) = ?
+        `)
+          .bind(user.id),
 
-          statements.push(
-            env.DB
-              .prepare(`
-                DELETE FROM public_video_comments
-                WHERE video_id = ?
-              `)
-              .bind(videoId)
-          );
+        env.DB.prepare(`
+          DELETE FROM sessions
+          WHERE user_id = ?
+        `)
+          .bind(user.id),
 
-          statements.push(
-            env.DB
-              .prepare(`
-                DELETE FROM public_videos
-                WHERE id = ?
-              `)
-              .bind(videoId)
-          );
+        env.DB.prepare(`
+          DELETE FROM users
+          WHERE id = ?
+        `)
+          .bind(user.id)
+      ]);
+
+      return json(
+        {
+          ok: true,
+          deleted: true
+        },
+        200,
+        {
+          "set-cookie":
+            clearCookie(
+              "funlearn_session"
+            )
         }
-
-        // Hapus komentar/reply Public Video milik user
-        // walaupun bukan uploader video.
-        statements.push(
-          env.DB
-            .prepare(`
-              DELETE FROM public_video_replies
-              WHERE user_id = ?
-            `)
-            .bind(user.id)
-        );
-
-        statements.push(
-          env.DB
-            .prepare(`
-              DELETE FROM public_video_comments
-              WHERE user_id = ?
-            `)
-            .bind(user.id)
-        );
-
-        // Hapus session.
-        statements.push(
-          env.DB
-            .prepare(`
-              DELETE FROM sessions
-              WHERE user_id = ?
-            `)
-            .bind(user.id)
-        );
-
-        // Terakhir hapus user.
-        statements.push(
-          env.DB
-            .prepare(`
-              DELETE FROM users
-              WHERE id = ?
-            `)
-            .bind(user.id)
-        );
-
-        await env.DB.batch(
-          statements
-        );
-
-        return json(
-          {
-            ok: true,
-            deleted: true
-          },
-          200,
-          {
-            "set-cookie":
-              clearCookie(
-                "funlearn_session"
-              )
-          }
-        );
-      } catch (err) {
-        console.error(
-          "DELETE_ACCOUNT_ERROR",
-          err
-        );
-
-        return json(
-          {
-            ok: false,
-            error:
-              "Gagal menghapus akun.",
-            detail:
-              errorDetail(err)
-          },
-          500
-        );
-      }
+      );
     }
 
     // ========================================================
-    // ME
+    // GLOBAL COMMENTS API
+    // ========================================================
+
+    // --------------------------------------------------------
+    // GET /api/comments
+    // --------------------------------------------------------
+
+    if (
+      route === "/comments" &&
+      method === "GET"
+    ) {
+
+      await ensureReplySchema(
+        env
+      );
+
+      const result =
+        await env.DB.prepare(`
+          SELECT
+            id,
+            user_id AS userId,
+            username,
+            comment,
+            created_at AS createdAt,
+            updated_at AS updatedAt
+
+          FROM comments
+
+          ORDER BY created_at DESC
+        `)
+          .all();
+
+      const repliesResult =
+        await env.DB.prepare(`
+          SELECT
+            id,
+            comment_id AS commentId,
+            user_id AS userId,
+            username,
+            reply,
+            created_at AS createdAt,
+            updated_at AS updatedAt
+
+          FROM comment_replies
+
+          ORDER BY created_at ASC
+        `)
+          .all();
+
+      const replyMap =
+        new Map();
+
+      for (
+        const r
+        of repliesResult.results || []
+      ) {
+
+        if (
+          !replyMap.has(
+            r.commentId
+          )
+        ) {
+          replyMap.set(
+            r.commentId,
+            []
+          );
+        }
+
+        replyMap
+          .get(r.commentId)
+          .push(r);
+      }
+
+      const comments =
+        (
+          result.results || []
+        ).map(c => ({
+          ...c,
+          replies:
+            replyMap.get(
+              c.id
+            ) || []
+        }));
+
+      return json(
+        {
+          ok: true,
+          comments
+        }
+      );
+    }
+
+    // --------------------------------------------------------
+    // POST /api/comments
+    // --------------------------------------------------------
+
+    if (
+      route === "/comments" &&
+      method === "POST"
+    ) {
+
+      if (!user) {
+        return json(
+          {
+            error:
+              "Kamu harus login terlebih dahulu."
+          },
+          401
+        );
+      }
+
+      const comment =
+        String(
+          body.comment || ""
+        ).trim();
+
+      if (!comment) {
+        return json(
+          {
+            error:
+              "Komentar tidak boleh kosong."
+          },
+          400
+        );
+      }
+
+      if (
+        comment.length > 2000
+      ) {
+        return json(
+          {
+            error:
+              "Komentar maksimal 2000 karakter."
+          },
+          400
+        );
+      }
+
+      const commentId =
+        id("comment");
+
+      const timestamp =
+        now();
+
+      await env.DB.prepare(`
+        INSERT INTO comments(
+          id,
+          user_id,
+          username,
+          comment,
+          created_at,
+          updated_at
+        )
+        VALUES(
+          ?,
+          ?,
+          ?,
+          ?,
+          ?,
+          ?
+        )
+      `)
+        .bind(
+          commentId,
+          user.id,
+          user.username,
+          comment,
+          timestamp,
+          timestamp
+        )
+        .run();
+
+      return json(
+        {
+          ok: true,
+
+          comment: {
+            id: commentId,
+            userId: user.id,
+            username:
+              user.username,
+            comment,
+            createdAt:
+              timestamp,
+            updatedAt:
+              timestamp
+          }
+        },
+        201
+      );
+    }
+
+    // --------------------------------------------------------
+    // POST /api/comments/:id/replies
+    // --------------------------------------------------------
+
+    if (
+      route.match(
+        /^\/comments\/[^/]+\/replies$/
+      ) &&
+      method === "POST"
+    ) {
+
+      if (!user) {
+        return json(
+          {
+            error:
+              "Kamu harus login terlebih dahulu."
+          },
+          401
+        );
+      }
+
+      await ensureReplySchema(
+        env
+      );
+
+      const commentId =
+        route.split("/")[2];
+
+      if (!commentId) {
+        return json(
+          {
+            error:
+              "ID komentar tidak valid."
+          },
+          400
+        );
+      }
+
+      const parent =
+        await env.DB.prepare(`
+          SELECT id
+          FROM comments
+          WHERE id = ?
+        `)
+          .bind(commentId)
+          .first();
+
+      if (!parent) {
+        return json(
+          {
+            error:
+              "Komentar tidak ditemukan."
+          },
+          404
+        );
+      }
+
+      const reply =
+        String(
+          body.reply || ""
+        ).trim();
+
+      if (!reply) {
+        return json(
+          {
+            error:
+              "Balasan tidak boleh kosong."
+          },
+          400
+        );
+      }
+
+      if (
+        reply.length > 2000
+      ) {
+        return json(
+          {
+            error:
+              "Balasan maksimal 2000 karakter."
+          },
+          400
+        );
+      }
+
+      const replyId =
+        id("reply");
+
+      const timestamp =
+        now();
+
+      await env.DB.prepare(`
+        INSERT INTO comment_replies(
+          id,
+          comment_id,
+          user_id,
+          username,
+          reply,
+          created_at,
+          updated_at
+        )
+        VALUES(
+          ?,
+          ?,
+          ?,
+          ?,
+          ?,
+          ?,
+          ?
+        )
+      `)
+        .bind(
+          replyId,
+          commentId,
+          user.id,
+          user.username,
+          reply,
+          timestamp,
+          timestamp
+        )
+        .run();
+
+      return json(
+        {
+          ok: true,
+
+          reply: {
+            id: replyId,
+            commentId,
+            userId: user.id,
+            username:
+              user.username,
+            reply,
+            createdAt:
+              timestamp,
+            updatedAt:
+              timestamp
+          }
+        },
+        201
+      );
+    }
+
+    // --------------------------------------------------------
+    // DELETE /api/comments/reply/:id
+    // --------------------------------------------------------
+
+    if (
+      route.startsWith(
+        "/comments/reply/"
+      ) &&
+      method === "DELETE"
+    ) {
+
+      if (!user) {
+        return json(
+          {
+            error:
+              "Kamu harus login terlebih dahulu."
+          },
+          401
+        );
+      }
+
+      await ensureReplySchema(
+        env
+      );
+
+      const replyId =
+        route.split("/")[3];
+
+      if (!replyId) {
+        return json(
+          {
+            error:
+              "ID balasan tidak valid."
+          },
+          400
+        );
+      }
+
+      const row =
+        await env.DB.prepare(`
+          SELECT
+            id,
+            user_id,
+            username
+          FROM comment_replies
+          WHERE id = ?
+        `)
+          .bind(replyId)
+          .first();
+
+      if (!row) {
+        return json(
+          {
+            error:
+              "Balasan tidak ditemukan."
+          },
+          404
+        );
+      }
+
+      const isOwner =
+        String(
+          row.user_id
+        ) ===
+        String(user.id);
+
+      const isDeveloper =
+        String(
+          user.username
+        ).toLowerCase() ===
+        "fazmen";
+
+      if (
+        !isOwner &&
+        !isDeveloper
+      ) {
+        return json(
+          {
+            error:
+              "Kamu tidak memiliki izin untuk menghapus balasan ini."
+          },
+          403
+        );
+      }
+
+      await env.DB.prepare(`
+        DELETE FROM comment_replies
+        WHERE id = ?
+      `)
+        .bind(replyId)
+        .run();
+
+      return json(
+        {
+          ok: true,
+          deleted: true,
+          replyId
+        }
+      );
+    }
+
+    // --------------------------------------------------------
+    // DELETE /api/comments/:id
+    // --------------------------------------------------------
+
+    if (
+      route.startsWith(
+        "/comments/"
+      ) &&
+      method === "DELETE"
+    ) {
+
+      if (!user) {
+        return json(
+          {
+            error:
+              "Kamu harus login terlebih dahulu."
+          },
+          401
+        );
+      }
+
+      const commentId =
+        route.split("/")[2];
+
+      if (!commentId) {
+        return json(
+          {
+            error:
+              "ID komentar tidak valid."
+          },
+          400
+        );
+      }
+
+      const comment =
+        await env.DB.prepare(`
+          SELECT
+            id,
+            user_id,
+            username
+          FROM comments
+          WHERE id = ?
+        `)
+          .bind(commentId)
+          .first();
+
+      if (!comment) {
+        return json(
+          {
+            error:
+              "Komentar tidak ditemukan."
+          },
+          404
+        );
+      }
+
+      const isOwner =
+        String(
+          comment.user_id
+        ) ===
+        String(user.id);
+
+      const isDeveloper =
+        String(
+          user.username
+        ).toLowerCase() ===
+        "fazmen";
+
+      if (
+        !isOwner &&
+        !isDeveloper
+      ) {
+        return json(
+          {
+            error:
+              "Kamu tidak memiliki izin untuk menghapus komentar ini."
+          },
+          403
+        );
+      }
+
+      await env.DB.prepare(`
+        DELETE FROM comments
+        WHERE id = ?
+      `)
+        .bind(commentId)
+        .run();
+
+      return json(
+        {
+          ok: true,
+          deleted: true,
+          commentId
+        }
+      );
+    }
+
+    // ========================================================
+    // /ME
     // ========================================================
 
     if (
       route === "/me" &&
       method === "GET"
     ) {
+
       if (!user) {
         return json(
           {
-            ok: false,
             user: null
           },
           401
         );
       }
 
-      try {
-        const state =
-          await readState(
-            env,
-            user.id
-          );
-
-        return json({
-          ok: true,
+      return json(
+        {
           user,
-          state
-        });
-      } catch (err) {
-        console.error(
-          "ME_STATE_ERROR",
-          err
-        );
-
-        return json(
-          {
-            ok: false,
-            error:
-              "Gagal mengambil data akun.",
-            detail:
-              errorDetail(err)
-          },
-          500
-        );
-      }
+          state:
+            await readState(
+              env,
+              user.id
+            )
+        }
+      );
     }
 
     // ========================================================
@@ -3164,10 +2673,10 @@ export async function onRequest(context) {
       route === "/sync" &&
       method === "POST"
     ) {
+
       if (!user) {
         return json(
           {
-            ok: false,
             error:
               "Sesi tidak valid."
           },
@@ -3175,34 +2684,18 @@ export async function onRequest(context) {
         );
       }
 
-      try {
-        await writeState(
-          env,
-          user.id,
-          body
-        );
+      await writeState(
+        env,
+        user.id,
+        body
+      );
 
-        return json({
+      return json(
+        {
           ok: true,
           syncedAt: now()
-        });
-      } catch (err) {
-        console.error(
-          "SYNC_ERROR",
-          err
-        );
-
-        return json(
-          {
-            ok: false,
-            error:
-              "Gagal menyinkronkan data.",
-            detail:
-              errorDetail(err)
-          },
-          500
-        );
-      }
+        }
+      );
     }
 
     // ========================================================
@@ -3213,10 +2706,10 @@ export async function onRequest(context) {
       route === "/progress" &&
       method === "POST"
     ) {
+
       if (!user) {
         return json(
           {
-            ok: false,
             error:
               "Sesi tidak valid."
           },
@@ -3224,63 +2717,35 @@ export async function onRequest(context) {
         );
       }
 
-      const moduleId =
-        String(
-          body.moduleId || ""
-        ).trim();
-
-      if (!moduleId) {
-        return json(
-          {
-            ok: false,
-            error:
-              "moduleId wajib diisi."
-          },
-          400
-        );
-      }
-
-      try {
-        const currentState =
-          await readState(
-            env,
-            user.id
-          );
-
-        currentState.onlineProgress =
-          currentState.onlineProgress ||
-          {};
-
-        currentState.onlineProgress[
-          moduleId
-        ] = body;
-
-        await writeState(
+      const currentState =
+        await readState(
           env,
-          user.id,
-          currentState
+          user.id
         );
 
-        return json({
+      await writeState(
+        env,
+        user.id,
+        {
+          ...currentState,
+
+          onlineProgress: {
+            ...currentState.onlineProgress,
+
+            [
+              String(
+                body.moduleId
+              )
+            ]: body
+          }
+        }
+      );
+
+      return json(
+        {
           ok: true
-        });
-      } catch (err) {
-        console.error(
-          "PROGRESS_ERROR",
-          err
-        );
-
-        return json(
-          {
-            ok: false,
-            error:
-              "Gagal menyimpan progress video.",
-            detail:
-              errorDetail(err)
-          },
-          500
-        );
-      }
+        }
+      );
     }
 
     // ========================================================
@@ -3290,21 +2755,16 @@ export async function onRequest(context) {
     return json(
       {
         ok: false,
-        error: "Not found"
+        error:
+          "Not found"
       },
       404
     );
 
   } catch (err) {
-    // ========================================================
-    // GLOBAL ERROR HANDLER
-    //
-    // Ini penting supaya Cloudflare tidak mengembalikan
-    // halaman HTML "Worker threw exception".
-    // ========================================================
 
     console.error(
-      "FUNLEARN_API_FATAL_ERROR",
+      "FUNLEARN_API_ERROR",
       err
     );
 
@@ -3319,4 +2779,73 @@ export async function onRequest(context) {
       500
     );
   }
+}
+
+// ============================================================
+// CREATE SESSION
+// ============================================================
+
+async function createSession(
+  env,
+  userId,
+  username
+) {
+
+  const raw =
+    b64(
+      randomBytes(32)
+    );
+
+  const sid =
+    await hashToken(raw);
+
+  const expires =
+    new Date(
+      Date.now() +
+      SESSION_DAYS *
+      86400000
+    ).toISOString();
+
+  await env.DB.prepare(`
+    INSERT INTO sessions(
+      id_hash,
+      user_id,
+      expires_at,
+      created_at
+    )
+    VALUES(
+      ?,
+      ?,
+      ?,
+      ?
+    )
+  `)
+    .bind(
+      sid,
+      userId,
+      expires,
+      now()
+    )
+    .run();
+
+  return json(
+    {
+      ok: true,
+
+      user: {
+        id: userId,
+        username
+      }
+    },
+    200,
+    {
+      "set-cookie":
+        cookie(
+          "funlearn_session",
+          raw,
+          SESSION_DAYS *
+            86400
+        )
+    }
+  );
 }
