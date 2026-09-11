@@ -95,6 +95,159 @@ export async function onRequest(context) {
       env.DB.prepare("DELETE FROM sessions WHERE user_id=?").bind(user.id),
       env.DB.prepare("DELETE FROM users WHERE id=?").bind(user.id)
     ]);
+    // ============================================================
+// COMMENTS API
+// ============================================================
+
+// GET /api/comments
+// Mengambil semua komentar
+if (route === "/comments" && method === "GET") {
+  const result = await env.DB.prepare(`
+    SELECT
+      id,
+      user_id AS userId,
+      username,
+      comment,
+      created_at AS createdAt,
+      updated_at AS updatedAt
+    FROM comments
+    ORDER BY created_at DESC
+  `).all();
+
+  return json({
+    ok: true,
+    comments: result.results || []
+  });
+}
+
+
+// POST /api/comments
+// Membuat komentar baru
+if (route === "/comments" && method === "POST") {
+
+  if (!user) {
+    return json({
+      error: "Kamu harus login terlebih dahulu."
+    }, 401);
+  }
+
+  const comment = String(body.comment || "").trim();
+
+  if (!comment) {
+    return json({
+      error: "Komentar tidak boleh kosong."
+    }, 400);
+  }
+
+  // Batas panjang komentar
+  if (comment.length > 2000) {
+    return json({
+      error: "Komentar maksimal 2000 karakter."
+    }, 400);
+  }
+
+  const commentId = id("comment");
+  const timestamp = now();
+
+  await env.DB.prepare(`
+    INSERT INTO comments (
+      id,
+      user_id,
+      username,
+      comment,
+      created_at,
+      updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?)
+  `)
+    .bind(
+      commentId,
+      user.id,
+      user.username,
+      comment,
+      timestamp,
+      timestamp
+    )
+    .run();
+
+  return json({
+    ok: true,
+    comment: {
+      id: commentId,
+      userId: user.id,
+      username: user.username,
+      comment,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    }
+  }, 201);
+}
+
+
+// DELETE /api/comments/:id
+// Pemilik komentar atau fazmen dapat menghapus
+if (route.startsWith("/comments/") && method === "DELETE") {
+
+  if (!user) {
+    return json({
+      error: "Kamu harus login terlebih dahulu."
+    }, 401);
+  }
+
+  const commentId = route.split("/")[2];
+
+  if (!commentId) {
+    return json({
+      error: "ID komentar tidak valid."
+    }, 400);
+  }
+
+  const comment = await env.DB.prepare(`
+    SELECT
+      id,
+      user_id,
+      username
+    FROM comments
+    WHERE id = ?
+  `)
+    .bind(commentId)
+    .first();
+
+  if (!comment) {
+    return json({
+      error: "Komentar tidak ditemukan."
+    }, 404);
+  }
+
+  // ==========================================================
+  // PERMISSION CHECK
+  //
+  // 1. Pemilik komentar boleh menghapus
+  // 2. Username "fazmen" boleh menghapus komentar siapa pun
+  // ==========================================================
+
+  const isOwner = comment.user_id === user.id;
+  const isDeveloper = String(user.username).toLowerCase() === "fazmen";
+
+  if (!isOwner && !isDeveloper) {
+    return json({
+      error: "Kamu tidak memiliki izin untuk menghapus komentar ini."
+    }, 403);
+  }
+
+  await env.DB.prepare(`
+    DELETE FROM comments
+    WHERE id = ?
+  `)
+    .bind(commentId)
+    .run();
+
+  return json({
+    ok: true,
+    deleted: true,
+    commentId
+  });
+}
     return json({ ok: true, deleted: true }, 200, { "set-cookie": clearCookie("funlearn_session") });
   }
   if (route === "/me" && method === "GET") return user ? json({ user, state: await readState(env, user.id) }) : json({ user: null }, 401);
