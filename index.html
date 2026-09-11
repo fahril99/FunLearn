@@ -1691,7 +1691,7 @@ button{touch-action:manipulation}
 .app{min-height:100dvh;align-items:stretch}
 .sidebar{flex:0 0 310px;background:linear-gradient(180deg,rgba(18,24,29,.98),rgba(12,17,21,.98));box-shadow:12px 0 40px rgba(0,0,0,.12);scrollbar-width:thin}
 .main{min-width:0;width:100%;max-width:1500px;margin:0 auto;padding:clamp(18px,3vw,34px) clamp(14px,3.2vw,42px) 48px;overflow:visible}
-.topbar{display:grid;grid-template-columns:auto minmax(170px,1fr) minmax(0,760px);align-items:start;gap:18px;margin-bottom:24px}
+.topbar{position:relative;z-index:50;display:grid;grid-template-columns:auto minmax(170px,1fr) minmax(0,760px);align-items:start;gap:18px;margin-bottom:24px}
 .topbar>div:nth-of-type(1){min-width:0}
 .course-title{font-size:clamp(25px,3vw,36px);line-height:1.08;letter-spacing:-.03em;text-wrap:balance}
 .main-status{font-size:13px;line-height:1.5}
@@ -7427,7 +7427,22 @@ setupOnlineEvents();
   }
   function install(){
     const overlay=document.createElement('div');overlay.className='auth-overlay';overlay.id='funlearnAuthOverlay';overlay.innerHTML='<div class="auth-card"><h2 id="authTitle">Login ke FunLearn</h2><p>Gunakan username dan password. Password diproses dan disimpan aman di server.</p><label>Username<input id="authUsername" autocomplete="username" maxlength="32"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" minlength="10"></label><div class="auth-error" id="authError"></div><div class="auth-actions"><button class="auth-button" id="authSubmit">Login</button><button class="auth-switch" id="authSwitch">Belum punya akun? Buat Akun</button></div></div>';document.body.appendChild(overlay);
-    $('authOpenButton').onclick=()=>openAuth('login');$('authSubmit').onclick=login;$('authSwitch').onclick=()=>openAuth(overlay.dataset.mode==='login'?'register':'login');overlay.onclick=e=>{if(e.target===overlay)closeAuth()};$('accountButton').onclick=()=> $('accountMenu').classList.toggle('open');$('accountProfileButton').onclick=()=>{showProfile();$('accountMenu')?.classList.remove('open')};$('accountLogoutButton').onclick=logout;
+    $('authOpenButton').onclick=()=>openAuth('login');
+    $('authSubmit').onclick=login;
+    $('authSwitch').onclick=()=>openAuth(overlay.dataset.mode==='login'?'register':'login');
+    overlay.onclick=e=>{if(e.target===overlay)closeAuth()};
+    const accountBtn=$('accountButton'), accountMenu=$('accountMenu');
+    if(accountBtn&&accountMenu){
+      accountBtn.setAttribute('aria-haspopup','menu');
+      accountBtn.setAttribute('aria-expanded','false');
+      const closeAccountMenu=()=>{accountMenu.classList.remove('open');accountBtn.setAttribute('aria-expanded','false')};
+      const toggleAccountMenu=(e)=>{e.preventDefault();e.stopPropagation();const open=!accountMenu.classList.contains('open');if(open) accountMenu.classList.add('open'); else accountMenu.classList.remove('open');accountBtn.setAttribute('aria-expanded',String(open));};
+      accountBtn.addEventListener('click',toggleAccountMenu);
+      accountBtn.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){toggleAccountMenu(e)}});
+      document.addEventListener('click',e=>{if(!accountMenu.contains(e.target)&&e.target!==accountBtn)closeAccountMenu()});
+      $('accountProfileButton')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeAccountMenu();showProfile()});
+      $('accountLogoutButton')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeAccountMenu();logout()});
+    }
     const oldSave=window.saveDatabase;if(typeof oldSave==='function')window.saveDatabase=function(){const r=oldSave.apply(this,arguments);queueSync();return r};
     const oldOD=window.saveOnlineData;if(typeof oldOD==='function')window.saveOnlineData=function(){const r=oldOD.apply(this,arguments);queueSync();return r};
     const oldOP=window.saveOnlineProgress;if(typeof oldOP==='function')window.saveOnlineProgress=function(){const r=oldOP.apply(this,arguments);queueSync();return r};
@@ -7591,6 +7606,7 @@ window.funlearnAchievementEmojiHTML=function(icon){const map={
   .flc-item{position:relative;border:1px solid var(--flc-border);border-radius:20px;padding:17px 18px;background:rgba(255,255,255,.035);animation:flcIn .35s ease both}.flc-item:hover{background:rgba(255,255,255,.055);border-color:rgba(124,92,255,.25)}@keyframes flcIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   .flc-meta{display:flex;align-items:center;gap:11px;margin-bottom:10px}.flc-user-avatar{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#202b49,#34466f);color:#fff;font-weight:900;font-size:13px}.flc-user{color:var(--flc-text);font-weight:850;font-size:14px}.flc-date{color:var(--flc-muted);font-size:11px;margin-top:2px}.flc-dev{display:inline-flex;align-items:center;gap:5px;margin-left:6px;padding:3px 8px;border-radius:999px;background:linear-gradient(135deg,rgba(255,78,43,.2),rgba(255,173,66,.15));border:1px solid rgba(255,111,55,.35);color:#ffad62;font-size:10px;font-weight:900;letter-spacing:.03em}.flc-fire{width:17px;height:17px;object-fit:contain;vertical-align:-4px}.flc-body{color:var(--flc-text);font-size:14px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}.flc-body.flc-collapsed{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden}.flc-more{margin-top:7px;border:0;background:none;color:var(--flc-accent2);font-weight:800;cursor:pointer;padding:0}.flc-delete{position:absolute;right:15px;top:15px;border:0;background:transparent;color:var(--flc-muted);cursor:pointer;font-size:14px}.flc-delete:hover{color:#ff687d}.flc-empty{text-align:center;padding:45px 20px;color:var(--flc-muted);border:1px dashed var(--flc-border);border-radius:20px}
   #fl-comments-fab{position:fixed;right:22px;bottom:22px;z-index:9998;width:60px;height:60px;border-radius:20px;border:1px solid rgba(255,255,255,.18);background:linear-gradient(135deg,#7c5cff,#4f8cff);color:#fff;display:grid;place-items:center;box-shadow:0 18px 45px rgba(49,57,180,.35);cursor:pointer;transition:.22s;isolation:isolate}#fl-comments-fab:hover{transform:translateY(-4px) scale(1.04);box-shadow:0 24px 55px rgba(49,57,180,.45)}#fl-comments-fab:after{content:"";position:absolute;inset:-6px;border-radius:25px;border:1px solid rgba(124,92,255,.28);animation:flcPulse 2.2s infinite;z-index:-1}@keyframes flcPulse{50%{transform:scale(1.12);opacity:.2}100%{transform:scale(1);opacity:.8}}.flc-fab-emoji{font-size:27px;line-height:1}.flc-fab-label{position:absolute;right:70px;white-space:nowrap;padding:8px 11px;border-radius:10px;background:#11182b;color:#fff;font-size:11px;font-weight:800;opacity:0;transform:translateX(6px);pointer-events:none;transition:.18s}.fl-fab-wrap:hover .flc-fab-label{opacity:1;transform:none}
+  .flc-comment-actions{display:flex;align-items:center;gap:10px;margin-top:11px}.flc-reply-btn{border:0;background:transparent;color:var(--flc-accent2);font-weight:800;cursor:pointer;padding:3px 0}.flc-replies{margin:12px 0 0 46px;padding-left:14px;border-left:2px solid rgba(124,92,255,.16);display:flex;flex-direction:column;gap:9px}.flc-reply{position:relative;display:flex;gap:9px;padding:11px 12px;border-radius:14px;background:rgba(124,92,255,.045);border:1px solid rgba(124,92,255,.1)}.flc-reply-avatar{width:29px;height:29px;flex:0 0 29px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(135deg,#273452,#415987);font-size:10px;font-weight:900}.flc-reply-main{min-width:0;flex:1}.flc-reply-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.flc-reply-head strong{font-size:12px}.flc-reply-head>span{font-size:10px;color:var(--flc-muted)}.flc-reply-text{font-size:12px;line-height:1.6;margin-top:3px;white-space:pre-wrap;overflow-wrap:anywhere}.flc-reply-delete{border:0;background:none;color:var(--flc-muted);cursor:pointer;align-self:flex-start}.flc-reply-delete:hover{color:#ff687d}.flc-replies-more{border:0;background:none;color:var(--flc-accent2);font-weight:800;cursor:pointer;margin:8px 0 0 60px}.flc-reply-compose{margin:11px 0 0 46px}.flc-reply-form{padding:11px;border:1px solid var(--flc-border);border-radius:14px;background:rgba(255,255,255,.025)}.flc-reply-form textarea{width:100%;min-height:75px;resize:vertical;border:1px solid var(--flc-border);border-radius:11px;background:rgba(0,0,0,.08);color:var(--flc-text);padding:10px;font:inherit;outline:none}.flc-reply-form>div{display:flex;justify-content:flex-end;gap:7px;margin-top:8px}.flc-reply-form .flc-btn{padding:8px 12px;font-size:12px}
   @media(max-width:700px){#funlearn-comments-section{width:min(100% - 18px,1180px);margin-top:55px;margin-bottom:95px}.flc-shell{border-radius:23px;padding:17px}.flc-head{align-items:flex-start;flex-direction:column}.flc-title{font-size:29px}.flc-count{align-self:flex-start}.flc-compose-row{align-items:stretch}.flc-avatar{display:none}.flc-actions{justify-content:stretch}.flc-actions .flc-btn{flex:1}.flc-list{max-height:540px}.flc-item{padding:15px}.flc-dev{font-size:9px}#fl-comments-fab{right:14px;bottom:14px;width:55px;height:55px;border-radius:18px}.flc-fab-label{display:none}}
 </style>
 
@@ -7616,24 +7632,68 @@ window.funlearnAchievementEmojiHTML=function(icon){const map={
   const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const fmt=v=>{try{return new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'short'}).format(new Date(v))}catch{return ''}};
   function fire(){return '<img class="flc-fire" src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f525/512.gif" alt="🔥">'}
+  function openLogin(){
+    try{
+      if(typeof window.funlearnCloud?.openAuth==='function'){window.funlearnCloud.openAuth('login');return;}
+      const b=document.getElementById('authOpenButton'); if(b){b.click();return;}
+    }catch(e){}
+    const overlay=document.getElementById('funlearnAuthOverlay'); if(overlay){overlay.classList.add('open');}
+  }
   function renderCompose(){
-    if(me){compose.innerHTML='<div class="flc-compose"><div class="flc-compose-row"><div class="flc-avatar">'+esc((me.username||'?')[0].toUpperCase())+'</div><textarea id="flCommentInput" class="flc-input" maxlength="2000" placeholder="Tulis komentar kamu…"></textarea></div><div class="flc-actions"><button class="flc-btn flc-primary" id="flCommentSend">Kirim komentar</button></div></div>';document.getElementById('flCommentSend').onclick=send;return}
-    compose.innerHTML='<div class="flc-login-note">👋 Mau ikut berkomentar? Kamu perlu login terlebih dahulu.<button type="button" id="flCommentLogin">Login</button></div>';document.getElementById('flCommentLogin').onclick=()=>{try{document.querySelector('[data-action="login"],#loginBtn,[onclick*="login"]')?.click()}catch(e){}};
+    if(me){
+      compose.innerHTML='<div class="flc-compose"><div class="flc-compose-row"><div class="flc-avatar">'+esc((me.username||'?')[0].toUpperCase())+'</div><textarea id="flCommentInput" class="flc-input" maxlength="2000" placeholder="Tulis komentar kamu…"></textarea></div><div class="flc-actions"><button class="flc-btn flc-primary" id="flCommentSend">Kirim komentar</button></div></div>';
+      document.getElementById('flCommentSend').onclick=send;return;
+    }
+    compose.innerHTML='<div class="flc-login-note">👋 Mau ikut berkomentar? Kamu perlu <button type="button" id="flCommentLogin">login</button> terlebih dahulu.</div>';
+    document.getElementById('flCommentLogin').onclick=openLogin;
+  }
+  function replyHtml(c){
+    const replies=Array.isArray(c.replies)?c.replies:[];
+    if(!replies.length) return '';
+    const shown=replies.slice(0,2);
+    const more=replies.length>2;
+    return '<div class="flc-replies" data-replies-for="'+esc(c.id)+'">'+shown.map(replyCard).join('')+'</div>'+
+      (more?'<button class="flc-replies-more" data-replies-more="'+esc(c.id)+'">Show more replies ('+(replies.length-2)+')</button>':'');
+  }
+  function replyCard(r){
+    const owner=me&&(r.userId===me.id||String(me.username).toLowerCase()==='fazmen');
+    const dev=String(r.username).toLowerCase()==='fazmen';
+    return '<div class="flc-reply"><div class="flc-reply-avatar">'+esc((r.username||'?')[0].toUpperCase())+'</div><div class="flc-reply-main"><div class="flc-reply-head"><strong>'+esc(r.username||'User')+(dev?'<span class="flc-dev">'+fire()+' DEVELOPER</span>':'')+'</strong><span>'+esc(fmt(r.createdAt))+'</span></div><div class="flc-reply-text">'+esc(r.reply)+'</div></div>'+(owner?'<button class="flc-reply-delete" data-delete-reply="'+esc(r.id)+'" title="Hapus balasan">🗑️</button>':'')+'</div>';
   }
   function render(){
     count.textContent=comments.length+' komentar';
     if(!comments.length){list.innerHTML='<div class="flc-empty">Belum ada komentar. Jadilah yang pertama ✨</div>';return}
-    list.innerHTML=comments.map((c,i)=>{const long=String(c.comment||'').length>420;const owner=me&&(c.userId===me.id || String(me.username).toLowerCase()==='fazmen');const dev=String(c.username).toLowerCase()==='fazmen';return '<article class="flc-item"><div class="flc-meta"><div class="flc-user-avatar">'+esc((c.username||'?')[0].toUpperCase())+'</div><div><div class="flc-user">'+esc(c.username||'User')+(dev?'<span class="flc-dev">'+fire()+' DEVELOPER</span>':'')+'</div><div class="flc-date">'+esc(fmt(c.createdAt))+'</div></div></div><div class="flc-body '+(long?'flc-collapsed':'')+'" id="flcb-'+i+'">'+esc(c.comment)+'</div>'+(long?'<button class="flc-more" data-more="'+i+'">Show more</button>':'')+(owner?'<button class="flc-delete" title="Hapus komentar" data-delete="'+esc(c.id)+'">🗑️</button>':'')+'</article>'}).join('');
+    list.innerHTML=comments.map((c,i)=>{
+      const long=String(c.comment||'').length>420;
+      const owner=me&&(c.userId===me.id||String(me.username).toLowerCase()==='fazmen');
+      const dev=String(c.username).toLowerCase()==='fazmen';
+      return '<article class="flc-item"><div class="flc-meta"><div class="flc-user-avatar">'+esc((c.username||'?')[0].toUpperCase())+'</div><div><div class="flc-user">'+esc(c.username||'User')+(dev?'<span class="flc-dev">'+fire()+' DEVELOPER</span>':'')+'</div><div class="flc-date">'+esc(fmt(c.createdAt))+'</div></div></div><div class="flc-body '+(long?'flc-collapsed':'')+'" id="flcb-'+i+'">'+esc(c.comment)+'</div>'+(long?'<button class="flc-more" data-more="'+i+'">Show more</button>':'')+'<div class="flc-comment-actions"><button class="flc-reply-btn" data-reply="'+esc(c.id)+'">↩ Reply</button>'+(owner?'<button class="flc-delete" title="Hapus komentar" data-delete="'+esc(c.id)+'">🗑️</button>':'')+'</div>'+replyHtml(c)+'<div class="flc-reply-compose" id="flrc-'+esc(c.id)+'"></div></article>';
+    }).join('');
     list.querySelectorAll('[data-more]').forEach(b=>b.onclick=()=>{const el=document.getElementById('flcb-'+b.dataset.more);el.classList.toggle('flc-collapsed');b.textContent=el.classList.contains('flc-collapsed')?'Show more':'Show less'});
     list.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>del(b.dataset.delete));
+    list.querySelectorAll('[data-reply]').forEach(b=>b.onclick=()=>openReply(b.dataset.reply));
+    list.querySelectorAll('[data-replies-more]').forEach(b=>b.onclick=()=>showAllReplies(b.dataset.repliesMore,b));
+    list.querySelectorAll('[data-delete-reply]').forEach(b=>b.onclick=()=>delReply(b.dataset.deleteReply));
+  }
+  function openReply(commentId){
+    if(!me){openLogin();return;}
+    const box=document.getElementById('flrc-'+commentId);if(!box)return;
+    if(box.innerHTML){box.innerHTML='';return;}
+    box.innerHTML='<div class="flc-reply-form"><textarea maxlength="2000" placeholder="Tulis balasan…"></textarea><div><button class="flc-btn flc-ghost flc-reply-cancel">Batal</button><button class="flc-btn flc-primary flc-reply-send">Balas</button></div></div>';
+    const ta=box.querySelector('textarea');box.querySelector('.flc-reply-cancel').onclick=()=>box.innerHTML='';box.querySelector('.flc-reply-send').onclick=()=>sendReply(commentId,ta,box);ta.focus();
+  }
+  function showAllReplies(id,btn){
+    const c=comments.find(x=>x.id===id);if(!c)return;const box=list.querySelector('[data-replies-for="'+CSS.escape(id)+'"]');if(!box)return;box.innerHTML=(c.replies||[]).map(replyCard).join('');btn.remove();box.querySelectorAll('[data-delete-reply]').forEach(b=>b.onclick=()=>delReply(b.dataset.deleteReply));
   }
   async function load(){
     try{const mr=await fetch(ME,{credentials:'include',cache:'no-store'});const md=await mr.json().catch(()=>({}));me=md?.user||null}catch(e){me=null}
     renderCompose();
     try{const r=await fetch(API,{credentials:'include',cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Gagal memuat');comments=Array.isArray(d.comments)?d.comments:[];render()}catch(e){list.innerHTML='<div class="flc-empty">Komentar belum dapat dimuat. Coba refresh halaman.</div>';count.textContent='—'}
   }
-  async function send(){const input=document.getElementById('flCommentInput');const comment=input?.value.trim();if(!comment)return;const btn=document.getElementById('flCommentSend');btn.disabled=true;btn.textContent='Mengirim…';try{const r=await fetch(API,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({comment})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Gagal mengirim komentar');input.value='';comments.unshift(d.comment);render();list.scrollTo({top:0,behavior:'smooth'})}catch(e){alert(e.message)}finally{btn.disabled=false;btn.textContent='Kirim komentar'}}
+  async function send(){const input=document.getElementById('flCommentInput');const comment=input?.value.trim();if(!comment)return;const btn=document.getElementById('flCommentSend');btn.disabled=true;btn.textContent='Mengirim…';try{const r=await fetch(API,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({comment})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Gagal mengirim komentar');input.value='';comments.unshift({...d.comment,replies:[]});render();list.scrollTo({top:0,behavior:'smooth'})}catch(e){alert(e.message)}finally{btn.disabled=false;btn.textContent='Kirim komentar'}}
+  async function sendReply(commentId,ta,box){const reply=ta.value.trim();if(!reply)return;const btn=box.querySelector('.flc-reply-send');btn.disabled=true;btn.textContent='Mengirim…';try{const r=await fetch(API+'/'+encodeURIComponent(commentId)+'/replies',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({reply})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Gagal mengirim balasan');const c=comments.find(x=>x.id===commentId);if(c){c.replies=c.replies||[];c.replies.push(d.reply)}box.innerHTML='';render()}catch(e){alert(e.message)}finally{btn.disabled=false;btn.textContent='Balas'}}
   async function del(id){if(!confirm('Hapus komentar ini?'))return;try{const r=await fetch(API+'/'+encodeURIComponent(id),{method:'DELETE',credentials:'include'});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Gagal menghapus');comments=comments.filter(x=>x.id!==id);render()}catch(e){alert(e.message)}}
+  async function delReply(id){if(!confirm('Hapus balasan ini?'))return;try{const r=await fetch(API+'/reply/'+encodeURIComponent(id),{method:'DELETE',credentials:'include'});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Gagal menghapus balasan');comments.forEach(c=>{c.replies=(c.replies||[]).filter(x=>x.id!==id)});render()}catch(e){alert(e.message)}}
   document.getElementById('fl-comments-fab').onclick=()=>document.getElementById('funlearn-comments-section').scrollIntoView({behavior:'smooth',block:'start'});
   load();
 })();
