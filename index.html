@@ -1802,6 +1802,9 @@ html[data-theme="light"] .account-menu button{color:var(--text)}
 @media(max-width:900px){.theme-toggle{flex:0 0 auto}.account-area{align-items:center}}
 @media(max-width:560px){.theme-toggle{min-height:42px;padding:9px 10px;font-size:12px}.theme-toggle .theme-label{display:none}}
 
+
+.fl-focus-complete-fire{display:inline-block;font-size:1.15em;vertical-align:-.08em;animation:flFocusFire .9s ease-in-out infinite alternate;filter:drop-shadow(0 0 8px rgba(255,120,0,.65));}
+@keyframes flFocusFire{from{transform:scale(1) translateY(0) rotate(-3deg)}to{transform:scale(1.18) translateY(-2px) rotate(3deg)}}
 </style>
 
 <style id="funlearn-2-upgrade-css">
@@ -2147,13 +2150,7 @@ html[data-theme="light"] .account-area{gap:9px}
     <div class="focus-timer" id="flFocusTimer">25:00</div><div class="focus-status" id="flFocusStatus">Pilih durasi lalu mulai sesi fokus.</div><div class="focus-actions"><button id="flFocusStart">Mulai</button><button id="flFocusReset" class="secondary">Reset</button></div>
   </section>
 </div>
-<section class="learning-card" id="funlearnAnalyticsCard" style="margin-bottom:16px">
-  <div class="goal-row"><h3>📈 Learning Analytics</h3><span class="cookie-badge">Data aktivitas nyata</span></div>
-  <div class="analytics-grid">
-    <div class="analytics-stat"><small>Learning Time</small><strong id="flAnalyticsTime">0m</strong></div><div class="analytics-stat"><small>Videos Completed</small><strong id="flAnalyticsVideos">0</strong></div><div class="analytics-stat"><small>Notes</small><strong id="flAnalyticsNotes">0</strong></div><div class="analytics-stat"><small>Recall</small><strong id="flAnalyticsRecall">0</strong></div><div class="analytics-stat"><small>Streak</small><strong id="flAnalyticsStreak">0 hari</strong></div><div class="analytics-stat"><small>Best Streak</small><strong id="flAnalyticsBest">0 hari</strong></div>
-  </div>
-  <div style="margin-top:14px;font-weight:900;font-size:13px">7 hari terakhir</div><div class="week-bars" id="flWeekBars"></div>
-</section>
+
 <div class="recall-overlay" id="flRecallOverlay" role="dialog" aria-modal="true" aria-labelledby="flRecallTitle">
   <div class="recall-card"><div class="recall-icon">🧠</div><h2 id="flRecallTitle">Quick Recall</h2><p>Videonya selesai! Sebelum lanjut, coba ingat kembali apa yang baru kamu pelajari.</p><div class="recall-question">Apa 3 hal terpenting yang baru kamu pelajari dari video ini?</div><textarea id="flRecallAnswer" placeholder="Tulis apa yang masih kamu ingat..." aria-label="Jawaban Active Recall"></textarea><div class="recall-feedback" id="flRecallFeedback">🧠 Recall Complete!<br>+30 XP &nbsp; +15 🪙</div><div class="recall-actions"><button id="flRecallSkip">Skip</button><button id="flRecallSubmit" class="primary">Submit Recall</button></div></div>
 </div>
@@ -7525,6 +7522,7 @@ function focusClearCookie(){setCookie("focus_session","",-1)}
 function syncFocusFromCookie(){
   const x=focusCookieRead();
   if(!x){
+    focusCompleted=false;
     focusRunning=false;focusPaused=false;focusEndAt=0;
     focusRemaining=focusMinutes*60;
     return;
@@ -7551,12 +7549,20 @@ function syncFocusFromCookie(){
   }
 }
 let focusEndAt=0;
+let focusCompleted=false;
 function renderFocus(){
   if(!$('flFocusTimer'))return;
   const r=Math.max(0,Math.ceil(focusRemaining));
   const m=Math.floor(r/60),sec=r%60;
-  $('flFocusTimer').textContent=String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
-  $('flFocusStatus').textContent=focusRunning?'Fokus berjalan.':focusPaused?'Sesi dijeda — klik Lanjut untuk meneruskan.':'Pilih durasi lalu mulai sesi fokus.';
+  const timerEl=$('flFocusTimer');
+  const statusEl=$('flFocusStatus');
+  if(focusCompleted){
+    timerEl.innerHTML='<span class="fl-focus-complete-fire" aria-hidden="true">🔥</span> Waktu selesai';
+    statusEl.textContent='🎉 Focus Session selesai! Waktu belajar sudah dicatat.';
+  }else{
+    timerEl.textContent=String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+    statusEl.textContent=focusRunning?'Fokus berjalan.':focusPaused?'Sesi dijeda — klik Lanjut untuk meneruskan.':'Pilih durasi lalu mulai sesi fokus.';
+  }
   document.querySelectorAll('.focus-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.focus)===focusMinutes));
   const startBtn=$('flFocusStart');
   if(startBtn){
@@ -7590,7 +7596,7 @@ function startFocusTicker(){
 function finishFocusSession(){
   if(focusTimer){clearInterval(focusTimer);focusTimer=null;}
   if(!focusRunning && focusRemaining<=0)return;
-  focusRunning=false;focusPaused=false;focusEndAt=0;focusPauseAt=0;focusRemaining=0;
+  focusRunning=false;focusPaused=false;focusEndAt=0;focusPauseAt=0;focusRemaining=0;focusCompleted=true;
   focusClearCookie();
   const completedMinutes=Math.max(1,Number(focusMinutes)||25);
   const p=ensureUpgradeData();
@@ -7608,7 +7614,7 @@ function finishFocusSession(){
 }
 function resetFocusSession(clearCookie=true,zero=false){
   if(focusTimer)clearInterval(focusTimer);
-  focusTimer=null;focusRunning=false;focusPaused=false;focusEndAt=0;focusPauseAt=0;
+  focusTimer=null;focusRunning=false;focusPaused=false;focusEndAt=0;focusPauseAt=0;focusCompleted=false;
   focusRemaining=zero?0:focusMinutes*60;
   if(clearCookie)focusClearCookie();
   renderFocus();
