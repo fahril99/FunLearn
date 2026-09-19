@@ -2237,7 +2237,7 @@ body.dark .fv-upload-modal,body.dark .fv-comments-modal{background:rgba(1,4,12,.
   async function getMe(){try{const d=await request('/api/me',{credentials:'include',cache:'no-store'});me=d.user||null}catch{me=null}renderUser()}
   function filteredVideos(){const q=search.toLowerCase();return videos.filter(v=>{const cat=v.category||'Lainnya';const okCat=selectedCategory==='Semua kategori'||cat===selectedCategory;const hay=[v.title,v.moduleTitle,v.description,v.username,v.category].join(' ').toLowerCase();return okCat&&(!q||hay.includes(q))})}
   function thumb(v){return v.thumbnailUrl?`<img src="${esc(v.thumbnailUrl)}" alt="Thumbnail ${esc(v.title)}" loading="lazy">`:`<video src="${esc(v.videoUrl)}" preload="metadata" muted playsinline></video>`}
-  function renderVideos(){const list=filteredVideos(),g=$('fvGrid');$('fvCount').textContent=`${list.length} video${list.length!==1?'':' '} • ${videos.length} total`;if(!list.length){g.innerHTML='<div class="fv-empty">Tidak ada video yang cocok dengan pencarian/kategori ini.</div>';return}g.innerHTML=list.map(v=>{const own=me&&(String(v.userId)===String(me.id)||String(me.username).toLowerCase()==='fazmen');const like=v.viewerReaction==='like',dislike=v.viewerReaction==='dislike';return `<article class="fv-card"><div class="fv-thumb">${thumb(v)}<div class="fv-category-badge">${esc(v.category||'Lainnya')}</div><div class="fv-play"><span>▶</span></div></div><div class="fv-body"><div class="fv-module">${esc(v.moduleTitle||'Public Module')}</div><div class="fv-title">${esc(v.title)}</div><div class="fv-desc">${esc(v.description||'Video edukasi FunLearn.')}</div><div class="fv-meta"><span class="fv-author">👤 ${esc(v.username||'User')}</span><span>${esc(fmt(v.createdAt))}</span></div><div class="fv-stats"><span class="fv-stat">👁 ${Number(v.views)||0}</span><span class="fv-stat">👍 ${Number(v.likes)||0}</span><span class="fv-stat">👎 ${Number(v.dislikes)||0}</span></div><div class="fv-reaction-row"><button class="fv-reaction ${like?'active-like':''}" data-react="like" data-id="${esc(v.id)}">👍 ${Number(v.likes)||0}</button><button class="fv-reaction ${dislike?'active-dislike':''}" data-react="dislike" data-id="${esc(v.id)}">👎 ${Number(v.dislikes)||0}</button></div><div class="fv-card-actions"><button class="fv-btn fv-primary" data-watch="${esc(v.id)}">▶ Tonton</button>${own?`<button class="fv-btn fv-edit" data-edit-video="${esc(v.id)}">✎ Edit</button><button class="fv-btn fv-delete" data-delete-video="${esc(v.id)}">🗑️</button>`:''}</div></div></article>`}).join('');g.querySelectorAll('[data-watch]').forEach(b=>b.onclick=()=>openComments(b.dataset.watch));g.querySelectorAll('[data-delete-video]').forEach(b=>b.onclick=()=>deleteVideo(b.dataset.deleteVideo));g.querySelectorAll('[data-edit-video]').forEach(b=>b.onclick=()=>openEdit(b.dataset.editVideo));g.querySelectorAll('[data-react]').forEach(b=>b.onclick=()=>reactVideo(b.dataset.id,b.dataset.react))}
+  function renderVideos(){const list=filteredVideos(),g=$('fvGrid');$('fvCount').textContent=`${list.length} video${list.length!==1?'':' '} • ${videos.length} total`;if(!list.length){g.innerHTML='<div class="fv-empty">Tidak ada video yang cocok dengan pencarian/kategori ini.</div>';return}g.innerHTML=list.map(v=>{const own=me&&(String(v.userId)===String(me.id)||String(me.username).toLowerCase()==='fazmen');const like=v.viewerReaction==='like',dislike=v.viewerReaction==='dislike';return `<article class="fv-card"><div class="fv-thumb">${thumb(v)}<div class="fv-category-badge">${esc(v.category||'Lainnya')}</div><div class="fv-play"><span>▶</span></div></div><div class="fv-body"><div class="fv-module">${esc(v.moduleTitle||'Public Module')}</div><div class="fv-title">${esc(v.title)}</div><div class="fv-desc">${esc(v.description||'Video edukasi FunLearn.')}</div><div class="fv-meta"><span class="fv-author">👤 ${esc(v.username||'User')}</span><span>${esc(fmt(v.createdAt))}</span></div><div class="fv-stats"><span class="fv-stat">👁 ${Number(v.views)||0}</span><span class="fv-stat">👍 ${Number(v.likes)||0}</span><span class="fv-stat">👎 ${Number(v.dislikes)||0}</span></div><div class="fv-reaction-row"><button class="fv-reaction ${like?'active-like':''}" data-react="like" data-id="${esc(v.id)}" ${getPublicVideoProgress(v.id).watchedSeconds>0?'':'disabled'} title="${getPublicVideoProgress(v.id).watchedSeconds>0?'Reaksi video':'Tonton video dulu untuk memberi reaksi'}">👍 ${Number(v.likes)||0}</button><button class="fv-reaction ${dislike?'active-dislike':''}" data-react="dislike" data-id="${esc(v.id)}" ${getPublicVideoProgress(v.id).watchedSeconds>0?'':'disabled'} title="${getPublicVideoProgress(v.id).watchedSeconds>0?'Reaksi video':'Tonton video dulu untuk memberi reaksi'}">👎 ${Number(v.dislikes)||0}</button></div><div class="fv-card-actions"><button class="fv-btn fv-primary" data-watch="${esc(v.id)}">▶ Tonton</button>${own?`<button class="fv-btn fv-edit" data-edit-video="${esc(v.id)}">✎ Edit</button><button class="fv-btn fv-delete" data-delete-video="${esc(v.id)}">🗑️</button>`:''}</div></div></article>`}).join('');g.querySelectorAll('[data-watch]').forEach(b=>b.onclick=()=>openComments(b.dataset.watch));g.querySelectorAll('[data-delete-video]').forEach(b=>b.onclick=()=>deleteVideo(b.dataset.deleteVideo));g.querySelectorAll('[data-edit-video]').forEach(b=>b.onclick=()=>openEdit(b.dataset.editVideo));g.querySelectorAll('[data-react]').forEach(b=>b.onclick=()=>reactVideo(b.dataset.id,b.dataset.react))}
   async function loadVideos(){try{$('fvCount').textContent='Memuat…';const d=await request(API+'/public-videos',{credentials:'include',cache:'no-store'});videos=Array.isArray(d.videos)?d.videos:[];renderVideos()}catch(e){$('fvGrid').innerHTML='<div class="fv-empty">❌ '+esc(e.message)+'</div>'}}
   function showUpload(){if(!me){openLogin();return}editingId=null;$('fvUploadHeading').textContent='Upload Video Edukasi';$('fvUploadIntro').textContent='Video diunggah ke penyimpanan video dan metadata dikelola oleh FunLearn.';$('fvUploadSubmit').textContent='🚀 Upload & Publikasikan';$('fvVideoField').hidden=false;$('fvFile').required=true;$('fvEditNote').hidden=true;$('fvTitle').value='';$('fvModule').value='';$('fvDesc').value='';$('fvCategory').value='';$('fvFile').value='';$('fvThumbnail').value='';$('fvPreview').hidden=true;$('fvUploadProgress').style.width='0%';$('fvUploadStatus').textContent='Siap.';$('fvUploadModal').classList.add('show');$('fvUploadModal').setAttribute('aria-hidden','false')}
   function hideUpload(){$('fvUploadModal').classList.remove('show');$('fvUploadModal').setAttribute('aria-hidden','true');editingId=null}
@@ -2249,16 +2249,16 @@ body.dark .fv-upload-modal,body.dark .fv-comments-modal{background:rgba(1,4,12,.
 
   async function upload(){if(!me){openLogin();return}const title=$('fvTitle').value.trim(),moduleTitle=$('fvModule').value.trim(),category=$('fvCategory').value,description=$('fvDesc').value.trim(),file=$('fvFile').files[0],thumbFile=$('fvThumbnail').files[0],btn=$('fvUploadSubmit');if(!title)return $('fvUploadStatus').textContent='Isi judul video.';if(!moduleTitle)return $('fvUploadStatus').textContent='Isi judul modul.';if(!category)return $('fvUploadStatus').textContent='Pilih kategori video.';if(!editingId&&!file)return $('fvUploadStatus').textContent='Pilih file video terlebih dahulu.';if(file&&!/^video\//i.test(file.type))return $('fvUploadStatus').textContent='File harus berupa video.';if(thumbFile&&!/^image\//i.test(thumbFile.type))return $('fvUploadStatus').textContent='Thumbnail harus berupa gambar.';btn.disabled=true;try{let videoUrl,thumbnailUrl;if(editingId){const current=videos.find(v=>String(v.id)===String(editingId));videoUrl=current.videoUrl;if(thumbFile){$('fvUploadStatus').textContent='🖼️ Memproses thumbnail…';$('fvUploadProgress').style.width='90%';thumbnailUrl=await compressThumbnail(thumbFile);$('fvUploadProgress').style.width='100%';$('fvUploadStatus').textContent='✓ Thumbnail siap.'}const d=await request(API+'/public-videos/'+encodeURIComponent(editingId),{method:'PATCH',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,moduleTitle,category,description,thumbnailUrl:thumbnailUrl||current.thumbnailUrl||''})});hideUpload();videos=videos.map(v=>String(v.id)===String(editingId)?d.video:v);renderVideos()}else{ $('fvUploadStatus').textContent='☁️ Upload video ke FunLearn… 0%';await xhrUpload(file,p=>{$('fvUploadProgress').style.width=(p*.85)+'%';$('fvUploadStatus').textContent=`☁️ Upload video ke FunLearn… ${p}%`}).then(d=>videoUrl=d.url);if(thumbFile){$('fvUploadStatus').textContent='🖼️ Memproses thumbnail…';thumbnailUrl=await compressThumbnail(thumbFile);$('fvUploadProgress').style.width='95%';$('fvUploadStatus').textContent='✓ Thumbnail siap.'}$('fvUploadStatus').textContent='☁️ Menyimpan metadata FunLearn…';const d=await request(API+'/public-videos',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,moduleTitle,category,description,videoUrl,thumbnailUrl:thumbnailUrl||''})});$('fvUploadProgress').style.width='100%';$('fvUploadStatus').textContent='✓ 100% selesai.';hideUpload();await loadVideos();openComments(d.video.id)}}catch(e){$('fvUploadStatus').textContent='❌ '+e.message}finally{btn.disabled=false}}
   $('fvUploadSubmit').onclick=upload;
-  async function reactVideo(id,type){if(!me){openLogin();return}try{const d=await request(API+'/public-videos/'+encodeURIComponent(id)+'/reaction',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({type})});const v=videos.find(x=>String(x.id)===String(id));if(v)Object.assign(v,d.video);renderVideos();if(activeVideo&&String(activeVideo.id)===String(id)){activeVideo=videos.find(x=>String(x.id)===String(id));renderActiveStats()}}catch(e){alert(e.message)}}
+  async function reactVideo(id,type){if(!me){openLogin();return}const progress=getPublicVideoProgress(id);if(!(Number(progress.watchedSeconds)>0)){showToast('▶️ Tonton video terlebih dahulu sebelum memberi 👍/👎.','error');return}try{const d=await request(API+'/public-videos/'+encodeURIComponent(id)+'/reaction',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({type})});const v=videos.find(x=>String(x.id)===String(id));if(v)Object.assign(v,d.video);renderVideos();if(activeVideo&&String(activeVideo.id)===String(id)){activeVideo=videos.find(x=>String(x.id)===String(id));renderActiveStats()}}catch(e){alert(e.message)}}
   async function registerView(id){try{const d=await request(API+'/public-videos/'+encodeURIComponent(id)+'/view',{method:'POST',credentials:'include'});const v=videos.find(x=>String(x.id)===String(id));if(v&&d.video)Object.assign(v,d.video);if(activeVideo&&String(activeVideo.id)===String(id)&&d.video)Object.assign(activeVideo,d.video)}catch(e){console.warn('view',e)}}
-  function renderActiveStats(){if(!activeVideo)return;$('fvcLike').textContent='👍 '+(Number(activeVideo.likes)||0);$('fvcDislike').textContent='👎 '+(Number(activeVideo.dislikes)||0);$('fvcViews').textContent='👁 '+(Number(activeVideo.views)||0)+' views';$('fvcLike').classList.toggle('active-like',activeVideo.viewerReaction==='like');$('fvcDislike').classList.toggle('active-dislike',activeVideo.viewerReaction==='dislike')}
+  function renderActiveStats(){if(!activeVideo)return;const watched=Number(getPublicVideoProgress(activeVideo.id).watchedSeconds||0)>0;$('fvcLike').textContent='👍 '+(Number(activeVideo.likes)||0);$('fvcDislike').textContent='👎 '+(Number(activeVideo.dislikes)||0);$('fvcViews').textContent='👁 '+(Number(activeVideo.views)||0)+' views';$('fvcLike').classList.toggle('active-like',activeVideo.viewerReaction==='like');$('fvcDislike').classList.toggle('active-dislike',activeVideo.viewerReaction==='dislike');$('fvcLike').disabled=!watched;$('fvcDislike').disabled=!watched;$('fvcLike').title=watched?'Like video':'Tonton video dulu';$('fvcDislike').title=watched?'Dislike video':'Tonton video dulu'}
   function ensurePublicTracking(){if(!appDatabase.publicVideoProgress||typeof appDatabase.publicVideoProgress!=='object')appDatabase.publicVideoProgress={};if(!appDatabase.publicVideoNotes||typeof appDatabase.publicVideoNotes!=='object')appDatabase.publicVideoNotes={}}
   function getPublicVideoProgress(id){ensurePublicTracking();return appDatabase.publicVideoProgress[String(id)]||{currentTime:0,duration:0,watchedSeconds:0,completed:false,completedDate:null}}
   function savePublicVideoProgress(id,patch){ensurePublicTracking();const key=String(id),old=getPublicVideoProgress(key),next={...old,...patch};appDatabase.publicVideoProgress[key]=next;persist();return next}
   function publicProgressSummary(){ensurePublicTracking();return Object.values(appDatabase.publicVideoProgress).reduce((a,v)=>{a.watchedSeconds+=Math.max(0,Number(v.watchedSeconds)||0);if(v.completed)a.completed++;return a},{watchedSeconds:0,completed:0})}
   function stopPublicWatchTracking(){if(publicWatchTimer){clearInterval(publicWatchTimer);publicWatchTimer=null}if(publicWatchFlushTimer){clearTimeout(publicWatchFlushTimer);publicWatchFlushTimer=null}publicLastVideoTime=0}
   function startPublicWatchTracking(){stopPublicWatchTracking();if(!activeVideo||!me)return;publicWatchTimer=setInterval(()=>{const video=$('fvcVideo');if(!video||video.paused||video.ended||!activeVideo)return;const p=getPublicVideoProgress(activeVideo.id);const nextSeconds=(Number(p.watchedSeconds)||0)+1;const duration=Math.max(0,Number(video.duration)||Number(p.duration)||0);const current=Math.max(0,Number(video.currentTime)||0);const completed=!!p.completed||video.ended||(duration>0&&current>=Math.max(1,duration-2));const patch={currentTime:current,duration,watchedSeconds:nextSeconds,completed,completedDate:completed?(p.completedDate||localDate()):null,lastWatchedAt:new Date().toISOString()};savePublicVideoProgress(activeVideo.id,patch);if(nextSeconds%5===0)checkAchievements();},1000)}
-  function bindPublicVideoProgress(){const video=$('fvcVideo');if(!video||video.dataset.flProgressBound)return;video.dataset.flProgressBound='1';video.addEventListener('loadedmetadata',()=>{if(!activeVideo)return;const p=getPublicVideoProgress(activeVideo.id);if(p.currentTime>0&&p.currentTime<video.duration-2){try{video.currentTime=p.currentTime}catch(e){}}});video.addEventListener('play',()=>startPublicWatchTracking());video.addEventListener('pause',()=>stopPublicWatchTracking());video.addEventListener('ended',()=>{if(!activeVideo)return;const p=getPublicVideoProgress(activeVideo.id);savePublicVideoProgress(activeVideo.id,{currentTime:video.duration||p.currentTime,duration:video.duration||p.duration,completed:true,completedDate:p.completedDate||localDate(),lastWatchedAt:new Date().toISOString()});stopPublicWatchTracking();checkAchievements()});video.addEventListener('timeupdate',()=>{if(!activeVideo)return;const p=getPublicVideoProgress(activeVideo.id),duration=Math.max(0,Number(video.duration)||0),current=Math.max(0,Number(video.currentTime)||0),completed=!!p.completed||(duration>0&&current>=Math.max(1,duration-2));appDatabase.publicVideoProgress[String(activeVideo.id)]={...p,currentTime:current,duration,completed,completedDate:completed?(p.completedDate||localDate()):null};if(publicWatchFlushTimer)clearTimeout(publicWatchFlushTimer);publicWatchFlushTimer=setTimeout(()=>persist(),1200)})}
+  function bindPublicVideoProgress(){const video=$('fvcVideo');if(!video||video.dataset.flProgressBound)return;video.dataset.flProgressBound='1';video.addEventListener('loadedmetadata',()=>{if(!activeVideo)return;const p=getPublicVideoProgress(activeVideo.id);if(p.currentTime>0&&p.currentTime<video.duration-2){try{video.currentTime=p.currentTime}catch(e){}}renderActiveStats()});video.addEventListener('play',()=>{startPublicWatchTracking();renderActiveStats()});video.addEventListener('pause',()=>{stopPublicWatchTracking();renderActiveStats()});video.addEventListener('ended',()=>{if(!activeVideo)return;const p=getPublicVideoProgress(activeVideo.id);savePublicVideoProgress(activeVideo.id,{currentTime:video.duration||p.currentTime,duration:video.duration||p.duration,watchedSeconds:Math.max(Number(p.watchedSeconds)||0,1),completed:true,completedDate:p.completedDate||localDate(),lastWatchedAt:new Date().toISOString()});stopPublicWatchTracking();renderActiveStats();checkAchievements()});video.addEventListener('timeupdate',()=>{if(!activeVideo)return;const p=getPublicVideoProgress(activeVideo.id),duration=Math.max(0,Number(video.duration)||0),current=Math.max(0,Number(video.currentTime)||0),completed=!!p.completed||(duration>0&&current>=Math.max(1,duration-2));appDatabase.publicVideoProgress[String(activeVideo.id)]={...p,currentTime:current,duration,completed,completedDate:completed?(p.completedDate||localDate()):null};if(current>0)renderActiveStats();if(publicWatchFlushTimer)clearTimeout(publicWatchFlushTimer);publicWatchFlushTimer=setTimeout(()=>persist(),1200)})}
   async function openComments(id){stopPublicWatchTracking();activeVideo=videos.find(v=>String(v.id)===String(id));if(!activeVideo)return;$('fvcTitle').textContent='▶ '+activeVideo.title;$('fvcVideo').src=activeVideo.videoUrl;$('fvCommentsModal').classList.add('show');$('fvCommentsModal').setAttribute('aria-hidden','false');renderActiveStats();loadNote();bindPublicVideoProgress();await registerView(id);renderVideos();renderActiveStats();await loadPublicComments();const p=getPublicVideoProgress(id);$('fvcVideo').dataset.progressInfo=JSON.stringify(p)}
   function closeComments(){stopPublicWatchTracking();$('fvCommentsModal').classList.remove('show');$('fvCommentsModal').setAttribute('aria-hidden','true');try{$('fvcVideo').pause();$('fvcVideo').removeAttribute('src');$('fvcVideo').load()}catch(e){}activeVideo=null}
   $('fvcClose').onclick=closeComments;$('fvCommentsModal').addEventListener('click',e=>{if(e.target===$('fvCommentsModal'))closeComments()});$('fvcRefresh').onclick=loadPublicComments;$('fvcLike').onclick=()=>activeVideo&&reactVideo(activeVideo.id,'like');$('fvcDislike').onclick=()=>activeVideo&&reactVideo(activeVideo.id,'dislike');
@@ -3258,6 +3258,9 @@ function normalizeDatabase(){
   profile.earlyBird = profile.earlyBird === true;
   profile.nightLearner = profile.nightLearner === true;
   profile.deepLearningVideos = Number(profile.deepLearningVideos) || 0;
+  profile.learningDaily = profile.learningDaily && typeof profile.learningDaily === 'object' && !Array.isArray(profile.learningDaily) ? profile.learningDaily : {};
+  profile.dailyGoal = Math.max(1, Number(profile.dailyGoal) || 30);
+  profile.dailyGoalCompletedDates = Array.isArray(profile.dailyGoalCompletedDates) ? profile.dailyGoalCompletedDates : [];
   if(!appDatabase.videos || typeof appDatabase.videos !== "object" || Array.isArray(appDatabase.videos)){
     appDatabase.videos = {};
   }
@@ -3810,10 +3813,11 @@ function ensureFolderInput(){
   input.type = "file";
   input.id = "funlearnFolderInput";
   input.multiple = true;
-  input.setAttribute("webkitdirectory","");
-  input.setAttribute("directory","");
+  // Different Chromium/WebView builds recognize different directory attributes.
+  // Do not set `accept`: some Android browsers fall back to a FILE picker when
+  // accept is present, even though webkitdirectory is set.
+  ["webkitdirectory","directory","mozdirectory","odirectory","msdirectory","xdirectory","nwdirectory"].forEach(attr=>input.setAttribute(attr,attr));
   input.hidden = true;
-  input.accept = "video/*,.json,.txt,.mp4,.webm,.mov,.m4v,.ts";
   document.body.appendChild(input);
 
   input.addEventListener("change",async()=>{
@@ -4164,7 +4168,13 @@ async function chooseFolder(){
       3) Android WebView / browsers without FSA:
          use the real OS file/folder chooser exposed by HTML input.
     */
-    ensureFolderInput().click();
+    const input=ensureFolderInput();
+    input.click();
+    setTimeout(()=>{
+      if(!folderMode||folderMode==='none'){
+        showToast('📁 Browser ini tidak menyediakan folder picker. Jika yang muncul hanya pemilih file, gunakan Chrome/Edge atau aktifkan dukungan folder di browser tersebut.','error');
+      }
+    },700);
   }catch(error){
     if(error?.name === "AbortError") return;
     console.error("Folder selection:",error);
@@ -4880,737 +4890,41 @@ async function addCoins(
 ========================================================= */
 
 async function registerStudyDay(){
+  const profile = getProfile();
+  normalizeDatabase();
+  const today = localDate();
+  const hour = new Date().getHours();
 
-  const profile =
-    getProfile();
-
-
-  const now = new Date();
-  const today = now.toISOString().slice(0,10);
-  const hour = now.getHours();
-
-  // Waktu belajar dicatat setiap kali menyelesaikan video,
-  // termasuk jika hari ini sudah pernah tercatat.
   if(hour >= 5 && hour < 9) profile.earlyBird = true;
   if(hour >= 21) profile.nightLearner = true;
 
-  if(
-    profile.lastStudyDate ===
-    today
-  ){
-    if(!profile.studyDates.includes(today)){
-      profile.studyDates.push(today);
-    }
+  profile.studyDates = Array.isArray(profile.studyDates) ? profile.studyDates : [];
+
+  // One calendar day = one streak increment. Calling this repeatedly today
+  // never increases the streak more than once.
+  if(profile.lastStudyDate === today){
+    if(!profile.studyDates.includes(today)) profile.studyDates.push(today);
     await saveDatabase();
-    await checkAchievements();
-    return;
+    try{ await checkAchievements(); }catch(e){}
+    return false;
   }
 
+  const yesterday = new Date(Date.now() - DAY_MS).toISOString().slice(0,10);
 
-  const yesterday =
-    new Date(
-      Date.now() -
-      86400000
-    )
-      .toISOString()
-      .slice(
-        0,
-        10
-      );
-
-
-  if(
-    profile.lastStudyDate ===
-    yesterday
-  ){
-
-    profile.streak++;
-
+  if(profile.lastStudyDate === yesterday){
+    profile.streak = Math.max(1, Number(profile.streak) || 0) + 1;
+  }else{
+    if(profile.lastStudyDate) profile.comeback = true;
+    profile.streak = 1;
   }
 
-  else{
-
-    if(
-      profile.lastStudyDate
-    ){
-
-      profile.comeback =
-        true;
-
-    }
-
-
-    profile.streak =
-      1;
-
-  }
-
-
-  profile.lastStudyDate =
-    today;
-
-  if(!profile.studyDates.includes(today)){
-    profile.studyDates.push(today);
-  }
+  profile.lastStudyDate = today;
+  if(!profile.studyDates.includes(today)) profile.studyDates.push(today);
 
   await saveDatabase();
-
-
-  await checkAchievements();
-
+  try{ await checkAchievements(); }catch(e){}
+  return true;
 }
-
-
-/* =========================================================
-   NOTES
-========================================================= */
-
-saveNotesButton.addEventListener(
-  "click",
-  async ()=>{
-
-    if(
-      !currentPathValue
-    ){
-
-      showToast(
-        "Pilih video terlebih dahulu.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    const old =
-      appDatabase.videos[
-        currentPathValue
-      ] || {};
-
-
-    const wasEmpty =
-      !old.notes ||
-      !old.notes.trim();
-
-
-    appDatabase.videos[
-      currentPathValue
-    ] = {
-
-      currentTime:
-        old.currentTime ||
-        videoPlayer.currentTime ||
-        0,
-
-      duration:
-        old.duration ||
-        videoPlayer.duration ||
-        0,
-
-      notes:
-        notes.value,
-
-      completed:
-        old.completed === true,
-
-      completedDate:
-        old.completedDate || null,
-
-      noteRewarded:
-        old.noteRewarded === true ||
-        (wasEmpty && notes.value.trim().length > 0)
-
-    };
-
-
-    await saveDatabase();
-
-
-    /*
-      Bonus hanya ketika notes
-      pertama kali dibuat.
-    */
-
-    if(
-      wasEmpty &&
-      !old.noteRewarded &&
-      notes.value.trim()
-    ){
-
-      await addXP(
-        5
-      );
-
-
-      await addCoins(
-        5,
-        "New Note"
-      );
-
-    }
-
-
-    /*
-      Simpan TXT ke:
-
-      Category/Notes/video - Notes.txt
-    */
-
-    await saveNoteAsTextFile();
-
-
-    saveStatus.textContent =
-      "✓ Notes saved";
-
-
-    saveStatus.classList.add(
-      "show"
-    );
-
-
-    setTimeout(
-      ()=>{
-
-        saveStatus.classList.remove(
-          "show"
-        );
-
-      },
-      2200
-    );
-
-
-    await checkAchievements();
-
-    await refreshSidebarProgress();
-
-  }
-);
-
-
-
-/* =========================================================
-   LOCAL NOTES AUTOSAVE
-========================================================= */
-let localNotesAutoSaveTimer = null;
-notes.addEventListener("input", ()=>{
-  if(!currentPathValue) return;
-  saveStatus.textContent = "⏳ Autosaving...";
-  saveStatus.classList.add("show");
-  clearTimeout(localNotesAutoSaveTimer);
-  localNotesAutoSaveTimer = setTimeout(()=>{
-    saveNotesButton.click();
-  }, 650);
-});
-
-/* =========================================================
-   SAVE NOTES TXT
-========================================================= */
-
-async function saveNoteAsTextFile(){
-  try{
-    if(!currentPathValue) return;
-
-    /*
-      FileList cannot write back into the user's selected folder.
-      The actual Notes remain safe in appDatabase/localStorage via saveDatabase().
-      Native SAF can optionally persist the .txt file through writeFile().
-      FSA keeps the original Notes/*.txt behavior.
-    */
-
-    if(folderMode === "fsa" && rootFolderHandle){
-      const parts = currentPathValue.split("/");
-      const folderName = parts.shift();
-      const fileName = parts.join("/");
-
-      const categoryHandle = await rootFolderHandle.getDirectoryHandle(folderName);
-      const notesFolder = await categoryHandle.getDirectoryHandle("Notes",{create:true});
-      const noteFileName = removeExtension(fileName) + " - Notes.txt";
-      const noteHandle = await notesFolder.getFileHandle(noteFileName,{create:true});
-      const writable = await noteHandle.createWritable();
-      await writable.write(notes.value);
-      await writable.close();
-      return;
-    }
-
-    if(folderMode === "native"){
-      const bridge = getNativeBridge();
-      const writer = bridge?.writeFile || bridge?.writeTextFile || bridge?.writeFunLearnFile;
-      if(typeof writer === "function"){
-        const parts = currentPathValue.split("/");
-        const category = parts.shift() || "Notes";
-        const videoName = parts.join("/");
-        const notePath = `${category}/Notes/${removeExtension(videoName)} - Notes.txt`;
-        let result = writer.call(bridge,notePath,notes.value);
-        if(result && typeof result.then === "function") await result;
-      }
-    }
-  }catch(error){
-    console.warn("TXT note persistence unavailable:",error);
-    /* Never turn a notes save into a fatal application error. */
-  }
-}
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-function getAllVideoItems(){
-
-  return Array.from(
-    document.querySelectorAll(
-      ".video-item"
-    )
-  );
-
-}
-
-
-function getCurrentIndex(){
-
-  const items =
-    getAllVideoItems();
-
-
-  return items.findIndex(
-    item =>
-      item.dataset.path ===
-      currentPathValue
-  );
-
-}
-
-
-function updateNavigation(){
-
-  const items =
-    getAllVideoItems();
-
-
-  const index =
-    getCurrentIndex();
-
-
-  previousButton.disabled =
-    index <= 0;
-
-
-  nextButton.disabled =
-    index < 0 ||
-    index >=
-    items.length - 1;
-
-}
-
-
-previousButton.addEventListener(
-  "click",
-  ()=>{
-
-    const items =
-      getAllVideoItems();
-
-
-    const index =
-      getCurrentIndex();
-
-
-    if(
-      index > 0
-    ){
-
-      items[
-        index - 1
-      ].click();
-
-    }
-
-  }
-);
-
-
-nextButton.addEventListener(
-  "click",
-  ()=>{
-
-    nextVideo();
-
-  }
-);
-
-
-function nextVideo(){
-
-  const items =
-    getAllVideoItems();
-
-
-  const index =
-    getCurrentIndex();
-
-
-  if(
-    index >= 0 &&
-    index <
-    items.length - 1
-  ){
-
-    items[
-      index + 1
-    ].click();
-
-  }
-
-}
-
-
-/* =========================================================
-   SIDEBAR ACTIVE
-========================================================= */
-
-function setActiveItem(
-  path
-){
-
-  document
-    .querySelectorAll(
-      ".video-item"
-    )
-    .forEach(
-      item=>{
-
-        item.classList.toggle(
-          "active",
-          item.dataset.path ===
-          path
-        );
-
-      }
-    );
-
-}
-
-
-/* =========================================================
-   SIDEBAR PROGRESS
-========================================================= */
-
-async function refreshSidebarProgress(){
-
-  const items =
-    getAllVideoItems();
-
-
-  /*
-    Hitung completed berdasarkan
-    video yang tampil sekarang.
-  */
-
-  let completedTotal =
-    0;
-
-
-  for(
-    const item
-    of items
-  ){
-
-    const path =
-      item.dataset.path;
-
-
-    const saved =
-      appDatabase.videos[
-        path
-      ];
-
-
-    const fill =
-      item.querySelector(
-        ".progress-mini div"
-      );
-
-
-    if(
-      saved &&
-      saved.duration > 0
-    ){
-
-      const percent =
-        (
-          saved.currentTime /
-          saved.duration
-        ) * 100;
-
-
-      fill.style.width =
-        Math.min(
-          percent,
-          100
-        ) + "%";
-
-    }
-
-
-    if(
-      saved &&
-      saved.completed
-    ){
-
-      item.classList.add(
-        "completed"
-      );
-
-
-      completedTotal++;
-
-    }
-
-    else{
-
-      item.classList.remove(
-        "completed"
-      );
-
-    }
-
-  }
-
-
-  /*
-    Update category progress.
-  */
-
-  document
-    .querySelectorAll(
-      ".category"
-    )
-    .forEach(
-      category=>{
-
-        const videoItems =
-          category.querySelectorAll(
-            ".video-item"
-          );
-
-
-        const categoryTotal =
-          videoItems.length;
-
-
-        const categoryCompleted =
-          category.querySelectorAll(
-            ".video-item.completed"
-          ).length;
-
-
-        const fill =
-          category.querySelector(
-            ".category-progress-fill"
-          );
-
-
-        if(
-          fill &&
-          categoryTotal > 0
-        ){
-
-          fill.style.width =
-            (
-              categoryCompleted /
-              categoryTotal *
-              100
-            ) + "%";
-
-        }
-
-      }
-    );
-
-
-  updateOverallProgress();
-
-  updateNavigation();
-
-}
-
-
-/* =========================================================
-   OVERALL PROGRESS
-========================================================= */
-
-function updateOverallProgress(){
-
-  const items =
-    getAllVideoItems();
-
-
-  const total =
-    items.length;
-
-
-  if(
-    total <= 0
-  ){
-
-    overallPercent.textContent =
-      "0%";
-
-    overallFill.style.width =
-      "0%";
-
-    return;
-
-  }
-
-
-  const completed =
-    items.filter(
-      item =>
-        item.classList.contains(
-          "completed"
-        )
-    ).length;
-
-
-  const percent =
-    (
-      completed /
-      total
-    ) * 100;
-
-
-  overallPercent.textContent =
-    Math.round(
-      percent
-    ) + "%";
-
-
-  overallFill.style.width =
-    Math.min(
-      percent,
-      100
-    ) + "%";
-
-}
-
-
-/* =========================================================
-   RESTORE LAST VIDEO
-========================================================= */
-
-async function restoreLastVideo(
-  rootHandle
-){
-
-  const path =
-    appDatabase.lastVideo;
-
-
-  if(
-    !path
-  ){
-
-    return;
-
-  }
-
-
-  const parts =
-    path.split("/");
-
-
-  if(
-    parts.length < 2
-  ){
-
-    return;
-
-  }
-
-
-  const folderName =
-    parts.shift();
-
-
-  const fileName =
-    parts.join("/");
-
-
-  try{
-
-    const folderHandle =
-      await rootHandle
-        .getDirectoryHandle(
-          folderName
-        );
-
-
-    const fileHandle =
-      await folderHandle
-        .getFileHandle(
-          fileName
-        );
-
-
-    /*
-      Buka video.
-    */
-
-    await openVideo(
-      fileHandle,
-      path,
-      fileName
-    );
-
-
-    /*
-      Buka category otomatis.
-    */
-
-    document
-      .querySelectorAll(
-        ".category"
-      )
-      .forEach(
-        category=>{
-
-          const text =
-            category
-              .querySelector(
-                ".category-title"
-              )
-              ?.textContent ||
-            "";
-
-
-          if(
-            text.includes(
-              folderName
-            )
-          ){
-
-            category.classList.add(
-              "open"
-            );
-
-          }
-
-        }
-      );
-
-  }catch(error){
-
-    console.log(
-      "Last video tidak ditemukan:",
-      error
-    );
-
-  }
-
-}
-
 
 /* =========================================================
    ACHIEVEMENT CHECK
@@ -7667,15 +6981,30 @@ function focusClearCookie(){setCookie("focus_session","",-1)}
 let focusEndAt=0, focusCompleted=false, focusAudioCtx=null;
 function unlockFocusAudio(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;focusAudioCtx=focusAudioCtx||new AC();if(focusAudioCtx.state==='suspended')focusAudioCtx.resume().catch(()=>{});}catch(e){}}
 async function playFocusTimeout(){
-  let externalPlayed=false;
-  try{const a=new Audio('https://www.myinstants.com/media/sounds/subway-surfers-open-box.mp3');a.volume=.5;a.preload='auto';await a.play();externalPlayed=true;}catch(e){}
-  if(externalPlayed)return;
+  // WebAudio alarm is used first because a newly-created <audio> element can
+  // be blocked by autoplay policies even after the timer started.
   try{
-    if(!focusAudioCtx)return;
-    if(focusAudioCtx.state==='suspended')await focusAudioCtx.resume();
-    const now=focusAudioCtx.currentTime;
-    [0,0.16,0.34].forEach((delay,i)=>{const o=focusAudioCtx.createOscillator(),g=focusAudioCtx.createGain();o.type='sine';o.frequency.value=[660,880,1046][i];g.gain.setValueAtTime(.0001,now+delay);g.gain.exponentialRampToValueAtTime(.12,now+delay+.02);g.gain.exponentialRampToValueAtTime(.0001,now+delay+.13);o.connect(g).connect(focusAudioCtx.destination);o.start(now+delay);o.stop(now+delay+.15);});
-  }catch(e){}
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(AC){
+      focusAudioCtx=focusAudioCtx||new AC();
+      if(focusAudioCtx.state==='suspended') await focusAudioCtx.resume();
+      const ctx=focusAudioCtx, t=ctx.currentTime+0.03;
+      const notes=[{f:880,d:0},{f:660,d:.22},{f:440,d:.44},{f:660,d:.72}];
+      notes.forEach(n=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine';o.frequency.setValueAtTime(n.f,t+n.d);
+        g.gain.setValueAtTime(.0001,t+n.d);
+        g.gain.exponentialRampToValueAtTime(.16,t+n.d+.025);
+        g.gain.exponentialRampToValueAtTime(.0001,t+n.d+.18);
+        o.connect(g).connect(ctx.destination);o.start(t+n.d);o.stop(t+n.d+.2);
+      });
+      return;
+    }
+  }catch(e){console.warn('Focus timeout WebAudio failed:',e)}
+  try{
+    const a=new Audio('https://www.myinstants.com/media/sounds/subway-surfers-open-box.mp3');
+    a.volume=.55;a.preload='auto';await a.play();
+  }catch(e){console.warn('Focus timeout fallback sound blocked:',e)}
 }
 function syncFocusFromCookie(){
   const x=focusCookieRead();
@@ -7699,7 +7028,10 @@ function finishFocusSession(){
   focusRunning=false;focusPaused=false;focusEndAt=0;focusPauseAt=0;focusRemaining=0;focusCompleted=true;focusClearCookie();
   const completedMinutes=Math.max(1,Number(focusMinutes)||25),p=ensureUpgradeData();if(p){p.focusHistory=p.focusHistory||[];p.focusHistory.push({date:localDate(),minutes:completedMinutes});}
   Promise.resolve(addLearningMinutes(completedMinutes,'Focus Session')).then(()=>typeof registerStudyDay==='function'?registerStudyDay():null).catch(()=>{});
-  showToast(`🎯 Focus Session selesai • +${completedMinutes} menit belajar`,'success');void playFocusTimeout();renderFocus();
+  showToast(`🎯 Focus Session selesai • +${completedMinutes} menit belajar`,'success');
+  void playFocusTimeout();
+  renderFocus();
+  setTimeout(()=>renderLearningDashboard(),50);
 }
 function resetFocusSession(clearCookie=true,zero=false){if(focusTimer)clearInterval(focusTimer);focusTimer=null;focusRunning=false;focusPaused=false;focusEndAt=0;focusPauseAt=0;focusCompleted=false;focusRemaining=zero?0:focusMinutes*60;if(clearCookie)focusClearCookie();renderFocus()}
 function startOrToggleFocus(){
@@ -7726,10 +7058,10 @@ $("flGoalCustom")?.addEventListener('click',openGoalCustomModal);
 
 /* Learning state + Study Lab */
 function localStudyDate(){return new Date().toISOString().slice(0,10)}
-function ensureUpgradeData(){try{normalizeDatabase?.();const p=getProfile();p.learningDaily=p.learningDaily&&typeof p.learningDaily==='object'?p.learningDaily:{};p.dailyGoal=Math.max(1,Number(p.dailyGoal)||30);p.focusHistory=Array.isArray(p.focusHistory)?p.focusHistory:[];p.studyLab=p.studyLab&&typeof p.studyLab==='object'?p.studyLab:{flashcards:[],quizAttempts:{},generated:[]};p.studyLab.flashcards=Array.isArray(p.studyLab.flashcards)?p.studyLab.flashcards:[];p.studyLab.quizAttempts=p.studyLab.quizAttempts||{};return p;}catch(e){return null}}
+function ensureUpgradeData(){try{normalizeDatabase?.();const p=getProfile();p.learningDaily=p.learningDaily&&typeof p.learningDaily==='object'?p.learningDaily:{};p.dailyGoal=Math.max(1,Number(p.dailyGoal)||30);p.dailyGoalCompletedDates=Array.isArray(p.dailyGoalCompletedDates)?p.dailyGoalCompletedDates:[];p.focusHistory=Array.isArray(p.focusHistory)?p.focusHistory:[];p.studyLab=p.studyLab&&typeof p.studyLab==='object'?p.studyLab:{flashcards:[],quizAttempts:{},generated:[]};p.studyLab.flashcards=Array.isArray(p.studyLab.flashcards)?p.studyLab.flashcards:[];p.studyLab.quizAttempts=p.studyLab.quizAttempts||{};return p;}catch(e){return null}}
 async function persist(){try{if(typeof saveDatabase==='function')await saveDatabase();if(typeof window.funlearnQueueSync==='function')window.funlearnQueueSync();}catch(e){console.warn('Learning persist failed',e)}}
-function renderLearningDashboard(){const p=ensureUpgradeData();if(!p)return;const target=Number(p.dailyGoal)||30,mins=getTodayGoalDisplayMinutes();const a=$('flGoalMinutes'),b=$('flGoalTarget'),f=$('flGoalFill'),m=$('flGoalMessage'),c=$('flGoalComplete');if(a)a.textContent=Math.floor(mins);if(b)b.textContent=target;if(f)f.style.width=Math.min(100,mins/target*100)+'%';if(m)m.textContent=mins>=target?'Target hari ini tercapai. Mantap!':focusRunning?`Focus Session berjalan • +${Math.floor(focusElapsedMinutesPreview())} menit`:'Tambah sedikit lagi untuk mencapai target hari ini.';if(c)c.hidden=mins<target;const sel=$('flGoalSelect');if(sel)sel.value=[15,30,45,60].includes(target)?String(target):'';renderStudyLabStats()}
-function addLearningMinutes(minutes,source){const n=Math.max(0,Number(minutes)||0);if(!n)return;const p=ensureUpgradeData();if(!p)return;const day=typeof localDate==='function'?localDate():localStudyDate();p.learningDaily[day]=(Number(p.learningDaily[day])||0)+n;recordStudyMinutesCookie(n);p.learningTime=getStudyMinutesCookie().total;persist();try{if(typeof checkAchievements==='function')Promise.resolve(checkAchievements()).catch(()=>{});}catch(e){}renderLearningDashboard()}
+function renderLearningDashboard(){const p=ensureUpgradeData();if(!p)return;const target=Math.max(1,Number(p.dailyGoal)||30),day=typeof localDate==='function'?localDate():localStudyDate(),mins=getTodayGoalDisplayMinutes(),complete=mins>=target||p.dailyGoalCompletedDates.includes(day);const a=$('flGoalMinutes'),b=$('flGoalTarget'),f=$('flGoalFill'),m=$('flGoalMessage'),c=$('flGoalComplete');if(a)a.textContent=Math.floor(Math.min(target,mins));if(b)b.textContent=target;if(f)f.style.width=complete?'100%':Math.min(100,mins/target*100)+'%';if(m)m.textContent=complete?'✓ Target hari ini tercapai • 🔥 Streak terlindungi':focusRunning?`Focus Session berjalan • +${Math.floor(focusElapsedMinutesPreview())} menit`:'Tambah sedikit lagi untuk mencapai target hari ini.';if(c){c.hidden=!complete;c.textContent='✓ Target hari ini tercapai • 🔥 Streak terlindungi'}const sel=$('flGoalSelect');if(sel)sel.value=[15,30,45,60].includes(target)?String(target):'';renderStudyLabStats()}
+function addLearningMinutes(minutes,source){const n=Math.max(0,Number(minutes)||0);if(!n)return;const p=ensureUpgradeData();if(!p)return;const day=typeof localDate==='function'?localDate():localStudyDate();const before=Number(p.learningDaily[day])||0;const target=Math.max(1,Number(p.dailyGoal)||30);p.learningDaily[day]=before+n;recordStudyMinutesCookie(n);p.learningTime=getStudyMinutesCookie().total;const reached=before<target&&p.learningDaily[day]>=target;if(reached&&!p.dailyGoalCompletedDates.includes(day)){p.dailyGoalCompletedDates.push(day);p.dailyGoalCompletedDates=p.dailyGoalCompletedDates.slice(-365);persist();Promise.resolve(typeof registerStudyDay==='function'?registerStudyDay():null).catch(()=>{});showToast('🎯 ✓ Target hari ini tercapai • 🔥 Streak terlindungi','success')}else{persist()}try{if(typeof checkAchievements==='function')Promise.resolve(checkAchievements()).catch(()=>{});}catch(e){}renderLearningDashboard()}
 function studyLab(){const p=ensureUpgradeData();return p?.studyLab}
 function normalizeStudyText(s){return String(s||'').replace(/\s+/g,' ').trim()}
 function currentStudyContext(fallback){
@@ -8042,3 +7374,7 @@ document.addEventListener('click',e=>{if(!d.contains(e.target))close()});
 })();
 </script></body>
 </html>
+
+<style id="funlearn-fixes-20260919">
+.fv-reaction:disabled,#fvcLike:disabled,#fvcDislike:disabled{opacity:.42;cursor:not-allowed;filter:grayscale(.35)}
+</style>
