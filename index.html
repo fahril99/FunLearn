@@ -3817,6 +3817,9 @@ function ensureFolderInput(){
   // Do not set `accept`: some Android browsers fall back to a FILE picker when
   // accept is present, even though webkitdirectory is set.
   ["webkitdirectory","directory","mozdirectory","odirectory","msdirectory","xdirectory","nwdirectory"].forEach(attr=>input.setAttribute(attr,attr));
+  // Be explicit for Chromium/WebView implementations that inspect the
+  // DOM property instead of only the content attribute.
+  try{ input.webkitdirectory = true; }catch(e){}
   input.hidden = true;
   document.body.appendChild(input);
 
@@ -4169,12 +4172,18 @@ async function chooseFolder(){
          use the real OS file/folder chooser exposed by HTML input.
     */
     const input=ensureFolderInput();
-    input.click();
-    setTimeout(()=>{
-      if(!folderMode||folderMode==='none'){
-        showToast('📁 Browser ini tidak menyediakan folder picker. Jika yang muncul hanya pemilih file, gunakan Chrome/Edge atau aktifkan dukungan folder di browser tersebut.','error');
-      }
-    },700);
+
+    // Jangan menampilkan pesan "browser tidak mendukung folder picker"
+    // hanya karena callback change belum terjadi. Beberapa Android browser
+    // membuka chooser secara asinkron dan membutuhkan waktu lebih lama.
+    // Jika browser mendukung webkitdirectory, biarkan OS/browser menangani
+    // pemilihan folder/isi folder tanpa memblokir alurnya dengan timeout.
+    try{
+      input.click();
+    }catch(error){
+      console.warn("Folder input click failed:",error);
+      showToast("❌ Folder picker tidak dapat dibuka di browser ini.","error");
+    }
   }catch(error){
     if(error?.name === "AbortError") return;
     console.error("Folder selection:",error);
