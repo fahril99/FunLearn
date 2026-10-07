@@ -3278,7 +3278,10 @@ function normalizeDatabase(){
    SAVE DATABASE.JSON / LOCAL FALLBACK
    ========================================================= */
 function saveDatabase(){
-  saveQueue = saveQueue.then(async()=>{
+  /* Keep the queue alive even after one write fails, while still returning
+     the current write promise so callers (especially Notes autosave) can
+     detect a real file-system error. */
+  const operation = saveQueue.catch(()=>{}).then(async()=>{
     normalizeDatabase();
     const text = JSON.stringify(appDatabase,null,2);
 
@@ -3290,7 +3293,6 @@ function saveDatabase(){
         if(typeof writer === "function"){
           const result = writer.call(bridge,"database.json",text);
           if(result && typeof result.then === "function") await result;
-          /* Native bridge is authoritative; local backup is still kept. */
         }
       }catch(error){
         console.warn("Native database write failed; keeping local backup.",error);
@@ -3300,25 +3302,31 @@ function saveDatabase(){
     /* Always keep a local copy in WebView/APK. */
     safeLocalStorageSet(LOCAL_DB_KEY,text);
 
-    /* Browser FSA: preserve the original database.json behavior. */
+    /* Browser FSA: write the real database.json in the selected folder. */
     if(folderMode === "fsa" && rootFolderHandle){
       try{
         if(!databaseFileHandle){
           databaseFileHandle = await rootFolderHandle.getFileHandle("database.json",{create:true});
         }
         const writable = await databaseFileHandle.createWritable();
-        await writable.write(text);
-        await writable.close();
+        try{
+          await writable.write(text);
+        }finally{
+          await writable.close();
+        }
       }catch(error){
         console.error("Database save error:",error);
-        /* Local copy already exists, so this is not fatal. */
+        throw error;
       }
     }
-  }).catch(error=>{
+  });
+
+  saveQueue = operation.catch(error=>{
     console.error("Database save queue error:",error);
     safeLocalStorageSet(LOCAL_DB_KEY,JSON.stringify(appDatabase));
   });
-  return saveQueue;
+
+  return operation;
 }
 
 /* =========================================================
@@ -3908,6 +3916,7 @@ async function loadFolderFromFileList(files){
 
   await refreshSidebarProgress();
   await updateStats();
+  updateNavigation();
   await restoreLastVideoFromSelectedFiles();
 }
 
@@ -4297,6 +4306,7 @@ async function createVideoItem(container,folderName,fileName,fileHandle){
   }
 
   item.dataset.path = path;
+  videoEntries.set(path,{handle:fileHandle,name:String(fileName).split('/').pop()});
 
   const saved = appDatabase.videos[path];
   const title = document.createElement("div");
@@ -4358,17 +4368,114 @@ let currentFileHandle =
 let currentObjectURL =
   null;
 
+/* Registry of every rendered local video so Previous/Next can open the
+   exact same file handle/entry that was used by the sidebar. */
+const videoEntries = new Map();
+let notesSaveTimer = null;
+let notesSaveInFlight = Promise.resolve();
+
+
+/* =========================================================
+   VIDEO NAVIGATION + NOTES AUTOSAVE
+========================================================= */
+function getRenderedVideoItems(){
+  return Array.from(document.querySelectorAll('.video-item[data-path]'));
+}
+
+function updateNavigation(){
+  const items = getRenderedVideoItems();
+  const index = items.findIndex(item => item.dataset.path === currentPathValue);
+  const hasCurrent = index >= 0;
+
+  previousButton.disabled = !hasCurrent || index <= 0;
+  nextButton.disabled = !hasCurrent || index >= items.length - 1;
+
+  previousButton.title = previousButton.disabled ? 'Tidak ada video sebelumnya' : 'Video sebelumnya';
+  nextButton.title = nextButton.disabled ? 'Tidak ada video berikutnya' : 'Video berikutnya';
+}
+
+async function saveCurrentNotes(){
+  if(!currentPathValue) return false;
+
+  const path = currentPathValue;
+  const text = String(notes.value || '');
+  const old = appDatabase.videos[path] || {};
+
+  appDatabase.videos[path] = {
+    currentTime: Number.isFinite(Number(old.currentTime)) ? Number(old.currentTime) : 0,
+    duration: Number.isFinite(Number(old.duration)) ? Number(old.duration) : 0,
+    notes: text,
+    completed: old.completed === true,
+    completedDate: old.completedDate || null,
+    noteRewarded: old.noteRewarded === true
+  };
+
+  saveStatus.textContent = '⏳ Menyimpan...';
+  try{
+    await saveDatabase();
+    saveStatus.textContent = '✓ Autosave tersimpan';
+    return true;
+  }catch(error){
+    console.error('Notes save error:',error);
+    saveStatus.textContent = '⚠️ Gagal menyimpan';
+    showToast('❌ Notes gagal disimpan.','error');
+    return false;
+  }
+}
+
+function queueNotesSave(){
+  clearTimeout(notesSaveTimer);
+  saveStatus.textContent = '⏳ Menunggu autosave...';
+  notesSaveTimer = setTimeout(()=>{
+    notesSaveInFlight = notesSaveInFlight.then(()=>saveCurrentNotes());
+  },500);
+}
+
+async function navigateVideo(direction){
+  const items = getRenderedVideoItems();
+  const index = items.findIndex(item => item.dataset.path === currentPathValue);
+  if(index < 0) return;
+
+  const targetIndex = index + direction;
+  if(targetIndex < 0 || targetIndex >= items.length) return;
+
+  clearTimeout(notesSaveTimer);
+  await notesSaveInFlight;
+  await saveCurrentNotes();
+
+  const target = items[targetIndex];
+  const path = target.dataset.path;
+  const entry = videoEntries.get(path);
+  if(!entry){
+    showToast('❌ File video tidak ditemukan.','error');
+    return;
+  }
+
+  await openVideo(entry.handle,path,entry.name);
+  target.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+previousButton.addEventListener('click',()=>navigateVideo(-1));
+nextButton.addEventListener('click',()=>navigateVideo(1));
+notes.addEventListener('input',queueNotesSave);
+notes.addEventListener('blur',()=>{
+  clearTimeout(notesSaveTimer);
+  notesSaveInFlight = notesSaveInFlight.then(()=>saveCurrentNotes());
+});
+
 
 /* =========================================================
    OPEN VIDEO
 ========================================================= */
 
 async function openVideo(fileHandle,path,fileName){
-  currentPathValue = path;
-  currentFileHandle = fileHandle;
+  clearTimeout(notesSaveTimer);
+  await notesSaveInFlight;
 
-  appDatabase.lastVideo = path;
-  await saveDatabase();
+  /* Persist the Notes belonging to the video we are leaving before switching. */
+  if(currentPathValue && currentPathValue !== path){
+    await saveCurrentNotes();
+  }
 
   let file = null;
 
@@ -4424,12 +4531,18 @@ async function openVideo(fileHandle,path,fileName){
     return;
   }
 
+  currentPathValue = path;
+  currentFileHandle = fileHandle;
+  appDatabase.lastVideo = path;
+  await saveDatabase();
+
   noVideo.style.display = "none";
   currentTitle.textContent = removeExtension(fileName);
   currentPath.textContent = path;
 
   const saved = appDatabase.videos[path];
   notes.value = saved?.notes || "";
+  saveStatus.textContent = "✓ Autosave aktif";
   progressFill.style.width = "0%";
   progressText.textContent = "0%";
   autoCompletedThisVideo = false;
