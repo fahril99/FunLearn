@@ -456,6 +456,135 @@ button{
     cubic-bezier(.2,.8,.2,1);
 }
 
+  /* =========================================================
+   VOICE NOTE — WhatsApp-style recorder & player
+   ========================================================= */
+.flc-voice-start{
+  flex:0 0 auto;width:48px;height:48px;
+  border:1px solid var(--flc-border);
+  border-radius:15px;
+  background:linear-gradient(135deg,rgba(124,92,255,.22),rgba(37,217,255,.14));
+  color:var(--flc-text);
+  display:grid;place-items:center;font-size:20px;cursor:pointer;
+  transition:transform .18s,box-shadow .18s,border-color .18s,background .2s;
+  position:relative;overflow:hidden;
+}
+.flc-voice-start:hover{transform:translateY(-2px);border-color:rgba(124,92,255,.6);box-shadow:0 12px 28px rgba(92,91,255,.25)}
+.flc-voice-start:active{transform:scale(.95)}
+.flc-voice-start:focus-visible{outline:3px solid rgba(124,92,255,.35);outline-offset:2px}
+
+/* Recording bar inside compose */
+.flc-recording{
+  display:flex;align-items:center;gap:12px;width:100%;
+  padding:12px 14px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(255,60,90,.14),rgba(255,120,60,.08));
+  border:1px solid rgba(255,90,120,.35);
+  animation:flcRecIn .28s ease both;
+}
+@keyframes flcRecIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.flc-rec-dot{
+  width:14px;height:14px;flex:0 0 14px;border-radius:50%;
+  background:#ff3b5c;box-shadow:0 0 0 0 rgba(255,59,92,.6);
+  animation:flcRecPulse 1.1s ease-out infinite;
+}
+@keyframes flcRecPulse{
+  0%{box-shadow:0 0 0 0 rgba(255,59,92,.65);transform:scale(1)}
+  70%{box-shadow:0 0 0 12px rgba(255,59,92,0);transform:scale(1.06)}
+  100%{box-shadow:0 0 0 0 rgba(255,59,92,0);transform:scale(1)}
+}
+.flc-rec-time{
+  font-variant-numeric:tabular-nums;font-weight:900;font-size:15px;
+  color:#ffd5dd;min-width:52px;text-align:center;letter-spacing:.4px;
+}
+.flc-rec-wave{
+  flex:1;display:flex;align-items:center;gap:3px;height:34px;min-width:60px;
+  padding:0 4px;overflow:hidden;
+}
+.flc-rec-wave i{
+  flex:1;display:block;background:linear-gradient(180deg,#ff5b7c,#ffa24b);
+  border-radius:3px;min-height:4px;
+  animation:flcWaveBounce 1s ease-in-out infinite;
+}
+.flc-rec-wave i:nth-child(1){animation-delay:0s}
+.flc-rec-wave i:nth-child(2){animation-delay:.1s}
+.flc-rec-wave i:nth-child(3){animation-delay:.2s}
+.flc-rec-wave i:nth-child(4){animation-delay:.3s}
+.flc-rec-wave i:nth-child(5){animation-delay:.4s}
+.flc-rec-wave i:nth-child(6){animation-delay:.3s}
+.flc-rec-wave i:nth-child(7){animation-delay:.2s}
+.flc-rec-wave i:nth-child(8){animation-delay:.1s}
+.flc-rec-wave i:nth-child(9){animation-delay:0s}
+@keyframes flcWaveBounce{
+  0%,100%{height:8px;opacity:.55}
+  50%{height:28px;opacity:1}
+}
+.flc-rec-cancel,.flc-rec-send{
+  width:42px;height:42px;flex:0 0 42px;border-radius:14px;border:0;cursor:pointer;
+  font-size:17px;display:grid;place-items:center;transition:transform .16s,box-shadow .16s,background .2s;
+}
+.flc-rec-cancel{background:rgba(255,255,255,.09);color:#ffb0b8}
+.flc-rec-cancel:hover{background:rgba(255,90,120,.2);color:#fff;transform:translateY(-1px)}
+.flc-rec-send{background:linear-gradient(135deg,#6d5dfc,#25c7ff);color:#fff;box-shadow:0 10px 26px rgba(83,92,220,.35)}
+.flc-rec-send:hover{transform:translateY(-1px) scale(1.03);box-shadow:0 14px 32px rgba(83,92,220,.45)}
+
+/* Sending state */
+.flc-sending{
+  display:flex;align-items:center;gap:11px;width:100%;
+  padding:14px 16px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(124,92,255,.14),rgba(37,217,255,.08));
+  border:1px solid rgba(124,92,255,.3);color:var(--flc-text);font-weight:800;font-size:13px;
+}
+.flc-sending-spinner{
+  width:18px;height:18px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.18);border-top-color:#7c5cff;
+  animation:flcSpin .8s linear infinite;
+}
+@keyframes flcSpin{to{transform:rotate(360deg)}}
+
+/* Voice player inside a comment */
+.flc-voice{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 13px;border-radius:16px;margin:4px 0 10px;
+  background:linear-gradient(135deg,rgba(124,92,255,.14),rgba(37,217,255,.07));
+  border:1px solid rgba(124,92,255,.22);
+  max-width:520px;width:100%;
+}
+.flc-voice-play{
+  flex:0 0 42px;width:42px;height:42px;border-radius:50%;border:0;cursor:pointer;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,#7c5cff,#25d9ff);color:#fff;
+  font-size:15px;box-shadow:0 10px 24px rgba(83,92,220,.3);
+  transition:transform .16s,box-shadow .16s;
+}
+.flc-voice-play:hover{transform:scale(1.06);box-shadow:0 14px 30px rgba(83,92,220,.42)}
+.flc-voice-play:active{transform:scale(.94)}
+.flc-voice-play.playing{background:linear-gradient(135deg,#ff5b7c,#ffa24b);box-shadow:0 12px 28px rgba(255,90,120,.35)}
+.flc-voice-play-icon{line-height:1;font-size:15px;transform:translateX(1px)}
+.flc-voice-play.playing .flc-voice-play-icon{transform:none}
+.flc-voice-track{position:relative;flex:1;min-width:70px;height:34px}
+.flc-voice-wave{display:flex;align-items:center;gap:2px;height:100%}
+.flc-voice-wave span{
+  flex:1;background:rgba(160,175,210,.28);border-radius:3px;
+  min-height:3px;min-width:2px;
+}
+.flc-voice-wave-fill{
+  position:absolute;inset:0;pointer-events:none;
+  clip-path:inset(0 calc((1 - var(--p,0)) * 100%) 0 0);
+  transition:clip-path .06s linear;
+}
+.flc-voice-wave-fill span{background:linear-gradient(180deg,#7c5cff,#25d9ff)}
+.flc-voice-time{
+  font-variant-numeric:tabular-nums;font-size:12px;font-weight:800;
+  color:var(--flc-muted);min-width:44px;text-align:right;
+}
+@media(max-width:700px){
+  .flc-voice-start{width:44px;height:44px;font-size:18px;border-radius:13px}
+  .flc-rec-cancel,.flc-rec-send{width:40px;height:40px;flex-basis:40px}
+  .flc-rec-time{font-size:13px;min-width:46px}
+  .flc-voice{padding:10px;gap:10px}
+  .flc-voice-play{width:38px;height:38px;flex-basis:38px}
+}
+
 
 /* =========================================================
    OVERALL PROGRESS
@@ -7399,11 +7528,27 @@ window.funlearnAchievementEmojiHTML=function(icon){const map={
 <script id="funlearn-comments-premium-js">
 (function(){
   const API='/api/comments', ME='/api/me';
-  const list=document.getElementById('flCommentsList'), compose=document.getElementById('flCommentsCompose'), count=document.getElementById('flCommentsCount');
+  const list=document.getElementById('flCommentsList');
+  const compose=document.getElementById('flCommentsCompose');
+  const count=document.getElementById('flCommentsCount');
   let me=null, comments=[];
+
+  /* ---------- Voice note state ---------- */
+  const MAX_RECORD_SEC = 120;              // batas rekam 2 menit
+  let mediaRecorder=null, audioChunks=[], recordingStream=null;
+  let recordingTimer=null, recordingStartAt=0, recordingCancelled=false;
+  let currentlyPlayingId=null;
+  const voiceEls = new Map(); // id -> {el, audio, playBtn, fill, timeEl}
+
   const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const fmt=v=>{try{return new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'short'}).format(new Date(v))}catch{return ''}};
+  const fmtTime=sec=>{
+    sec = Math.max(0, Math.floor(Number(sec)||0));
+    const m = Math.floor(sec/60), s = sec%60;
+    return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  };
   function fire(){return '<img class="flc-fire" src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f525/512.gif" alt="🔥">'}
+
   function openLogin(){
     try{
       if(typeof window.funlearnCloud?.openAuth==='function'){window.funlearnCloud.openAuth('login');return;}
@@ -7411,14 +7556,205 @@ window.funlearnAchievementEmojiHTML=function(icon){const map={
     }catch(e){}
     const overlay=document.getElementById('funlearnAuthOverlay'); if(overlay){overlay.classList.add('open');}
   }
+
+  /* ---------- Compose (with mic button) ---------- */
   function renderCompose(){
+    // Jangan render ulang saat sedang merekam atau mengirim
+    if(mediaRecorder && mediaRecorder.state !== 'inactive') return;
+
     if(me){
-      compose.innerHTML='<div class="flc-compose"><div class="flc-compose-row"><div class="flc-avatar">'+esc((me.username||'?')[0].toUpperCase())+'</div><textarea id="flCommentInput" class="flc-input" maxlength="2000" placeholder="Tulis komentar kamu…"></textarea></div><div class="flc-actions"><button class="flc-btn flc-primary" id="flCommentSend">Kirim komentar</button></div></div>';
-      document.getElementById('flCommentSend').onclick=send;return;
+      compose.innerHTML =
+        '<div class="flc-compose">'+
+          '<div class="flc-compose-row">'+
+            '<div class="flc-avatar">'+esc((me.username||'?')[0].toUpperCase())+'</div>'+
+            '<textarea id="flCommentInput" class="flc-input" maxlength="2000" placeholder="Tulis komentar kamu…"></textarea>'+
+            '<button class="flc-voice-start" id="flVoiceStart" type="button" aria-label="Rekam pesan suara" title="Pesan suara">🎤</button>'+
+          '</div>'+
+          '<div class="flc-actions">'+
+            '<button class="flc-btn flc-primary" id="flCommentSend" type="button">Kirim komentar</button>'+
+          '</div>'+
+        '</div>';
+      document.getElementById('flCommentSend').onclick=send;
+      document.getElementById('flVoiceStart').onclick=startRecording;
+      return;
     }
-    compose.innerHTML='<div class="flc-login-note">👋 Mau ikut berkomentar? Kamu perlu <button type="button" id="flCommentLogin">login</button> terlebih dahulu.</div>';
+    compose.innerHTML='<div class="flc-login-note">👋 Mau ikut berkomentar atau kirim voice note? Kamu perlu <button type="button" id="flCommentLogin">login</button> terlebih dahulu.</div>';
     document.getElementById('flCommentLogin').onclick=openLogin;
   }
+
+  /* ---------- Recording UI ---------- */
+  function pickMimeType(){
+    if(!window.MediaRecorder) return '';
+    const list=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4','audio/mpeg'];
+    for(const t of list){ try{ if(MediaRecorder.isTypeSupported(t)) return t; }catch(e){} }
+    return '';
+  }
+
+  async function startRecording(){
+    if(!me){openLogin();return;}
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      alert('Browser ini belum mendukung perekaman suara.');return;
+    }
+    if(!window.MediaRecorder){
+      alert('MediaRecorder tidak tersedia di browser ini.');return;
+    }
+
+    try{
+      recordingStream = await navigator.mediaDevices.getUserMedia({audio:true});
+    }catch(err){
+      alert('Tidak bisa mengakses mikrofon. Izinkan akses mikrofon pada browser lalu coba lagi.');
+      return;
+    }
+
+    audioChunks = [];
+    recordingCancelled = false;
+    const mime = pickMimeType();
+    try{
+      mediaRecorder = mime
+        ? new MediaRecorder(recordingStream,{mimeType:mime})
+        : new MediaRecorder(recordingStream);
+    }catch(err){
+      stopStream();
+      alert('Gagal memulai perekaman: '+err.message);
+      return;
+    }
+
+    mediaRecorder.ondataavailable = e=>{ if(e.data && e.data.size>0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = onRecorderStop;
+    try{ mediaRecorder.start(); }catch(err){ stopStream(); alert('Tidak bisa memulai rekaman: '+err.message); return; }
+
+    recordingStartAt = Date.now();
+    showRecordingUI();
+    recordingTimer = setInterval(tickRecording, 100);
+  }
+
+  function showRecordingUI(){
+    const row = compose.querySelector('.flc-compose-row');
+    if(!row) return;
+    row.innerHTML =
+      '<div class="flc-recording">'+
+        '<span class="flc-rec-dot" aria-hidden="true"></span>'+
+        '<span class="flc-rec-time" id="flRecTime">00:00</span>'+
+        '<span class="flc-rec-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>'+
+        '<button class="flc-rec-cancel" id="flRecCancel" type="button" aria-label="Batalkan rekaman" title="Batalkan">🗑️</button>'+
+        '<button class="flc-rec-send" id="flRecSend" type="button" aria-label="Kirim voice note" title="Kirim">➤</button>'+
+      '</div>';
+    document.getElementById('flRecCancel').onclick=cancelRecording;
+    document.getElementById('flRecSend').onclick=stopAndSendRecording;
+  }
+
+  function tickRecording(){
+    const sec = (Date.now()-recordingStartAt)/1000;
+    const t = document.getElementById('flRecTime');
+    if(t) t.textContent = fmtTime(sec);
+    if(sec >= MAX_RECORD_SEC){ stopAndSendRecording(); }
+  }
+
+  function stopStream(){
+    try{ recordingStream && recordingStream.getTracks().forEach(t=>t.stop()); }catch(e){}
+    recordingStream = null;
+  }
+
+  function cancelRecording(){
+    recordingCancelled = true;
+    try{
+      if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+      else onRecorderStop();
+    }catch(e){ onRecorderStop(); }
+  }
+
+  function stopAndSendRecording(){
+    try{
+      if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+      else onRecorderStop();
+    }catch(e){ onRecorderStop(); }
+  }
+
+  async function onRecorderStop(){
+    if(recordingTimer){ clearInterval(recordingTimer); recordingTimer=null; }
+    stopStream();
+
+    const duration = Math.max(0.5,(Date.now()-recordingStartAt)/1000);
+    const wasCancelled = recordingCancelled;
+
+    let blob = null;
+    if(!wasCancelled){
+      try{ blob = new Blob(audioChunks,{type:(mediaRecorder&&mediaRecorder.mimeType)||'audio/webm'}); }catch(e){}
+    }
+    audioChunks = [];
+    mediaRecorder = null;
+    recordingCancelled = false;
+
+    if(wasCancelled || !blob || blob.size === 0){
+      renderCompose();
+      return;
+    }
+    if(duration < 0.6){
+      showToast('Rekaman terlalu pendek.','error');
+      renderCompose();
+      return;
+    }
+    await sendVoiceNote(blob, duration);
+  }
+
+  function showSendingState(){
+    const row = compose.querySelector('.flc-compose-row');
+    if(!row) return;
+    row.innerHTML =
+      '<div class="flc-sending">'+
+        '<div class="flc-sending-spinner" aria-hidden="true"></div>'+
+        '<span>Mengirim voice note…</span>'+
+      '</div>';
+    const actions = compose.querySelector('.flc-actions');
+    if(actions) actions.innerHTML='';
+  }
+
+  function blobToDataURL(blob){
+    return new Promise((resolve,reject)=>{
+      const r = new FileReader();
+      r.onload = ()=>resolve(r.result);
+      r.onerror = ()=>reject(r.error || new Error('Gagal membaca audio'));
+      r.readAsDataURL(blob);
+    });
+  }
+
+  async function sendVoiceNote(blob, duration){
+    showSendingState();
+    try{
+      const dataUrl = await blobToDataURL(blob);
+      const payload = {
+        comment: '🎤 Voice Note',
+        audio: dataUrl,
+        audioDuration: Number(duration.toFixed(2)),
+        audioMime: blob.type || 'audio/webm',
+        voiceNote: true
+      };
+      const r = await fetch(API,{
+        method:'POST',
+        credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(d.error || 'Gagal mengirim voice note');
+
+      const created = d.comment || {};
+      // Pastikan audio tetap tersimpan di sisi klien meskipun server belum balikin field audio.
+      if(!created.audio) created.audio = dataUrl;
+      if(!created.audioDuration) created.audioDuration = payload.audioDuration;
+      created.replies = created.replies || [];
+      comments.unshift(created);
+      render();
+      list.scrollTo({top:0,behavior:'smooth'});
+      showToast('🎤 Voice note terkirim','success');
+    }catch(e){
+      alert(e.message || 'Gagal mengirim voice note');
+    }finally{
+      renderCompose();
+    }
+  }
+
+  /* ---------- Replies ---------- */
   function replyHtml(c){
     const replies=Array.isArray(c.replies)?c.replies:[];
     if(!replies.length) return '';
@@ -7432,50 +7768,299 @@ window.funlearnAchievementEmojiHTML=function(icon){const map={
     const dev=String(r.username).toLowerCase()==='fazmen';
     return '<div class="flc-reply"><div class="flc-reply-avatar">'+esc((r.username||'?')[0].toUpperCase())+'</div><div class="flc-reply-main"><div class="flc-reply-head"><strong>'+esc(r.username||'User')+(dev?'<span class="flc-dev">'+fire()+' DEVELOPER</span>':'')+'</strong><span>'+esc(fmt(r.createdAt))+'</span></div><div class="flc-reply-text">'+esc(r.reply)+'</div></div>'+(owner?'<button class="flc-reply-delete" data-delete-reply="'+esc(r.id)+'" title="Hapus balasan">🗑️</button>':'')+'</div>';
   }
+
+  /* ---------- Voice player markup ---------- */
+  function voicePlayerHtml(c){
+    if(!c.audio) return '';
+    const dur = Number(c.audioDuration) || 0;
+    // Buat waveform deterministik dari id agar konsisten
+    const seed = String(c.id||'').split('').reduce((a,ch)=>a+ch.charCodeAt(0),0) || 1;
+    const bars = [];
+    let s = seed;
+    for(let i=0;i<28;i++){
+      s = (s*9301+49297)%233280;
+      const h = 30 + Math.round((s/233280)*65); // 30%–95%
+      bars.push(h);
+    }
+    const barsHtml = bars.map(h=>'<span style="height:'+h+'%"></span>').join('');
+    return (
+      '<div class="flc-voice" data-voice-id="'+esc(c.id)+'">'+
+        '<button class="flc-voice-play" type="button" aria-label="Putar voice note">'+
+          '<span class="flc-voice-play-icon">▶</span>'+
+        '</button>'+
+        '<div class="flc-voice-track">'+
+          '<div class="flc-voice-wave">'+barsHtml+'</div>'+
+          '<div class="flc-voice-wave flc-voice-wave-fill" style="--p:0">'+barsHtml+'</div>'+
+        '</div>'+
+        '<div class="flc-voice-time">'+fmtTime(dur)+'</div>'+
+        '<audio preload="metadata" data-voice-audio="'+esc(c.id)+'" src="'+esc(c.audio)+'"></audio>'+
+      '</div>'
+    );
+  }
+
+  /* ---------- Render list ---------- */
   function render(){
     count.textContent=comments.length+' komentar';
     if(!comments.length){list.innerHTML='<div class="flc-empty">Belum ada komentar. Jadilah yang pertama ✨</div>';return}
-    list.innerHTML=comments.map((c,i)=>{
-      const long=String(c.comment||'').length>420;
+
+    list.innerHTML = comments.map((c,i)=>{
+      const hasVoice = !!c.audio;
+      const rawText = String(c.comment||'');
+      const showText = hasVoice ? (rawText && rawText.trim() !== '🎤 Voice Note') : !!rawText;
+      const long = rawText.length>420;
       const owner=me&&(c.userId===me.id||String(me.username).toLowerCase()==='fazmen');
       const dev=String(c.username).toLowerCase()==='fazmen';
-      return '<article class="flc-item"><div class="flc-meta"><div class="flc-user-avatar">'+esc((c.username||'?')[0].toUpperCase())+'</div><div><div class="flc-user">'+esc(c.username||'User')+(dev?'<span class="flc-dev">'+fire()+' DEVELOPER</span>':'')+'</div><div class="flc-date">'+esc(fmt(c.createdAt))+'</div></div></div><div class="flc-body '+(long?'flc-collapsed':'')+'" id="flcb-'+i+'">'+esc(c.comment)+'</div>'+(long?'<button class="flc-more" data-more="'+i+'">Show more</button>':'')+'<div class="flc-comment-actions"><button class="flc-like-btn '+(c.liked?'liked':'')+'" data-like="'+esc(c.id)+'">♥ '+(Number(c.likes)||0)+'</button><button class="flc-reply-btn" data-reply="'+esc(c.id)+'">↩ Reply</button>'+(owner?'<button class="flc-delete" title="Hapus komentar" data-delete="'+esc(c.id)+'">🗑️</button>':'')+'</div>'+replyHtml(c)+'<div class="flc-reply-compose" id="flrc-'+esc(c.id)+'"></div></article>';
+      return '<article class="flc-item">'+
+        '<div class="flc-meta">'+
+          '<div class="flc-user-avatar">'+esc((c.username||'?')[0].toUpperCase())+'</div>'+
+          '<div><div class="flc-user">'+esc(c.username||'User')+(dev?'<span class="flc-dev">'+fire()+' DEVELOPER</span>':'')+'</div>'+
+          '<div class="flc-date">'+esc(fmt(c.createdAt))+'</div></div>'+
+        '</div>'+
+        (hasVoice ? voicePlayerHtml(c) : '')+
+        (showText ? '<div class="flc-body '+(long?'flc-collapsed':'')+'" id="flcb-'+i+'">'+esc(rawText)+'</div>' : '')+
+        (showText && long ? '<button class="flc-more" data-more="'+i+'">Show more</button>' : '')+
+        '<div class="flc-comment-actions">'+
+          '<button class="flc-like-btn '+(c.liked?'liked':'')+'" data-like="'+esc(c.id)+'">♥ '+(Number(c.likes)||0)+'</button>'+
+          '<button class="flc-reply-btn" data-reply="'+esc(c.id)+'">↩ Reply</button>'+
+          (owner?'<button class="flc-delete" title="Hapus komentar" data-delete="'+esc(c.id)+'">🗑️</button>':'')+
+        '</div>'+
+        replyHtml(c)+
+        '<div class="flc-reply-compose" id="flrc-'+esc(c.id)+'"></div>'+
+      '</article>';
     }).join('');
-    list.querySelectorAll('[data-more]').forEach(b=>b.onclick=()=>{const el=document.getElementById('flcb-'+b.dataset.more);el.classList.toggle('flc-collapsed');b.textContent=el.classList.contains('flc-collapsed')?'Show more':'Show less'});
+
+    list.querySelectorAll('[data-more]').forEach(b=>b.onclick=()=>{
+      const el=document.getElementById('flcb-'+b.dataset.more);
+      el.classList.toggle('flc-collapsed');
+      b.textContent=el.classList.contains('flc-collapsed')?'Show more':'Show less';
+    });
     list.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>del(b.dataset.delete));
     list.querySelectorAll('[data-like]').forEach(b=>b.onclick=()=>likeComment(b.dataset.like));
     list.querySelectorAll('[data-reply]').forEach(b=>b.onclick=()=>openReply(b.dataset.reply));
     list.querySelectorAll('[data-replies-more]').forEach(b=>b.onclick=()=>showAllReplies(b.dataset.repliesMore,b));
     list.querySelectorAll('[data-delete-reply]').forEach(b=>b.onclick=()=>delReply(b.dataset.deleteReply));
+
+    bindVoicePlayers();
   }
-  async function likeComment(commentId){if(!me){openLogin();return}try{const r=await fetch(API+'/'+encodeURIComponent(commentId)+'/like',{method:'POST',credentials:'include'});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Gagal memberi like');const c=comments.find(x=>String(x.id)===String(commentId));if(c){c.likes=d.likes;c.liked=d.liked}render()}catch(e){alert(e.message)}}
-  function openReply(commentId){
-    if(!me){openLogin();return;}
-    const box=document.getElementById('flrc-'+commentId);if(!box)return;
-    if(box.innerHTML){box.innerHTML='';return;}
-    box.innerHTML='<div class="flc-reply-form"><textarea maxlength="2000" placeholder="Tulis balasan…"></textarea><div><button class="flc-btn flc-ghost flc-reply-cancel">Batal</button><button class="flc-btn flc-primary flc-reply-send">Balas</button></div></div>';
-    const ta=box.querySelector('textarea');box.querySelector('.flc-reply-cancel').onclick=()=>box.innerHTML='';box.querySelector('.flc-reply-send').onclick=()=>sendReply(commentId,ta,box);ta.focus();
+
+  /* ---------- Voice playback ---------- */
+  function bindVoicePlayers(){
+    voiceEls.clear();
+    currentlyPlayingId = null;
+    list.querySelectorAll('.flc-voice').forEach(el=>{
+      const id = el.dataset.voiceId;
+      const audio = el.querySelector('audio');
+      const playBtn = el.querySelector('.flc-voice-play');
+      const fill = el.querySelector('.flc-voice-wave-fill');
+      const timeEl = el.querySelector('.flc-voice-time');
+      if(!audio || !playBtn) return;
+
+      voiceEls.set(id,{el,audio,playBtn,fill,timeEl});
+
+      playBtn.onclick = ()=>toggleVoicePlay(id);
+
+      audio.addEventListener('loadedmetadata',()=>{
+        if(isFinite(audio.duration) && audio.duration>0){
+          audio.dataset.realDuration = audio.duration;
+          if(timeEl && currentlyPlayingId !== id) timeEl.textContent = fmtTime(audio.duration);
+        }
+      });
+      audio.addEventListener('timeupdate',()=>{
+        if(!isFinite(audio.duration) || audio.duration<=0) return;
+        const p = audio.currentTime / audio.duration;
+        if(fill) fill.style.setProperty('--p', String(p));
+        if(timeEl) timeEl.textContent = fmtTime(audio.currentTime);
+      });
+      audio.addEventListener('ended',()=>{
+        playBtn.classList.remove('playing');
+        playBtn.innerHTML = '<span class="flc-voice-play-icon">▶</span>';
+        if(fill) fill.style.setProperty('--p','0');
+        if(timeEl){
+          const dur = Number(audio.dataset.realDuration)||0;
+          timeEl.textContent = fmtTime(dur);
+        }
+        if(currentlyPlayingId === id) currentlyPlayingId = null;
+      });
+      audio.addEventListener('error',()=>{
+        playBtn.classList.remove('playing');
+        playBtn.innerHTML = '<span class="flc-voice-play-icon">▶</span>';
+        if(fill) fill.style.setProperty('--p','0');
+        if(currentlyPlayingId === id) currentlyPlayingId = null;
+      });
+    });
   }
-  function showAllReplies(id,btn){
-    const c=comments.find(x=>x.id===id);if(!c)return;const box=list.querySelector('[data-replies-for="'+CSS.escape(id)+'"]');if(!box)return;box.innerHTML=(c.replies||[]).map(replyCard).join('');btn.remove();box.querySelectorAll('[data-delete-reply]').forEach(b=>b.onclick=()=>delReply(b.dataset.deleteReply));
+
+  function stopCurrentlyPlaying(exceptId){
+    if(!currentlyPlayingId || currentlyPlayingId === exceptId) return;
+    const prev = voiceEls.get(currentlyPlayingId);
+    if(prev && prev.audio){
+      try{ prev.audio.pause(); prev.audio.currentTime = 0; }catch(e){}
+      prev.playBtn.classList.remove('playing');
+      prev.playBtn.innerHTML = '<span class="flc-voice-play-icon">▶</span>';
+      if(prev.fill) prev.fill.style.setProperty('--p','0');
+      if(prev.timeEl){
+        const dur = Number(prev.audio.dataset.realDuration)||0;
+        prev.timeEl.textContent = fmtTime(dur);
+      }
+    }
+    currentlyPlayingId = null;
   }
+
+  function toggleVoicePlay(id){
+    const ref = voiceEls.get(id);
+    if(!ref || !ref.audio) return;
+    stopCurrentlyPlaying(id);
+
+    if(ref.audio.paused){
+      ref.audio.play().then(()=>{
+        currentlyPlayingId = id;
+        ref.playBtn.classList.add('playing');
+        ref.playBtn.innerHTML = '<span class="flc-voice-play-icon">❚❚</span>';
+      }).catch(err=>{
+        alert('Tidak dapat memutar voice note: ' + (err.message||err));
+      });
+    }else{
+      ref.audio.pause();
+      ref.playBtn.classList.remove('playing');
+      ref.playBtn.innerHTML = '<span class="flc-voice-play-icon">▶</span>';
+      if(currentlyPlayingId === id) currentlyPlayingId = null;
+    }
+  }
+
+  /* ---------- Data loading ---------- */
   async function loadUserAndRender(){
-    try{const mr=await fetch(ME,{credentials:'include',cache:'no-store'});const md=await mr.json().catch(()=>({}));me=md?.user||null}catch(e){me=null}
+    try{
+      const mr = await fetch(ME,{credentials:'include',cache:'no-store'});
+      const md = await mr.json().catch(()=>({}));
+      me = md?.user || null;
+    }catch(e){ me = null; }
     renderCompose();
     render();
   }
+
   async function load(){
     await loadUserAndRender();
-    try{const r=await fetch(API,{credentials:'include',cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Gagal memuat');comments=Array.isArray(d.comments)?d.comments:[];render()}catch(e){list.innerHTML='<div class="flc-empty">Komentar belum dapat dimuat. Coba refresh halaman.</div>';count.textContent='—'}
+    try{
+      const r = await fetch(API,{credentials:'include',cache:'no-store'});
+      const d = await r.json();
+      if(!r.ok) throw new Error(d.error||'Gagal memuat');
+      comments = Array.isArray(d.comments) ? d.comments : [];
+      render();
+    }catch(e){
+      list.innerHTML='<div class="flc-empty">Komentar belum dapat dimuat. Coba refresh halaman.</div>';
+      count.textContent='—';
+    }
   }
-  window.addEventListener('funlearn:auth-changed',async()=>{
-    await loadUserAndRender();
-  });
-  async function send(){const input=document.getElementById('flCommentInput');const comment=input?.value.trim();if(!comment)return;const btn=document.getElementById('flCommentSend');btn.disabled=true;btn.textContent='Mengirim…';try{const r=await fetch(API,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({comment})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Gagal mengirim komentar');input.value='';comments.unshift({...d.comment,replies:[]});render();list.scrollTo({top:0,behavior:'smooth'})}catch(e){alert(e.message)}finally{btn.disabled=false;btn.textContent='Kirim komentar'}}
-  async function sendReply(commentId,ta,box){const reply=ta.value.trim();if(!reply)return;const btn=box.querySelector('.flc-reply-send');btn.disabled=true;btn.textContent='Mengirim…';try{const r=await fetch(API+'/'+encodeURIComponent(commentId)+'/replies',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({reply})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Gagal mengirim balasan');const c=comments.find(x=>x.id===commentId);if(c){c.replies=c.replies||[];c.replies.push(d.reply)}box.innerHTML='';render()}catch(e){alert(e.message)}finally{btn.disabled=false;btn.textContent='Balas'}}
-  async function del(id){if(!confirm('Hapus komentar ini?'))return;try{const r=await fetch(API+'/'+encodeURIComponent(id),{method:'DELETE',credentials:'include'});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Gagal menghapus');comments=comments.filter(x=>x.id!==id);render()}catch(e){alert(e.message)}}
-  async function delReply(id){if(!confirm('Hapus balasan ini?'))return;try{const r=await fetch(API+'/reply/'+encodeURIComponent(id),{method:'DELETE',credentials:'include'});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Gagal menghapus balasan');comments.forEach(c=>{c.replies=(c.replies||[]).filter(x=>x.id!==id)});render()}catch(e){alert(e.message)}}
+
+  window.addEventListener('funlearn:auth-changed', async ()=>{ await loadUserAndRender(); });
+
+  /* ---------- Send text comment ---------- */
+  async function send(){
+    const input = document.getElementById('flCommentInput');
+    const comment = input?.value.trim();
+    if(!comment) return;
+    const btn = document.getElementById('flCommentSend');
+    btn.disabled = true; btn.textContent = 'Mengirim…';
+    try{
+      const r = await fetch(API,{
+        method:'POST',credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({comment})
+      });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(d.error||'Gagal mengirim komentar');
+      input.value='';
+      const created = d.comment || {};
+      created.replies = created.replies || [];
+      comments.unshift(created);
+      render();
+      list.scrollTo({top:0,behavior:'smooth'});
+    }catch(e){ alert(e.message); }
+    finally{ btn.disabled = false; btn.textContent = 'Kirim komentar'; }
+  }
+
+  async function sendReply(commentId, ta, box){
+    const reply = ta.value.trim();
+    if(!reply) return;
+    const btn = box.querySelector('.flc-reply-send');
+    btn.disabled=true; btn.textContent='Mengirim…';
+    try{
+      const r = await fetch(API+'/'+encodeURIComponent(commentId)+'/replies',{
+        method:'POST',credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({reply})
+      });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(d.error||'Gagal mengirim balasan');
+      const c = comments.find(x=>String(x.id)===String(commentId));
+      if(c){ c.replies = c.replies||[]; c.replies.push(d.reply); }
+      box.innerHTML='';
+      render();
+    }catch(e){ alert(e.message); }
+    finally{ btn.disabled=false; btn.textContent='Balas'; }
+  }
+
+  async function likeComment(commentId){
+    if(!me){openLogin();return}
+    try{
+      const r = await fetch(API+'/'+encodeURIComponent(commentId)+'/like',{method:'POST',credentials:'include'});
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(d.error||'Gagal memberi like');
+      const c = comments.find(x=>String(x.id)===String(commentId));
+      if(c){ c.likes=d.likes; c.liked=d.liked; }
+      render();
+    }catch(e){ alert(e.message); }
+  }
+
+  function openReply(commentId){
+    if(!me){openLogin();return;}
+    const box = document.getElementById('flrc-'+commentId);
+    if(!box) return;
+    if(box.innerHTML){ box.innerHTML=''; return; }
+    box.innerHTML='<div class="flc-reply-form"><textarea maxlength="2000" placeholder="Tulis balasan…"></textarea><div><button class="flc-btn flc-ghost flc-reply-cancel" type="button">Batal</button><button class="flc-btn flc-primary flc-reply-send" type="button">Balas</button></div></div>';
+    const ta = box.querySelector('textarea');
+    box.querySelector('.flc-reply-cancel').onclick=()=>box.innerHTML='';
+    box.querySelector('.flc-reply-send').onclick=()=>sendReply(commentId,ta,box);
+    ta.focus();
+  }
+
+  function showAllReplies(id,btn){
+    const c = comments.find(x=>x.id===id);
+    if(!c) return;
+    const box = list.querySelector('[data-replies-for="'+CSS.escape(id)+'"]');
+    if(!box) return;
+    box.innerHTML = (c.replies||[]).map(replyCard).join('');
+    btn.remove();
+    box.querySelectorAll('[data-delete-reply]').forEach(b=>b.onclick=()=>delReply(b.dataset.deleteReply));
+  }
+
+  async function del(id){
+    if(!confirm('Hapus komentar ini?')) return;
+    try{
+      const r = await fetch(API+'/'+encodeURIComponent(id),{method:'DELETE',credentials:'include'});
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(d.error||'Gagal menghapus');
+      comments = comments.filter(x=>x.id!==id);
+      render();
+    }catch(e){ alert(e.message); }
+  }
+
+  async function delReply(id){
+    if(!confirm('Hapus balasan ini?')) return;
+    try{
+      const r = await fetch(API+'/reply/'+encodeURIComponent(id),{method:'DELETE',credentials:'include'});
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(d.error||'Gagal menghapus balasan');
+      comments.forEach(c=>{ c.replies=(c.replies||[]).filter(x=>x.id!==id); });
+      render();
+    }catch(e){ alert(e.message); }
+  }
+
   document.getElementById('fl-comments-fab').onclick=()=>document.getElementById('funlearn-comments-section').scrollIntoView({behavior:'smooth',block:'start'});
+
+  // Hentikan audio yang sedang diputar ketika keluar dari halaman
+  window.addEventListener('beforeunload',()=>{ stopCurrentlyPlaying(null); });
+
   load();
 })();
 </script>
