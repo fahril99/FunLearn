@@ -8107,28 +8107,35 @@ document.addEventListener('click',e=>{if(!d.contains(e.target))close()});
 html[data-theme="light"] .funlearn-folder-memory-box{color:#5d6f63;background:rgba(90,120,100,.06)}
 html[data-theme="light"] .funlearn-folder-memory-box b,
 html[data-theme="light"] .funlearn-folder-memory-box .fm-name{color:#1d2b22}
+
+/* Placeholder items: badge kecil supaya user tahu butuh di-hubungkan dulu */
+.video-item[data-placeholder="1"]{position:relative;padding-right:28px}
+.video-item[data-placeholder="1"]::before{
+  content:"🔌";position:absolute;right:8px;top:50%;
+  transform:translateY(-50%);font-size:11px;opacity:.55;
+}
+.video-item[data-placeholder="1"]:hover::before{opacity:1}
+.video-item[data-placeholder="1"]:hover{background:#252b34;color:#fff}
 </style>
   <script id="funlearn-folder-memory-js">
 (function(){
 'use strict';
 
 /* =========================================================
-   FunLearn Folder Memory v4
+   FunLearn Folder Memory v5
    ---------------------------------------------------------
-   Prinsip:
-   - Yang diingat = NAMA + DAFTAR FILE folder, bukan isi video.
-   - Disimpan di localStorage (instan) + appDatabase.folderProfile
-     (sync ke akun via /api/sync).
-   - Deteksi folder terhubung lewat MutationObserver pada #categories,
-     bukan lewat hook window.loadFolder (yang tidak reliable).
-   - Setelah video asli muncul -> capture dari `videoEntries` (Map
-     internal FunLearn) atau fallback dari DOM.
+   Perbaikan dari v4:
+   - Klik placeholder -> coba pakai handle FSA tersimpan dulu
+     (cukup prompt permission, tanpa navigasi folder baru).
+   - Setelah folder berhasil dimuat (FSA / FileList), video
+     yang tadi diklik otomatis diputar (auto-open pending).
+   - Matching path by basename sebagai fallback.
+   - Placeholder diberi ikon 🔌 agar jelas butuh dihubungkan.
    ========================================================= */
 
-const LS_PROFILE = 'funlearn_folder_profile_v4';
-const LS_HANDLE  = 'funlearn_folder_handle_v4';
+const LS_PROFILE = 'funlearn_folder_profile_v5';
+const LS_HANDLE  = 'funlearn_folder_handle_v5';
 
-/* ---------- utils ---------- */
 function log(...a){ try{ console.log('[FolderMemory]', ...a); }catch(e){} }
 function warn(...a){ try{ console.warn('[FolderMemory]', ...a); }catch(e){} }
 function esc(s){ return String(s??'').replace(/[&<>'"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
@@ -8169,9 +8176,7 @@ function writeLocalProfile(p){
     else localStorage.removeItem(LS_PROFILE);
   }catch(e){}
 }
-function getProfile(){
-  return readAppProfile() || readLocalProfile();
-}
+function getProfile(){ return readAppProfile() || readLocalProfile(); }
 async function saveProfile(p){
   writeLocalProfile(p);
   if(writeAppProfile(p)){
@@ -8182,7 +8187,6 @@ async function saveProfile(p){
 function hasDeviceHandle(){ try{ return localStorage.getItem(LS_HANDLE) === '1'; }catch(e){ return false; } }
 function setDeviceHandle(v){ try{ if(v) localStorage.setItem(LS_HANDLE,'1'); else localStorage.removeItem(LS_HANDLE); }catch(e){} }
 
-/* ---------- EARLY INJECT ---------- */
 function injectEarly(){
   if(readAppProfile()) return;
   const p = readLocalProfile();
@@ -8191,16 +8195,11 @@ function injectEarly(){
 injectEarly();
 
 /* =========================================================
-   CAPTURE FROM RUNTIME STATE
-   Sumber data (prioritas):
-   1) global `videoEntries` (Map path -> {handle,name})
-   2) DOM `.video-item[data-path]` (kecuali placeholder)
+   CAPTURE FROM RUNTIME
    ========================================================= */
 function readVideoEntriesMap(){
   try{
-    if(typeof videoEntries !== 'undefined' && videoEntries && videoEntries.size){
-      return videoEntries;
-    }
+    if(typeof videoEntries !== 'undefined' && videoEntries && videoEntries.size) return videoEntries;
   }catch(e){ warn('read videoEntries', e); }
   return null;
 }
@@ -8209,7 +8208,6 @@ function captureFromRuntime(){
   const videos = [];
   const cats = new Set();
 
-  // Sumber 1: videoEntries (paling akurat, terisi oleh createVideoItem)
   const map = readVideoEntriesMap();
   if(map){
     try{
@@ -8225,7 +8223,6 @@ function captureFromRuntime(){
     }catch(e){ warn('iterate videoEntries', e); }
   }
 
-  // Sumber 2: DOM (fallback kalau videoEntries tidak ada)
   if(!videos.length){
     document.querySelectorAll('#categories .video-item[data-path]:not([data-placeholder="1"])').forEach(el => {
       const path = el.dataset.path;
@@ -8241,7 +8238,6 @@ function captureFromRuntime(){
 
   if(!videos.length) return null;
 
-  // Nama folder (prioritas: rootFolderHandle -> selectedFolderLabel -> status text)
   let folderName = '';
   try{
     if(typeof rootFolderHandle !== 'undefined' && rootFolderHandle && rootFolderHandle.name){
@@ -8250,9 +8246,7 @@ function captureFromRuntime(){
   }catch(e){}
   if(!folderName){
     try{
-      if(typeof selectedFolderLabel !== 'undefined' && selectedFolderLabel){
-        folderName = selectedFolderLabel;
-      }
+      if(typeof selectedFolderLabel !== 'undefined' && selectedFolderLabel) folderName = selectedFolderLabel;
     }catch(e){}
   }
   if(!folderName){
@@ -8262,12 +8256,9 @@ function captureFromRuntime(){
   }
   if(!folderName) folderName = 'FunLearn Folder';
 
-  // Mode
   let mode = 'filelist';
   try{
-    if(typeof folderMode !== 'undefined' && folderMode && folderMode !== 'none'){
-      mode = folderMode;
-    }
+    if(typeof folderMode !== 'undefined' && folderMode && folderMode !== 'none') mode = folderMode;
   }catch(e){}
   if(mode === 'fsa') setDeviceHandle(true);
 
@@ -8282,39 +8273,79 @@ function captureFromRuntime(){
 }
 
 /* =========================================================
-   DETECTOR — panggil capture setiap ada video asli muncul
+   OPEN PENDING VIDEO (auto-play setelah folder berhasil dimuat)
+   ========================================================= */
+let pendingOpenPath = null;
+let pendingOpenTimer = null;
+
+function scheduleOpenPending(delay){
+  clearTimeout(pendingOpenTimer);
+  pendingOpenTimer = setTimeout(openPendingIfAny, delay || 350);
+}
+
+function openPendingIfAny(){
+  if(!pendingOpenPath) return false;
+  const target = pendingOpenPath;
+
+  const videoMap = readVideoEntriesMap();
+  if(!videoMap || !videoMap.size) return false;
+
+  // 1) Exact path match
+  if(videoMap.get(target)){
+    const entry = videoMap.get(target);
+    pendingOpenPath = null;
+    log('auto-open (exact):', target);
+    setTimeout(()=>{ try{ openVideo(entry.handle, target, entry.name); }catch(e){ warn('openVideo', e); } }, 250);
+    return true;
+  }
+
+  // 2) Match by basename (kalau path berubah dikit)
+  const basename = String(target).split('/').pop();
+  for(const [path, entry] of videoMap){
+    if(path === target || path.endsWith('/' + basename)){
+      pendingOpenPath = null;
+      log('auto-open (basename):', path);
+      setTimeout(()=>{ try{ openVideo(entry.handle, path, entry.name); }catch(e){ warn('openVideo', e); } }, 250);
+      return true;
+    }
+  }
+
+  // Belum ada, coba lagi nanti
+  warn('pending belum match, coba lagi nanti:', target);
+  setTimeout(openPendingIfAny, 600);
+  return false;
+}
+
+/* =========================================================
+   DETECTOR
    ========================================================= */
 let _captureTimer = null;
-let _lastCapturedCount = 0;
 
 function scheduleCapture(reason){
   clearTimeout(_captureTimer);
   _captureTimer = setTimeout(async () => {
     const hasReal = document.querySelector('#categories .video-item:not([data-placeholder="1"])');
-    if(!hasReal){
-      updateBox();
-      return;
-    }
+    if(!hasReal){ updateBox(); return; }
+
     const profile = captureFromRuntime();
-    if(!profile){
-      warn('capture returned null despite DOM has videos');
-      updateBox();
-      return;
-    }
-    // Hindari save berulang kalau tidak berubah
+    if(!profile){ updateBox(); return; }
+
     const prev = getProfile();
     if(prev && prev.name === profile.name && prev.videos.length === profile.videos.length){
-      _lastCapturedCount = profile.videos.length;
       updateBox();
+      scheduleOpenPending(120);
       return;
     }
+
     log('captured', reason, '->', profile.name, profile.videos.length, 'videos');
-    _lastCapturedCount = profile.videos.length;
     await saveProfile(profile);
     updateBox();
+
     const fb = document.getElementById('folderButton');
     if(fb) fb.textContent = '✓ ' + profile.name;
-  }, 350);
+
+    scheduleOpenPending(180);
+  }, 300);
 }
 
 function startDetector(){
@@ -8322,25 +8353,19 @@ function startDetector(){
   if(!cats) return;
 
   new MutationObserver(() => scheduleCapture('mutation')).observe(cats, {childList:true, subtree:true});
-
-  // Cek awal (kalau sidebar sudah terisi sebelum observer terpasang)
   scheduleCapture('initial');
 
-  // Backstop: cek tiap 2 detik, berhenti setelah 20 kali
   let ticks = 0;
   const iv = setInterval(() => {
     ticks++;
     const hasReal = document.querySelector('#categories .video-item:not([data-placeholder="1"])');
-    const prof = getProfile();
-    if(hasReal && !prof){
-      scheduleCapture('backstop');
-    }
-    if(ticks > 20 || (hasReal && prof)) clearInterval(iv);
+    if(hasReal && !getProfile()) scheduleCapture('backstop');
+    if(ticks > 20) clearInterval(iv);
   }, 2000);
 }
 
 /* =========================================================
-   PLACEHOLDER SIDEBAR (dari metadata, kalau video asli belum ada)
+   PLACEHOLDER SIDEBAR
    ========================================================= */
 function buildPlaceholderSidebar(profile){
   const categoriesEl = document.getElementById('categories');
@@ -8378,6 +8403,7 @@ function buildPlaceholderSidebar(profile){
       item.className = 'video-item';
       item.dataset.path = v.path;
       item.dataset.placeholder = '1';
+      item.title = 'Klik untuk menghubungkan folder & putar video ini';
 
       const t = document.createElement('div');
       t.textContent = (typeof removeExtension === 'function')
@@ -8411,21 +8437,41 @@ function buildPlaceholderSidebar(profile){
   return true;
 }
 
-let pendingOpenPath = null;
-function onPlaceholderClick(v){
+/* =========================================================
+   CLICK HANDLER untuk placeholder
+   Strategi:
+   1) Kalau ada handle FSA tersimpan + mode 'fsa' -> coba pakai (cukup prompt permission)
+   2) Kalau tidak berhasil -> fallback ke folderButton picker
+   ========================================================= */
+async function onPlaceholderClick(v){
   pendingOpenPath = v.path;
+  const profile = getProfile();
+  const canFSA = (typeof window.showDirectoryPicker === 'function');
+
+  if(canFSA && profile && profile.mode === 'fsa' && hasDeviceHandle()){
+    try{
+      const handle = await (typeof getStoredFolderHandle === 'function' ? getStoredFolderHandle() : Promise.resolve(null));
+      if(handle){
+        let perm = await handle.queryPermission({mode:'readwrite'});
+        if(perm !== 'granted'){
+          try{ perm = await handle.requestPermission({mode:'readwrite'}); }catch(e){}
+        }
+        if(perm === 'granted'){
+          log('placeholder click -> FSA reconnect');
+          try{
+            await loadFolder(handle);
+            scheduleOpenPending(150);
+            return;
+          }catch(e){ warn('loadFolder on click failed', e); }
+        }
+      }
+    }catch(e){ warn('onPlaceholderClick FSA', e); }
+  }
+
+  // Fallback: folder button -> native picker
   try{ if(typeof showToast === 'function') showToast('🔌 Pilih folder untuk memutar "'+v.name+'"','coin'); }catch(e){}
   const fb = document.getElementById('folderButton');
   if(fb) fb.click();
-}
-function openPendingIfAny(){
-  if(!pendingOpenPath) return;
-  try{
-    if(typeof videoEntries === 'undefined' || !videoEntries.get(pendingOpenPath)) return;
-  }catch(e){ return; }
-  const p = pendingOpenPath; pendingOpenPath = null;
-  const entry = videoEntries.get(p);
-  setTimeout(()=>{ try{ openVideo(entry.handle, p, entry.name); }catch(e){} }, 250);
 }
 
 /* =========================================================
@@ -8441,7 +8487,6 @@ function updateBox(){
   if(!host) return;
   const profile = getProfile();
   const hasReal = !!document.querySelector('#categories .video-item:not([data-placeholder="1"])');
-  const connected = hasReal;
 
   if(!profile){
     host.innerHTML =
@@ -8450,16 +8495,16 @@ function updateBox(){
     return;
   }
 
-  const badge = connected
+  const badge = hasReal
     ? '<span class="fm-badge ok">✓ Terhubung</span>'
-    : '<span class="fm-badge warn">⚠ Belum terhubung di perangkat ini</span>';
+    : '<span class="fm-badge warn">⚠ Klik video untuk menghubungkan</span>';
 
   host.innerHTML =
     '<div class="fm-row">📦 <b>Folder Memory</b> ' + badge + '</div>' +
     '<div class="fm-row">📁 <span class="fm-name">' + esc(profile.name) + '</span> • ' + profile.videos.length + ' video • ' + (profile.categories?.length || 0) + ' kategori</div>' +
-    '<div class="fm-row" style="opacity:.7">Tersimpan di akun. Video tetap di folder asli perangkat — bukan di server.</div>' +
+    '<div class="fm-row" style="opacity:.7">Tersimpan di akun. Video tetap di folder asli perangkat.</div>' +
     '<div class="fm-actions">' +
-      '<button type="button" id="fmConnectBtn">🔌 ' + (connected ? 'Sambungkan Ulang' : 'Hubungkan Sekarang') + '</button>' +
+      '<button type="button" id="fmConnectBtn">🔌 ' + (hasReal ? 'Sambungkan Ulang' : 'Hubungkan Sekarang') + '</button>' +
       '<button type="button" class="fm-danger" id="fmDisconnectBtn">🗑️ Putuskan / Ganti Folder</button>' +
     '</div>';
 
@@ -8478,8 +8523,8 @@ async function disconnectFolder(){
     writeLocalProfile(null);
     setDeviceHandle(false);
     if(typeof appDatabase !== 'undefined' && appDatabase) appDatabase.folderProfile = null;
+    pendingOpenPath = null;
 
-    // Hapus handle FSA dari IndexedDB
     await new Promise(res=>{
       try{
         const req = indexedDB.open('WebMakerFolderHandle',1);
@@ -8496,7 +8541,6 @@ async function disconnectFolder(){
       }catch(e){ res(); }
     });
 
-    // Bersihkan runtime
     try{ if(typeof selectedFiles !== 'undefined' && selectedFiles?.clear) selectedFiles.clear(); }catch(e){}
     try{ if(typeof videoEntries !== 'undefined' && videoEntries?.clear) videoEntries.clear(); }catch(e){}
 
@@ -8529,7 +8573,6 @@ async function autoReconnect(){
       if(local){ writeAppProfile(local); profile = local; }
     }
 
-    // Sudah ada video asli di DOM -> capture dulu
     const hasReal = !!document.querySelector('#categories .video-item:not([data-placeholder="1"])');
     if(hasReal){
       scheduleCapture('autoReconnect-hasReal');
@@ -8537,31 +8580,25 @@ async function autoReconnect(){
       return;
     }
 
-    if(!profile){
-      updateBox();
-      return;
-    }
+    if(!profile){ updateBox(); return; }
 
-    // Coba FSA auto-reconnect (kalau didukung + handle tersimpan)
     const canFSA = (typeof window.showDirectoryPicker === 'function');
     if(profile.mode === 'fsa' && canFSA && hasDeviceHandle()){
       try{
-        const handle = await (typeof getStoredFolderHandle === 'function'
-          ? getStoredFolderHandle() : Promise.resolve(null));
+        const handle = await (typeof getStoredFolderHandle === 'function' ? getStoredFolderHandle() : Promise.resolve(null));
         if(handle){
           const perm = await handle.queryPermission({mode:'readwrite'});
           if(perm === 'granted'){
-            log('FSA auto-reconnect: loading folder');
-            await loadFolder(handle); // akan memicu MutationObserver -> capture
+            log('FSA auto-reconnect: loading folder silently');
+            await loadFolder(handle);
             return;
           }
         }
       }catch(e){ warn('FSA auto-reconnect', e); }
     }
 
-    // Fallback: tampilkan sidebar dari metadata
     buildPlaceholderSidebar(profile);
-    setStatus(`📁 <b>${esc(profile.name)}</b> • ${profile.videos.length} video • klik tombol folder untuk hubungkan`);
+    setStatus(`📁 <b>${esc(profile.name)}</b> • ${profile.videos.length} video • klik video atau tombol folder untuk hubungkan`);
     updateBox();
   }catch(e){
     warn('autoReconnect', e);
@@ -8574,7 +8611,6 @@ async function autoReconnect(){
    BOOT
    ========================================================= */
 function boot(){
-  // Suntik UI box di bawah folderStatus
   const folderStatus = document.getElementById('folderStatus');
   if(folderStatus && !document.getElementById('funlearnFolderMemoryBox')){
     const box = document.createElement('div');
@@ -8588,12 +8624,10 @@ function boot(){
   startDetector();
   updateBox();
 
-  // Multi-pass
   setTimeout(()=>{ updateBox(); autoReconnect(); }, 800);
   setTimeout(()=>{ updateBox(); autoReconnect(); }, 2000);
   setTimeout(()=>{ updateBox(); autoReconnect(); }, 4000);
 
-  // Re-inject kalau appDatabase.folderProfile hilang (mis. habis applyCloudState)
   let injectTicks = 0;
   const injectIv = setInterval(()=>{
     injectTicks++;
@@ -8601,14 +8635,12 @@ function boot(){
     if(injectTicks > 30) clearInterval(injectIv);
   }, 1500);
 
-  // Saat tab kembali aktif
   document.addEventListener('visibilitychange', ()=>{
     if(document.visibilityState === 'visible'){
-      setTimeout(()=>{ updateBox(); scheduleCapture('visibility'); }, 300);
+      setTimeout(()=>{ updateBox(); scheduleCapture('visibility'); scheduleOpenPending(300); }, 300);
     }
   });
 
-  // Saat auth berubah (login/logout/switch akun)
   window.addEventListener('funlearn:auth-changed', ()=>{
     setTimeout(()=>{
       if(!readAppProfile() && readLocalProfile()) injectEarly();
@@ -8624,17 +8656,16 @@ if(document.readyState === 'loading'){
   boot();
 }
 
-/* ---------- public API ---------- */
 window.funlearnFolderMemory = {
   getProfile,
   autoReconnect,
   captureNow: ()=>scheduleCapture('manual'),
   disconnect: disconnectFolder,
-  clearMemory: disconnectFolder
+  clearMemory: disconnectFolder,
+  openPending: openPendingIfAny
 };
 })();
 </script>
-  
 </html>
 
 <style id="funlearn-fixes-20260919">
