@@ -8080,71 +8080,57 @@ c.onclick=e=>{e.stopPropagation();close();const b=document.getElementById('fl-co
 document.addEventListener('click',e=>{if(!d.contains(e.target))close()});
 })();
 </script></body>
-  <style id="funlearn-folder-memory-css">
-.funlearn-folder-cache-info{
-  margin:8px 0 14px;padding:10px 12px;
-  border:1px dashed var(--border);
-  border-radius:10px;
+ <style id="funlearn-folder-memory-css">
+.funlearn-folder-memory-box{
+  margin:10px 0 14px;padding:11px 13px;
+  border:1px dashed var(--border);border-radius:11px;
   background:rgba(120,140,180,.05);
-  font-size:11px;line-height:1.6;color:#a7b0be;
+  font-size:11.5px;line-height:1.6;color:#a7b0be;
 }
-.funlearn-folder-cache-info b{color:#dfe6ef}
-.funlearn-folder-cache-info .fm-badge{
-  display:inline-block;padding:2px 7px;border-radius:999px;
-  font-size:10px;font-weight:800;margin-left:4px;
+.funlearn-folder-memory-box b{color:#dfe6ef}
+.funlearn-folder-memory-box .fm-row{margin-bottom:2px}
+.funlearn-folder-memory-box .fm-name{color:#eaf0ff;font-weight:800}
+.funlearn-folder-memory-box .fm-badge{
+  display:inline-block;padding:2px 8px;border-radius:999px;
+  font-size:10px;font-weight:800;margin-left:5px;
+  vertical-align:1px;
 }
-.funlearn-folder-cache-info .fm-badge.ok{background:rgba(92,213,33,.14);color:#8ce85c;border:1px solid rgba(92,213,33,.3)}
-.funlearn-folder-cache-info .fm-badge.warn{background:rgba(255,190,60,.13);color:#ffcd72;border:1px solid rgba(255,190,60,.3)}
-.funlearn-folder-cache-info button{
-  margin-top:7px;margin-right:6px;
-  border:1px solid var(--border);
-  background:var(--card2);color:var(--text);
-  border-radius:7px;padding:5px 9px;
-  font-size:10px;font-weight:800;cursor:pointer;
+.funlearn-folder-memory-box .fm-badge.ok{background:rgba(92,213,33,.14);color:#8ce85c;border:1px solid rgba(92,213,33,.35)}
+.funlearn-folder-memory-box .fm-badge.warn{background:rgba(255,190,60,.13);color:#ffcd72;border:1px solid rgba(255,190,60,.3)}
+.funlearn-folder-memory-box .fm-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.funlearn-folder-memory-box button{
+  border:1px solid var(--border);background:var(--card2);color:var(--text);
+  border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;
+  transition:.16s;
 }
-.funlearn-folder-cache-info button:hover{border-color:var(--green)}
-.funlearn-folder-cache-info button.fm-danger{color:#ff8b8b;border-color:#542b2b;background:#211719}
-.funlearn-folder-cache-info button.fm-danger:hover{background:#321b1d}
-html[data-theme="light"] .funlearn-folder-cache-info{
-  color:#5d6f63;background:rgba(90,120,100,.06);
-}
-html[data-theme="light"] .funlearn-folder-cache-info b{color:#1d2b22}
-
-/* Placeholder item indicator */
-.video-item[data-placeholder="1"]{
-  position:relative;
-  opacity:.85;
-}
-.video-item[data-placeholder="1"]::before{
-  content:"🔌";
-  position:absolute;right:8px;top:50%;
-  transform:translateY(-50%);
-  font-size:11px;opacity:.6;
-}
-.video-item[data-placeholder="1"]:hover::before{opacity:1}
-.video-item[data-placeholder="1"].completed::after{
-  content:""; /* hide checkmark for placeholder */
-}
+.funlearn-folder-memory-box button:hover{border-color:var(--green);transform:translateY(-1px)}
+.funlearn-folder-memory-box button.fm-danger{color:#ff8b8b;border-color:#542b2b;background:#211719}
+.funlearn-folder-memory-box button.fm-danger:hover{background:#321b1d;border-color:#8f3d3d}
+html[data-theme="light"] .funlearn-folder-memory-box{color:#5d6f63;background:rgba(90,120,100,.06)}
+html[data-theme="light"] .funlearn-folder-memory-box b,
+html[data-theme="light"] .funlearn-folder-memory-box .fm-name{color:#1d2b22}
 </style>
-
-<script id="funlearn-folder-memory-js">
+  <script id="funlearn-folder-memory-js">
 (function(){
 'use strict';
 
-/* ============================================================
-   FunLearn Folder Memory
-   Mengingat folder yang dipilih per akun, TANPA menyimpan video.
-   - FSA  : menyimpan FileSystemDirectoryHandle ke IndexedDB (pointer folder)
-   - Meta : struktur folder (nama + daftar file) disimpan di appDatabase
-            -> otomatis ikut tersinkron ke akun (via /api/sync)
-   ============================================================ */
+/* =========================================================
+   FunLearn Folder Memory v3
+   ---------------------------------------------------------
+   - Ingat LOKASI folder (pointer / metadata), bukan isi video.
+   - Per akun: disimpan di appDatabase.folderProfile -> sync cloud
+   - Backup di localStorage (sumber kebenaran sementara)
+   - Auto-reconnect kalau browser punya File System Access API
+   - Di browser tanpa FSA, sidebar tetap tampil dari metadata;
+     user tinggal klik video -> prompt pilih folder sekali.
+   - Tombol "Putuskan" untuk ganti folder.
+   ========================================================= */
 
-const PROFILE_BACKUP_KEY = 'funlearn_folder_profile_backup_v2';
-const HANDLE_KEY_FLAG     = 'funlearn_has_dir_handle';
+const LS_PROFILE     = 'funlearn_folder_profile_v3';
+const LS_HANDLE_FLAG = 'funlearn_folder_has_handle_v3';
 
-/* ---------- util ---------- */
-function log(...a){ try{console.log('[FolderMemory]', ...a);}catch(e){} }
-function warn(...a){ try{console.warn('[FolderMemory]', ...a);}catch(e){} }
+function log(...a){ try{ console.log('[FolderMemory]', ...a); }catch(e){} }
+function warn(...a){ try{ console.warn('[FolderMemory]', ...a); }catch(e){} }
 function esc(s){ return String(s??'').replace(/[&<>'"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 function isVideoName(n){
   const x = String(n||'').toLowerCase();
@@ -8152,42 +8138,75 @@ function isVideoName(n){
       || x.endsWith('.m4v')||x.endsWith('.ts');
 }
 
-/* ---------- profile I/O ---------- */
-function getProfileFromApp(){
+/* =========================================================
+   PROFILE I/O  (localStorage = cepat + andal)
+   ========================================================= */
+function readLocalProfile(){
+  try{
+    const raw = localStorage.getItem(LS_PROFILE);
+    if(!raw) return null;
+    const p = JSON.parse(raw);
+    if(p && Array.isArray(p.videos) && p.videos.length) return p;
+  }catch(e){}
+  return null;
+}
+function writeLocalProfile(p){
+  try{
+    if(p) localStorage.setItem(LS_PROFILE, JSON.stringify(p));
+    else localStorage.removeItem(LS_PROFILE);
+  }catch(e){}
+}
+function readAppProfile(){
   try{
     if(typeof appDatabase === 'undefined' || !appDatabase) return null;
     const p = appDatabase.folderProfile;
-    if(p && typeof p === 'object' && Array.isArray(p.videos)) return p;
+    if(p && Array.isArray(p.videos) && p.videos.length) return p;
   }catch(e){}
   return null;
 }
-function setProfileToApp(profile){
+function writeAppProfile(p){
   try{
     if(typeof appDatabase === 'undefined' || !appDatabase) return false;
-    appDatabase.folderProfile = profile;
-    try{ localStorage.setItem(PROFILE_BACKUP_KEY, JSON.stringify(profile)); }catch(e){}
-    try{ if(typeof saveDatabase === 'function') saveDatabase(); }catch(e){}
-    try{ if(typeof window.funlearnQueueSync === 'function') window.funlearnQueueSync(); }catch(e){}
+    appDatabase.folderProfile = p || null;
     return true;
-  }catch(e){ warn('setProfileToApp', e); return false; }
+  }catch(e){ return false; }
 }
-function readBackup(){
-  try{
-    const raw = localStorage.getItem(PROFILE_BACKUP_KEY);
-    if(!raw) return null;
-    const p = JSON.parse(raw);
-    if(p && Array.isArray(p.videos)) return p;
-  }catch(e){}
-  return null;
+function getProfile(){
+  /* appDatabase adalah sumber yang di-sync ke akun.
+     localStorage adalah fallback kalau appDatabase ke-reset
+     (mis. loadDatabaseFile baru selesai & menimpa appDatabase). */
+  return readAppProfile() || readLocalProfile();
 }
-function deviceHasHandleFlag(){
-  try{ return localStorage.getItem(HANDLE_KEY_FLAG) === '1'; }catch(e){ return false; }
+async function saveProfile(p){
+  /* Simpan sinkron dulu -> PASTI ada walau appDatabase belum siap */
+  writeLocalProfile(p);
+  /* Baru sync ke appDatabase + server (fire & forget) */
+  if(writeAppProfile(p)){
+    try{ if(typeof saveDatabase === 'function') await saveDatabase(); }catch(e){ warn('saveDatabase', e); }
+    try{ if(typeof window.funlearnQueueSync === 'function') window.funlearnQueueSync(); }catch(e){}
+  }
 }
-function setDeviceHasHandleFlag(v){
-  try{ if(v) localStorage.setItem(HANDLE_KEY_FLAG,'1'); else localStorage.removeItem(HANDLE_KEY_FLAG); }catch(e){}
+function hasDeviceHandle(){
+  try{ return localStorage.getItem(LS_HANDLE_FLAG) === '1'; }catch(e){ return false; }
+}
+function setDeviceHandle(v){
+  try{ if(v) localStorage.setItem(LS_HANDLE_FLAG,'1'); else localStorage.removeItem(LS_HANDLE_FLAG); }catch(e){}
 }
 
-/* ---------- capture metadata (NO FILE CONTENT) ---------- */
+/* ==== EARLY INJECT: taruh profil ke appDatabase SEGERA ==== */
+function injectEarly(){
+  if(readAppProfile()) return;
+  const local = readLocalProfile();
+  if(local){
+    writeAppProfile(local);
+    log('inject early:', local.name, local.videos.length);
+  }
+}
+injectEarly();
+
+/* =========================================================
+   CAPTURE (metadata saja — TANPA isi file)
+   ========================================================= */
 async function captureFromFSA(rootHandle){
   if(!rootHandle || rootHandle.kind !== 'directory') return null;
   const videos = [], cats = new Set();
@@ -8199,13 +8218,9 @@ async function captureFromFSA(rootHandle){
         for await (const [fileName, fh] of handle.entries()){
           if(fh.kind !== 'file') continue;
           if(!isVideoName(fileName)) continue;
-          videos.push({
-            path: name + '/' + fileName,
-            name: fileName,
-            category: name
-          });
+          videos.push({ path: name + '/' + fileName, name: fileName, category: name });
         }
-      }catch(e){ warn('read cat', name, e); }
+      }catch(e){ warn('read subdir', name, e); }
     }
   }catch(e){ warn('captureFromFSA', e); }
   if(!videos.length) return null;
@@ -8259,18 +8274,17 @@ async function captureFromFileList(files){
   };
 }
 
-/* ---------- placeholder sidebar (metadata only) ---------- */
-async function renderPlaceholderSidebar(profile){
+/* =========================================================
+   PLACEHOLDER SIDEBAR (dari metadata)
+   ========================================================= */
+function buildPlaceholderSidebar(profile){
   const categoriesEl = document.getElementById('categories');
-  if(!categoriesEl) return false;
-  if(!profile || !Array.isArray(profile.videos) || !profile.videos.length) return false;
+  if(!categoriesEl || !profile || !profile.videos.length) return false;
 
-  // Kalau sidebar sudah punya video asli (bukan placeholder), jangan override
-  const realVideos = categoriesEl.querySelectorAll('.video-item:not([data-placeholder="1"])');
-  if(realVideos.length) return false;
+  // Kalau sudah ada video asli terpasang, jangan override
+  if(categoriesEl.querySelector('.video-item:not([data-placeholder="1"])')) return false;
 
   categoriesEl.innerHTML = '';
-
   const byCat = new Map();
   for(const v of profile.videos){
     if(!byCat.has(v.category)) byCat.set(v.category, []);
@@ -8321,8 +8335,7 @@ async function renderPlaceholderSidebar(profile){
 
       item.appendChild(t);
       item.appendChild(mini);
-
-      item.addEventListener('click', ()=>handlePlaceholderClick(v));
+      item.addEventListener('click', ()=>onPlaceholderClick(v));
 
       list.appendChild(item);
     }
@@ -8336,88 +8349,67 @@ async function renderPlaceholderSidebar(profile){
 }
 
 let pendingOpenPath = null;
-function handlePlaceholderClick(v){
+function onPlaceholderClick(v){
   pendingOpenPath = v.path;
-  try{
-    if(typeof showToast === 'function'){
-      showToast('🔌 Menghubungkan folder untuk memutar video…','coin');
-    }
-  }catch(e){}
-  const folderButton = document.getElementById('folderButton');
-  if(folderButton) folderButton.click();
+  try{ if(typeof showToast === 'function') showToast('🔌 Pilih folder untuk memutar "'+v.name+'"','coin'); }catch(e){}
+  const fb = document.getElementById('folderButton');
+  if(fb) fb.click();
 }
 
-/* ---------- auto reconnect ---------- */
+/* =========================================================
+   AUTO-RECONNECT
+   ========================================================= */
 let _reconnecting = false;
 async function autoReconnect(){
   if(_reconnecting) return;
   _reconnecting = true;
   try{
-    let profile = getProfileFromApp();
-    if(!profile || !Array.isArray(profile.videos) || !profile.videos.length){
-      const backup = readBackup();
-      if(backup){
-        profile = backup;
-        setProfileToApp(profile);
-      }
+    let profile = getProfile();
+    if(!profile){
+      // Coba tarik dari backup kalau appDatabase kosong
+      const local = readLocalProfile();
+      if(local){ writeAppProfile(local); profile = local; }
     }
 
-    if(!profile || !Array.isArray(profile.videos) || !profile.videos.length){
-      updateInfoUI();
+    if(!profile){
+      setStatus('Belum ada folder.');
+      updateBox();
       return;
     }
 
-    // FSA: coba handle tersimpan
-    const canFSA = (typeof canUseFileSystemAccess === 'function') && canUseFileSystemAccess();
-    if(profile.mode === 'fsa' && canFSA){
+    const canFSA = (typeof window.showDirectoryPicker === 'function');
+
+    // Coba FSA handle kalau mode = fsa
+    if(profile.mode === 'fsa' && canFSA && hasDeviceHandle()){
+      let handle = null;
       try{
-        const handle = await getStoredFolderHandle();
-        if(handle){
+        handle = await (typeof getStoredFolderHandle === 'function'
+          ? getStoredFolderHandle() : Promise.resolve(null));
+      }catch(e){}
+
+      if(handle){
+        try{
           const perm = await handle.queryPermission({mode:'readwrite'});
           if(perm === 'granted'){
-            // Jalankan loadFolder untuk bangun sidebar asli
-            try{
-              await loadFolder(handle);
-              setStatusText(
-                `📁 <b>${esc(profile.name)}</b> terhubung ✓ • ${profile.videos.length} video`,
-                'ok'
-              );
-              updateInfoUI();
-              // Kalau tadi klik video placeholder, buka langsung
-              if(pendingOpenPath && typeof videoEntries !== 'undefined' && videoEntries.get(pendingOpenPath)){
-                const p = pendingOpenPath;
-                pendingOpenPath = null;
-                const entry = videoEntries.get(p);
-                setTimeout(()=>{
-                  try{ openVideo(entry.handle, p, entry.name); }catch(e){}
-                }, 200);
-              }
-              return;
-            }catch(e){ warn('auto loadFolder', e); }
+            await loadFolder(handle);
+            setStatus(`📁 <b>${esc(profile.name)}</b> terhubung ✓ • ${profile.videos.length} video`);
+            updateBox();
+            openPendingIfAny();
+            return;
           }
-          // Permission masih "prompt": tampilkan sidebar dari metadata
-          await renderPlaceholderSidebar(profile);
-          setStatusText(
-            `📁 <b>${esc(profile.name)}</b> • ${profile.videos.length} video • klik tombol folder untuk hubungkan <span class="fm-badge warn">Belum terhubung</span>`,
-            'warn'
-          );
-          updateInfoUI();
+          // Butuh izin user -> tampilkan placeholder + tombol
+          buildPlaceholderSidebar(profile);
+          setStatus(`📁 <b>${esc(profile.name)}</b> • ${profile.videos.length} video • klik tombol folder untuk hubungkan`);
+          updateBox();
           return;
-        }
-      }catch(e){ warn('autoReconnect FSA', e); }
+        }catch(e){ warn('auto FSA perm', e); }
+      }
     }
 
-    // Non-FSA atau belum ada handle di device ini:
-    // tampilkan sidebar dari metadata saja
-    await renderPlaceholderSidebar(profile);
-    const badge = profile.mode === 'fsa'
-      ? '<span class="fm-badge warn">Belum terhubung</span>'
-      : '<span class="fm-badge warn">Klik folder untuk hubungkan</span>';
-    setStatusText(
-      `📁 <b>${esc(profile.name)}</b> • ${profile.videos.length} video ${badge}`,
-      'warn'
-    );
-    updateInfoUI();
+    // Fallback: pakai metadata saja
+    buildPlaceholderSidebar(profile);
+    setStatus(`📁 <b>${esc(profile.name)}</b> • ${profile.videos.length} video • klik tombol folder untuk hubungkan`);
+    updateBox();
   }catch(e){
     warn('autoReconnect', e);
   }finally{
@@ -8425,194 +8417,212 @@ async function autoReconnect(){
   }
 }
 
-function setStatusText(html){
+function openPendingIfAny(){
+  if(!pendingOpenPath) return;
+  if(typeof videoEntries === 'undefined' || !videoEntries.get(pendingOpenPath)) return;
+  const p = pendingOpenPath; pendingOpenPath = null;
+  const entry = videoEntries.get(p);
+  setTimeout(()=>{ try{ openVideo(entry.handle, p, entry.name); }catch(e){} }, 250);
+}
+
+function setStatus(html){
   const el = document.getElementById('folderStatus');
   if(el) el.innerHTML = html;
 }
 
-/* ---------- info UI ---------- */
-function updateInfoUI(){
-  const host = document.getElementById('funlearnFolderCacheInfo');
+/* =========================================================
+   UI BOX
+   ========================================================= */
+function updateBox(){
+  const host = document.getElementById('funlearnFolderMemoryBox');
   if(!host) return;
-  const profile = getProfileFromApp();
-  const canFSA = (typeof canUseFileSystemAccess === 'function') && canUseFileSystemAccess();
-  const hasHandle = deviceHasHandleFlag();
+  const profile = getProfile();
+  const connected = !!document.querySelector('.video-item:not([data-placeholder="1"])');
 
-  if(!profile || !profile.videos || !profile.videos.length){
+  if(!profile){
     host.innerHTML =
-      '📦 <b>Folder memory</b> — belum ada folder tersimpan di akun ini.';
+      '<div class="fm-row">📦 <b>Folder Memory</b></div>' +
+      '<div class="fm-row" style="opacity:.75">Belum ada folder tersimpan. Pilih folder untuk diingat oleh akun ini.</div>';
     return;
   }
 
-  const connected =
-    (profile.mode === 'fsa' && canFSA && hasHandle)
-    || (typeof folderMode !== 'undefined' && (folderMode === 'fsa' || folderMode === 'filelist') && document.querySelector('.video-item:not([data-placeholder="1"])'));
-
   const badge = connected
-    ? '<span class="fm-badge ok">Terhubung</span>'
-    : '<span class="fm-badge warn">Perlu hubungkan</span>';
+    ? '<span class="fm-badge ok">✓ Terhubung</span>'
+    : '<span class="fm-badge warn">⚠ Belum terhubung di perangkat ini</span>';
 
   host.innerHTML =
-    `📦 <b>Folder memory</b> — <b>${esc(profile.name)}</b> • ${profile.videos.length} video ${badge}` +
-    `<div style="margin-top:6px;opacity:.75">Tersimpan di akunmu. Video tetap di folder asli — bukan di server.</div>` +
-    `<div><button type="button" id="fmReconnectBtn">🔌 Hubungkan Sekarang</button>` +
-    `<button type="button" class="fm-danger" id="fmClearBtn">Hapus Memori Folder</button></div>`;
+    '<div class="fm-row">📦 <b>Folder Memory</b> ' + badge + '</div>' +
+    '<div class="fm-row">📁 <span class="fm-name">' + esc(profile.name) + '</span> • ' + profile.videos.length + ' video • ' + (profile.categories?.length || 0) + ' kategori</div>' +
+    '<div class="fm-row" style="opacity:.7">Tersimpan di akun. Video tetap di folder asli perangkat — bukan di server.</div>' +
+    '<div class="fm-actions">' +
+      '<button type="button" id="fmConnectBtn">🔌 ' + (connected ? 'Sambungkan Ulang' : 'Hubungkan Sekarang') + '</button>' +
+      '<button type="button" class="fm-danger" id="fmDisconnectBtn">🗑️ Putuskan / Ganti Folder</button>' +
+    '</div>';
 
-  const rb = document.getElementById('fmReconnectBtn');
-  if(rb) rb.addEventListener('click', ()=>{
+  document.getElementById('fmConnectBtn').onclick = ()=>{
     const fb = document.getElementById('folderButton');
     if(fb) fb.click();
-  });
-
-  const cb = document.getElementById('fmClearBtn');
-  if(cb) cb.addEventListener('click', ()=>{
-    if(!confirm('Hapus memori folder dari akun ini?\n\nFolder asli di perangkat tetap utuh. Hanya catatan lokasi folder di FunLearn yang dihapus.')) return;
-    clearFolderMemory();
-    try{ if(typeof showToast === 'function') showToast('🗑️ Memori folder dihapus.','success'); }catch(e){}
-  });
+  };
+  document.getElementById('fmDisconnectBtn').onclick = disconnectFolder;
 }
 
-async function clearFolderMemory(){
+async function disconnectFolder(){
+  if(!confirm('Putuskan folder saat ini?\n\nFolder asli di perangkat TIDAK akan terhapus. Hanya catatan lokasi di FunLearn yang dihapus supaya kamu bisa pilih folder baru.')) return;
   try{
-    if(typeof appDatabase !== 'undefined' && appDatabase) delete appDatabase.folderProfile;
-    try{ localStorage.removeItem(PROFILE_BACKUP_KEY); }catch(e){}
-    setDeviceHasHandleFlag(false);
-    try{
-      // Hapus handle dari IndexedDB (WebMakerFolderHandle)
-      await new Promise(res=>{
-        try{
-          const req = indexedDB.open('WebMakerFolderHandle',1);
-          req.onsuccess = ()=>{
-            const db = req.result;
-            try{
-              const tx = db.transaction('handles','readwrite');
-              tx.objectStore('handles').delete('root');
-              tx.oncomplete = ()=>{ try{db.close();}catch(e){} res(); };
-              tx.onerror = ()=>{ try{db.close();}catch(e){} res(); };
-            }catch(e){ try{db.close();}catch(x){} res(); }
-          };
-          req.onerror = ()=>res();
-        }catch(e){ res(); }
-      });
-    }catch(e){}
+    writeLocalProfile(null);
+    setDeviceHandle(false);
+    if(typeof appDatabase !== 'undefined' && appDatabase) appDatabase.folderProfile = null;
+    // Hapus handle FSA dari IndexedDB
+    await new Promise(res=>{
+      try{
+        const req = indexedDB.open('WebMakerFolderHandle',1);
+        req.onsuccess = ()=>{
+          const db = req.result;
+          try{
+            const tx = db.transaction('handles','readwrite');
+            tx.objectStore('handles').delete('root');
+            tx.oncomplete = ()=>{ try{db.close();}catch(e){} res(); };
+            tx.onerror = ()=>{ try{db.close();}catch(e){} res(); };
+          }catch(e){ try{db.close();}catch(x){} res(); }
+        };
+        req.onerror = ()=>res();
+      }catch(e){ res(); }
+    });
+    // Reset state internal (kalau bisa)
+    try{ if(typeof selectedFiles !== 'undefined' && selectedFiles?.clear) selectedFiles.clear(); }catch(e){}
+    try{ if(typeof videoEntries !== 'undefined' && videoEntries?.clear) videoEntries.clear(); }catch(e){}
+    // Bersihkan UI
+    const cats = document.getElementById('categories');
+    if(cats) cats.innerHTML = '<div style="color:#737b88;font-size:12px;padding:10px">Pilih folder FunLearn untuk mulai.</div>';
+    const fb = document.getElementById('folderButton');
+    if(fb) fb.textContent = '📁 Pilih FunLearn Folder';
+    setStatus('Belum ada folder.');
+    // Simpan state kosong
     try{ if(typeof saveDatabase === 'function') await saveDatabase(); }catch(e){}
     try{ if(typeof window.funlearnQueueSync === 'function') window.funlearnQueueSync(); }catch(e){}
-    updateInfoUI();
-  }catch(e){ warn('clearFolderMemory', e); }
+    updateBox();
+    try{ if(typeof showToast === 'function') showToast('🗑️ Folder diputuskan. Pilih folder baru sekarang.','success'); }catch(e){}
+  }catch(e){ warn('disconnect', e); }
 }
 
-/* ---------- hooks ---------- */
+/* =========================================================
+   HOOKS
+   ========================================================= */
 function installHooks(){
-  /* Hook: setelah FSA folder load sukses -> capture metadata + simpan handle flag */
-  try{
+  // ---- Hook loadFolder (FSA) ----
+  if(typeof window.loadFolder === 'function' && !window.loadFolder.__fmWrapped){
     const origLF = window.loadFolder;
-    if(typeof origLF === 'function'){
-      window.loadFolder = async function(rootHandle){
-        const r = await origLF.apply(this, arguments);
-        Promise.resolve().then(async ()=>{
-          try{
-            if(typeof saveFolderHandle === 'function' && rootHandle && canUseFileSystemAccess && canUseFileSystemAccess()){
-              await saveFolderHandle(rootHandle);
-              setDeviceHasHandleFlag(true);
-            }
-          }catch(e){}
+    const wrapped = async function(rootHandle){
+      const r = await origLF.apply(this, arguments);
+      try{
+        if(rootHandle){
           const profile = await captureFromFSA(rootHandle);
           if(profile){
-            setProfileToApp(profile);
-            updateInfoUI();
-            setStatusText(
-              `📁 <b>${esc(profile.name)}</b> terhubung ✓ • ${profile.videos.length} video`,
-              'ok'
-            );
+            await saveProfile(profile);
+            setDeviceHandle(true);
+            setStatus(`📁 <b>${esc(profile.name)}</b> terhubung ✓ • ${profile.videos.length} video`);
+            updateBox();
+            openPendingIfAny();
           }
-        }).catch(e=>warn('capture FSA after load', e));
-        return r;
-      };
-    }
-  }catch(e){ warn('hook loadFolder', e); }
+        }
+      }catch(e){ warn('post-loadFolder', e); }
+      return r;
+    };
+    wrapped.__fmWrapped = true;
+    window.loadFolder = wrapped;
+  }
 
-  /* Hook: setelah FileList folder load sukses -> capture metadata */
-  try{
+  // ---- Hook loadFolderFromFileList ----
+  if(typeof window.loadFolderFromFileList === 'function' && !window.loadFolderFromFileList.__fmWrapped){
     const origFL = window.loadFolderFromFileList;
-    if(typeof origFL === 'function'){
-      window.loadFolderFromFileList = async function(files){
-        const r = await origFL.apply(this, arguments);
-        Promise.resolve().then(async ()=>{
-          const profile = await captureFromFileList(files);
-          if(profile){
-            setProfileToApp(profile);
-            updateInfoUI();
-            setStatusText(
-              `📁 <b>${esc(profile.name)}</b> terhubung ✓ • ${profile.videos.length} video`,
-              'ok'
-            );
-          }
-          // Auto-open video yang tadi diklik kalau ada
-          if(pendingOpenPath && typeof videoEntries !== 'undefined' && videoEntries.get(pendingOpenPath)){
-            const p = pendingOpenPath;
-            pendingOpenPath = null;
-            const entry = videoEntries.get(p);
-            setTimeout(()=>{
-              try{ openVideo(entry.handle, p, entry.name); }catch(e){}
-            }, 250);
-          }
-        }).catch(e=>warn('capture filelist after load', e));
-        return r;
-      };
-    }
-  }catch(e){ warn('hook loadFolderFromFileList', e); }
+    const wrapped = async function(files){
+      const r = await origFL.apply(this, arguments);
+      try{
+        const profile = await captureFromFileList(files);
+        if(profile){
+          await saveProfile(profile);
+          setDeviceHandle(false); // FileList tidak punya persistent handle
+          setStatus(`📁 <b>${esc(profile.name)}</b> terhubung ✓ • ${profile.videos.length} video`);
+          updateBox();
+          openPendingIfAny();
+        }
+      }catch(e){ warn('post-filelist', e); }
+      return r;
+    };
+    wrapped.__fmWrapped = true;
+    window.loadFolderFromFileList = wrapped;
+  }
 
-  /* Hook: auth berubah (login / logout) -> coba restore */
+  // ---- Hook loadDatabaseFile: re-inject profile kalau ke-reset ----
+  if(typeof window.loadDatabaseFile === 'function' && !window.loadDatabaseFile.__fmWrapped){
+    const origLDB = window.loadDatabaseFile;
+    const wrapped = async function(){
+      const local = readLocalProfile();
+      const r = await origLDB.apply(this, arguments);
+      // Kalau appDatabase baru selesai load tanpa folderProfile, isi ulang dari localStorage
+      if(!readAppProfile() && local){
+        writeAppProfile(local);
+        log('re-inject after loadDatabaseFile');
+      }
+      return r;
+    };
+    wrapped.__fmWrapped = true;
+    window.loadDatabaseFile = wrapped;
+  }
+
+  // ---- MutationObserver: pastikan tombol folder label tepat ----
+  const cats = document.getElementById('categories');
+  if(cats){
+    new MutationObserver(()=>{
+      const hasReal = cats.querySelector('.video-item:not([data-placeholder="1"])');
+      const profile = getProfile();
+      const fb = document.getElementById('folderButton');
+      if(fb && profile && hasReal){
+        fb.textContent = '✓ ' + profile.name;
+        fb.title = 'Klik untuk menyambungkan ulang folder ini';
+      }
+      updateBox();
+    }).observe(cats,{childList:true,subtree:true});
+  }
+
+  // ---- Auth change: tarik backup lokal, coba reconnect ----
   window.addEventListener('funlearn:auth-changed', ()=>{
     setTimeout(async ()=>{
-      // Kalau profile di akun kosong tapi ada backup lokal, restore dari backup
-      if(!getProfileFromApp()){
-        const backup = readBackup();
-        if(backup) setProfileToApp(backup);
+      if(!readAppProfile()){
+        const local = readLocalProfile();
+        if(local) writeAppProfile(local);
       }
-      // Selalu coba auto reconnect
-      setTimeout(autoReconnect, 400);
-    }, 300);
+      if(!readLocalProfile()){
+        const app = readAppProfile();
+        if(app) writeLocalProfile(app);
+      }
+      await autoReconnect();
+    }, 400);
   });
-
-  /* Hook: mark as real videos supaya placeholder tidak menimpa */
-  try{
-    const cats = document.getElementById('categories');
-    if(cats){
-      new MutationObserver(muts=>{
-        muts.forEach(m=>m.addedNodes.forEach(n=>{
-          if(n.nodeType === 1){
-            if(n.classList && n.classList.contains('video-item') && !n.dataset.placeholder){
-              n.dataset.real = '1';
-            }
-            n.querySelectorAll?.('.video-item:not([data-placeholder])').forEach(el=>{
-              el.dataset.real = '1';
-            });
-          }
-        }));
-      }).observe(cats, {childList:true, subtree:true});
-    }
-  }catch(e){}
 }
 
-/* ---------- boot ---------- */
+/* =========================================================
+   BOOT
+   ========================================================= */
 function boot(){
-  // Suntik info box di bawah folderStatus
+  // Box UI di bawah folderStatus
   const folderStatus = document.getElementById('folderStatus');
-  if(folderStatus && !document.getElementById('funlearnFolderCacheInfo')){
+  if(folderStatus && !document.getElementById('funlearnFolderMemoryBox')){
     const box = document.createElement('div');
-    box.id = 'funlearnFolderCacheInfo';
-    box.className = 'funlearn-folder-cache-info';
+    box.id = 'funlearnFolderMemoryBox';
+    box.className = 'funlearn-folder-memory-box';
     box.textContent = '📦 Memuat folder memory…';
     folderStatus.insertAdjacentElement('afterend', box);
   }
 
+  injectEarly();
   installHooks();
 
-  // Beberapa pass untuk memastikan sudah lewat restoreFolder bawaan
-  setTimeout(autoReconnect, 900);
-  setTimeout(autoReconnect, 2200);
-  setTimeout(updateInfoUI, 2600);
+  // Beberapa pass supaya sinkron dengan restoreFolder() bawaan yang async
+  setTimeout(autoReconnect, 800);
+  setTimeout(autoReconnect, 2000);
+  setTimeout(updateBox, 2600);
+  setTimeout(updateBox, 4000);
 }
 
 if(document.readyState === 'loading'){
@@ -8621,15 +8631,18 @@ if(document.readyState === 'loading'){
   boot();
 }
 
-/* ---------- public API ---------- */
+/* =========================================================
+   PUBLIC API
+   ========================================================= */
 window.funlearnFolderMemory = {
-  getProfile: getProfileFromApp,
+  getProfile,
   autoReconnect,
-  renderPlaceholderSidebar,
-  clearMemory: clearFolderMemory
+  disconnect: disconnectFolder,
+  clearMemory: disconnectFolder
 };
 })();
 </script>
+  
 </html>
 
 <style id="funlearn-fixes-20260919">
