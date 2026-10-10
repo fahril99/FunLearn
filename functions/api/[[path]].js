@@ -2,6 +2,10 @@ const SESSION_DAYS = 30;
 const USERNAME_RE = /^[A-Za-z0-9_][A-Za-z0-9_.-]{2,31}$/;
 const MIN_PASSWORD_LENGTH = 10;
 
+/* Batas ukuran audio voice note (base64 string length) */
+const MAX_AUDIO_LENGTH = 4_000_000;         // ~4 MB base64 ≈ 3 MB binary
+const MAX_AUDIO_DURATION_SEC = 180;          // longgar 3 menit; klien dibatasi 2 menit
+
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
     status,
@@ -408,7 +412,10 @@ async function ensureGlobalCommentSchema(env) {
         username TEXT NOT NULL,
         comment TEXT NOT NULL,
         created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        updated_at TEXT NOT NULL,
+        audio TEXT,
+        audio_duration REAL,
+        audio_mime TEXT
       )`
     )
     .run();
@@ -419,7 +426,11 @@ async function ensureGlobalCommentSchema(env) {
       ["username", "TEXT"],
       ["comment", "TEXT"],
       ["created_at", "TEXT"],
-      ["updated_at", "TEXT"]
+      ["updated_at", "TEXT"],
+      /* Migrasi aman: tambah kolom voice note kalau belum ada */
+      ["audio", "TEXT"],
+      ["audio_duration", "REAL"],
+      ["audio_mime", "TEXT"]
     ]
   ) {
     await ensureColumn(
@@ -607,7 +618,10 @@ async function ensurePublicVideoSchema(env) {
         content TEXT NOT NULL,
         comment TEXT NOT NULL,
         created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        updated_at TEXT NOT NULL,
+        audio TEXT,
+        audio_duration REAL,
+        audio_mime TEXT
       )`
     )
     .run();
@@ -620,7 +634,11 @@ async function ensurePublicVideoSchema(env) {
       ["content", "TEXT"],
       ["comment", "TEXT"],
       ["created_at", "TEXT"],
-      ["updated_at", "TEXT"]
+      ["updated_at", "TEXT"],
+      /* Voice note juga didukung di komentar public video */
+      ["audio", "TEXT"],
+      ["audio_duration", "REAL"],
+      ["audio_mime", "TEXT"]
     ]
   ) {
     await ensureColumn(
@@ -690,14 +708,58 @@ async function publicVideoRow(
     .first();
 }
 
-export async function onRequest(
-  context
-) {
-  const {
-    request,
-    env,
-    params
-  } = context;
+/* ============================================================
+ * Helper validasi voice note
+ * ============================================================ */
+function validateAudioPayload(audioRaw, durationRaw, mimeRaw) {
+  const audio = String(audioRaw || "").trim();
+  if (!audio) {
+    return { ok: true, audio: "", duration: 0, mime: "" };
+  }
+
+  if (audio.length > MAX_AUDIO_LENGTH) {
+    return {
+      ok: false,
+      error:
+        "Voice note terlalu besar. Maksimal sekitar 4 MB."
+    };
+  }
+
+  if (
+    !/^data:audio\/(webm|ogg|mp4|mpeg|wav|x-m4a|m4a)(;[^,]*)?;base64,/i.test(
+      audio
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Format voice note tidak valid."
+    };
+  }
+
+  const duration = Math.max(
+    0,
+    Math.min(
+      MAX_AUDIO_DURATION_SEC,
+      Number(durationRaw) || 0
+    )
+  );
+
+  let mime = String(mimeRaw || "").trim();
+  if (!mime) {
+    const m = audio.match(/^data:([^;,]+)/i);
+    mime = m ? m[1].toLowerCase() : "audio/webm";
+  }
+
+  return {
+    ok: true,
+    audio,
+    duration,
+    mime: mime.slice(0, 60)
+  };
+}
+
+export async function onRequest(context) {
+  const { request, env, params } = context;
 
   if (!env.DB) {
     return json(
@@ -1002,13 +1064,6 @@ export async function onRequest(
           body.videoUrl || ""
         ).trim();
 
-      /*
-       * Thumbnail sekarang boleh berupa:
-       * - data:image/jpeg;base64,...
-       * - URL HTTPS biasa
-       *
-       * Jadi thumbnail TIDAK perlu dikirim ke Top4Top.
-       */
       const thumbnailUrl =
         String(
           body.thumbnailUrl || ""
@@ -1756,6 +1811,9 @@ export async function onRequest(
               c.comment,
               c.created_at AS createdAt,
               c.updated_at AS updatedAt,
+              c.audio,
+              c.audio_duration AS audioDuration,
+              c.audio_mime AS audioMime,
 
               (
                 SELECT COUNT(*)
@@ -1795,6 +1853,10 @@ export async function onRequest(
         (cr.results || []).map(
           c => ({
             ...c,
+            audio: c.audio || "",
+            audioDuration:
+              Number(c.audioDuration) || 0,
+            audioMime: c.audioMime || "",
             liked: !!c.liked,
             replies:
               (rr.results || [])
@@ -1834,14 +1896,31 @@ export async function onRequest(
 
       const vid = pvc[1];
 
-      const comment =
+      let comment =
         String(
           body.comment ||
             body.text ||
             ""
         ).trim();
 
-      if (!comment) {
+      const audioCheck =
+        validateAudioPayload(
+          body.audio,
+          body.audioDuration,
+          body.audioMime
+        );
+
+      if (!audioCheck.ok) {
+        return json(
+          { error: audioCheck.error },
+          400
+        );
+      }
+
+      const hasAudio = !!audioCheck.audio;
+
+      /* Komentar boleh kosong JIKA ada voice note */
+      if (!comment && !hasAudio) {
         return json(
           {
             error:
@@ -1861,6 +1940,10 @@ export async function onRequest(
         );
       }
 
+      if (!comment && hasAudio) {
+        comment = "🎤 Voice Note";
+      }
+
       const cid =
         id("pvcomment");
 
@@ -1868,7 +1951,7 @@ export async function onRequest(
 
       await env.DB
         .prepare(
-          "INSERT INTO public_video_comments(id,video_id,user_id,username,content,comment,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)"
+          "INSERT INTO public_video_comments(id,video_id,user_id,username,content,comment,created_at,updated_at,audio,audio_duration,audio_mime) VALUES(?,?,?,?,?,?,?,?,?,?,?)"
         )
         .bind(
           cid,
@@ -1878,7 +1961,10 @@ export async function onRequest(
           comment,
           comment,
           ts,
-          ts
+          ts,
+          audioCheck.audio || null,
+          hasAudio ? audioCheck.duration : null,
+          hasAudio ? audioCheck.mime : null
         )
         .run();
 
@@ -1892,6 +1978,13 @@ export async function onRequest(
             username:
               user.username,
             comment,
+            audio: audioCheck.audio || "",
+            audioDuration: hasAudio
+              ? audioCheck.duration
+              : 0,
+            audioMime: hasAudio
+              ? audioCheck.mime
+              : "",
             createdAt: ts,
             updatedAt: ts,
             likes: 0,
@@ -2275,7 +2368,7 @@ export async function onRequest(
     }
 
     // ============================================================
-    // GLOBAL COMMENTS
+    // GLOBAL COMMENTS (dengan voice note)
     // ============================================================
 
     if (
@@ -2296,6 +2389,9 @@ export async function onRequest(
               c.comment,
               c.created_at AS createdAt,
               c.updated_at AS updatedAt,
+              c.audio,
+              c.audio_duration AS audioDuration,
+              c.audio_mime AS audioMime,
 
               (
                 SELECT COUNT(*)
@@ -2356,6 +2452,10 @@ export async function onRequest(
           (result.results || [])
             .map(c => ({
               ...c,
+              audio: c.audio || "",
+              audioDuration:
+                Number(c.audioDuration) || 0,
+              audioMime: c.audioMime || "",
               liked: !!c.liked,
               replies:
                 replyMap.get(
@@ -2383,12 +2483,29 @@ export async function onRequest(
         env
       );
 
-      const comment =
+      let comment =
         String(
           body.comment || ""
         ).trim();
 
-      if (!comment) {
+      const audioCheck =
+        validateAudioPayload(
+          body.audio,
+          body.audioDuration,
+          body.audioMime
+        );
+
+      if (!audioCheck.ok) {
+        return json(
+          { error: audioCheck.error },
+          400
+        );
+      }
+
+      const hasAudio = !!audioCheck.audio;
+
+      /* Komentar boleh kosong JIKA ada voice note */
+      if (!comment && !hasAudio) {
         return json(
           {
             error:
@@ -2408,6 +2525,10 @@ export async function onRequest(
         );
       }
 
+      if (!comment && hasAudio) {
+        comment = "🎤 Voice Note";
+      }
+
       const cid =
         id("comment");
 
@@ -2415,7 +2536,7 @@ export async function onRequest(
 
       await env.DB
         .prepare(
-          "INSERT INTO comments(id,user_id,username,comment,created_at,updated_at) VALUES(?,?,?,?,?,?)"
+          "INSERT INTO comments(id,user_id,username,comment,created_at,updated_at,audio,audio_duration,audio_mime) VALUES(?,?,?,?,?,?,?,?,?)"
         )
         .bind(
           cid,
@@ -2423,7 +2544,10 @@ export async function onRequest(
           user.username,
           comment,
           ts,
-          ts
+          ts,
+          audioCheck.audio || null,
+          hasAudio ? audioCheck.duration : null,
+          hasAudio ? audioCheck.mime : null
         )
         .run();
 
@@ -2436,6 +2560,13 @@ export async function onRequest(
             username:
               user.username,
             comment,
+            audio: audioCheck.audio || "",
+            audioDuration: hasAudio
+              ? audioCheck.duration
+              : 0,
+            audioMime: hasAudio
+              ? audioCheck.mime
+              : "",
             createdAt: ts,
             updatedAt: ts,
             likes: 0,
